@@ -1,0 +1,17 @@
+# www.robotstxt.org/
+# Allow all web crawlers to access all content
+
+User-agent: *
+Allow: /
+
+# Block certain paths
+Disallow: /login
+Disallow: /register
+Disallow: /checkout
+Disallow: /cart
+Disallow: /profile
+Disallow: /verify-otp
+Disallow: /recover-password
+
+# Sitemap location
+Sitemap: https://www.barsha.com.tn/fr/sitemap.xml

@@ -1,0 +1,56 @@
+<!-- Backdrop overlay to catch taps/clicks outside the menu and improve accessibility on mobile -->
+<div class="menu-overlay" (click)="closeMenu()"></div>
+
+<div class="menu-popup menu-container" #menuRef role="dialog" aria-modal="true" aria-label="Menu" tabindex="-1">
+  <div class="menu-header">
+    <!-- Close button: visible on small screens for better UX -->
+    <button class="close-button" (click)="closeMenu()" aria-label="Fermer le menu">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
+    <div class="gender-selector">
+      <button
+        *ngFor="let gender of genders"
+        (click)="switchGender(gender)"
+        [class.active]="selectedGender === gender"
+        class="gender-btn">
+        {{ gender }}
+      </button>
+    </div>
+  </div>
+
+  <div class="menu-divider"></div>
+
+  <div class="menu-content">
+    <div class="categories-container">
+      <div *ngFor="let category of getFilteredCategories()" class="category-section">
+        <div *ngFor="let subCategory of category.subCategories" class="menu-item">
+          <!-- Main subcategory link -->
+          <div class="menu-link" (click)="subCategory.subCategories.length > 0 ? toggleSubMenu(subCategory) : navigateToShop(subCategory)" [ngStyle]="{'color': subCategory.fontColor || ''}">
+            {{ subCategory.publicName || subCategory.name }}
+            <i *ngIf="subCategory.subCategories && subCategory.subCategories.length > 0" [class.rotated]="isSubMenuOpen(subCategory)" aria-hidden="true"></i>
+          </div>
+
+          <!-- Sub-subcategories -->
+          <div *ngIf="subCategory.subCategories && subCategory.subCategories.length > 0"
+               class="sub-menu"
+               [class.open]="isSubMenuOpen(subCategory)"
+               [class.scrollable]="subCategory.subCategories.length > 4">
+            <div class="scrollable-container">
+              <!-- 'Afficher Tout' link to navigate to the parent subCategory itself -->
+              <div class="sub-menu-item all-link">
+                <span class="sub-menu-link" (click)="navigateToShop(subCategory)">
+                  Afficher tout
+                </span>
+              </div>
+              <div *ngFor="let subSubCategory of subCategory.subCategories" class="sub-menu-item">
+                <span class="sub-menu-link" (click)="navigateToShop(subSubCategory)">
+                  {{ subSubCategory.publicName || subSubCategory.name }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

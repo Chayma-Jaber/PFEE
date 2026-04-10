@@ -1,0 +1,175 @@
+<!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</section>
+
+<article class="container-fluid px-0" *ngIf="!isLoading">
+    <div class="profile-form">
+        <div class="form-group">
+            <h1 class="text-center mb-2">Mes Coupons</h1>
+            <div class="line mb-2"></div>
+
+            <!-- Section FidTrans -->
+            <section *ngIf="couponsAll.fidTransCoupons.length > 0" class="mb-1">
+                <!-- <h2 class="h5 mb-3">Coupons Fidélité</h2> -->
+                <div class="row">
+                    <div class="col-12">
+                        <div *ngFor="let coupon of couponsAll.fidTransCoupons" class="mb-1">
+                            <div class="coupon-base">
+                                <img src="images/Fid.png" alt="Coupon Base" class="coupon-bg img-fluid">
+
+                                <div class="coupon-content d-flex">
+                                    <div class="coupon-left">
+                                        <div class="discount-value">
+                                            {{ coupon.discount_amount > 0 ? coupon.discount_amount :
+                                            coupon.discount_percent }}
+                                        </div>
+                                        <div class="currency">
+                                            {{ coupon.discount_amount > 0 ? 'TND' : '%' }}
+                                        </div>
+                                    </div>
+                                    <div class="coupon-right" [class.no-barcode]="!coupon.bar_code">
+                                        <h3 class="coupon-title">{{coupon.code}}</h3>
+
+                                        <div class="validity-container">
+                                            <span class="validity-label">valide jusqu'à</span>
+                                            <span class="expiry-date">{{ coupon.date_to | date:'dd/MM/yyyy' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-info-row" *ngIf="coupon.bar_code">
+                                        <span class="mobile-coupon-name">{{coupon.code}}</span>
+                                        <div class="mobile-validity-wrapper" *ngIf="coupon.date_to">
+                                            <span class="mobile-validity-label">valide jusqu'à</span>
+                                            <span class="mobile-coupon-date">{{ coupon.date_to | date:'dd/MM/yyyy'
+                                                }}</span>
+                                        </div>
+                                        <div class="mobile-barcode-wrapper">
+                                            <svg [id]="'barcode-mob-' + coupon.code" class="barcode-svg"></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="barcode-container" *ngIf="coupon.bar_code">
+                                    <svg [id]="'barcode-' + coupon.code" class="barcode-svg"></svg>
+                                </div>
+                            </div>
+                            <p class="coupon-instruction">Sélectionnez-le lors de la confirmation de commande dans la
+                                liste des coupons, en vous basant sur son nom et son montant ou son pourcentage de
+                                réduction</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Marketing -->
+            <section *ngIf="couponsAll.marketingCoupons.length > 0" class="mb-1">
+                <!-- <h2 class="h5 mb-3">Coupons Marketing</h2> -->
+                <div class="row">
+                    <div class="col-12">
+                        <div *ngFor="let coupon of couponsAll.marketingCoupons" class="mb-1">
+                            <div class="coupon-base">
+                                <img src="images/gift.png" alt="Coupon Base" class="coupon-bg img-fluid">
+                                <div class="coupon-content d-flex">
+                                    <div class="coupon-left">
+                                        <div class="discount-value marketing-value">
+                                            {{ coupon.discount_amount > 0 ? coupon.discount_amount :
+                                            coupon.discount_percent }}
+                                        </div>
+                                        <div class="currency marketing-currency">
+                                            {{ coupon.discount_amount > 0 ? 'TND' : '%' }}
+                                        </div>
+                                    </div>
+                                    <div class="coupon-right" [class.no-barcode]="!coupon.bar_code">
+                                        <h3 class="coupon-title">{{coupon.code}}</h3>
+
+                                        <div class="validity-container">
+                                            <span class="validity-label">valide jusqu'à</span>
+                                            <span class="expiry-date marketing-expiry">{{ coupon.date_to |
+                                                date:'dd/MM/yyyy' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-info-row" *ngIf="coupon.bar_code">
+                                        <span class="mobile-coupon-name">{{coupon.code}}</span>
+                                        <div class="mobile-validity-wrapper" *ngIf="coupon.date_to">
+                                            <span class="mobile-validity-label">valide jusqu'à</span>
+                                            <span class="mobile-coupon-date marketing-mobile-expiry">{{ coupon.date_to |
+                                                date:'dd/MM/yyyy' }}</span>
+                                        </div>
+                                        <div class="mobile-barcode-wrapper">
+                                            <svg [id]="'barcode-mob-' + coupon.code" class="barcode-svg"></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="barcode-container" *ngIf="coupon.bar_code">
+                                    <svg [id]="'barcode-' + coupon.code" class="barcode-svg"></svg>
+                                </div>
+                            </div>
+                            <p class="coupon-instruction">Sélectionnez-le lors de la confirmation de commande dans la
+                                liste des coupons, en vous basant sur son nom et son montant ou son pourcentage de
+                                réduction</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Autres coupons -->
+            <section *ngIf="couponsAll.otherCoupons.length > 0" class="mb-1">
+                <!-- <h2 class="h5 mb-3">Autres Coupons</h2> -->
+                <div class="row">
+                    <div class="col-12">
+                        <div *ngFor="let coupon of couponsAll.otherCoupons" class="mb-1">
+                            <div class="coupon-base">
+                                <img src="images/autre.png" alt="Coupon Base" class="coupon-bg img-fluid">
+                                <div class="coupon-content d-flex">
+                                    <div class="coupon-left">
+                                        <div class="discount-value other-value">
+                                            {{ coupon.discount_amount > 0 ? coupon.discount_amount :
+                                            coupon.discount_percent }}
+                                        </div>
+                                        <div class="currency other-currency">
+                                            {{ coupon.discount_amount > 0 ? 'TND' : '%' }}
+                                        </div>
+                                    </div>
+                                    <div class="coupon-right" [class.no-barcode]="!coupon.bar_code">
+                                        <h3 class="coupon-title">{{coupon.code}}</h3>
+
+                                        <div class="validity-container">
+                                            <span class="validity-label">valide jusqu'à</span>
+                                            <span class="expiry-date other-expiry">{{ coupon.date_to | date:'dd/MM/yyyy'
+                                                }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-info-row" *ngIf="coupon.bar_code">
+                                        <span class="mobile-coupon-name">{{coupon.code}}</span>
+                                        <div class="mobile-validity-wrapper" *ngIf="coupon.date_to">
+                                            <span class="mobile-validity-label">valide jusqu'à</span>
+                                            <span class="mobile-coupon-date other-mobile-expiry">{{ coupon.date_to |
+                                                date:'dd/MM/yyyy' }}</span>
+                                        </div>
+                                        <div class="mobile-barcode-wrapper">
+                                            <svg [id]="'barcode-mob-' + coupon.code" class="barcode-svg"></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="barcode-container" *ngIf="coupon.bar_code">
+                                    <svg [id]="'barcode-' + coupon.code" class="barcode-svg"></svg>
+                                </div>
+                            </div>
+                            <p class="coupon-instruction">Sélectionnez-le lors de la confirmation de commande dans la
+                                liste des coupons, en vous basant sur son nom et son montant ou son pourcentage de
+                                réduction</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Message si aucun coupon -->
+            <p class="text-center"
+                *ngIf="couponsAll.fidTransCoupons.length === 0 && couponsAll.marketingCoupons.length === 0 && couponsAll.otherCoupons.length === 0">
+                Vous n'avez aucun coupon disponible
+            </p>
+        </div>
+    </div>
+</article>

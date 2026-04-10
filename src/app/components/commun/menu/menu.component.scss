@@ -1,0 +1,760 @@
+.menu-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--menuTop, 0px);
+  height: calc(100vh - var(--menuTop, 0px));
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1020;
+  /* show the overlay only when the component is present */
+}
+
+.menu-popup {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--menuTop, 0px);
+  width: 100%;
+  /* mobile-first: full width */
+  height: calc(100vh - var(--menuTop, 0px));
+  /* full height for better mobile UX */
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
+  z-index: 1025;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  /* Keep menu scrollable */
+  overflow-x: hidden;
+  font-family: 'std55';
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+// Style for when menu is open to prevent body scrolling
+:host-context(body.menu-open) {
+  .menu-popup {
+    // Ensure menu remains scrollable when body is fixed
+    overflow-y: auto;
+  }
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  gap: 10px; // Reduced gap
+}
+
+.close-button {
+  background: none;
+  border: none;
+  overflow-y: auto;
+  /* Allow nested scrolling if content grows */
+  font-size: 40px;
+  cursor: pointer;
+  padding: 0;
+  color: #000;
+  z-index: 1060; // Ensure it's above other elements
+  outline: none;
+  /* Remove outline */
+
+  &:focus {
+    outline: none;
+    /* Remove outline when focused */
+    box-shadow: none;
+    /* Remove any box-shadow when focused */
+  }
+}
+
+/* Hide close button on large screens where the menu is a side panel and a separate UI may exist */
+@media (min-width: 1024px) {
+  .close-button {
+    display: none;
+  }
+}
+
+.gender-selector {
+  display: flex;
+  width: 100%; // Take full width
+  gap: 10px; // Minimal gap for all screen sizes
+  justify-content: flex-start; // Align buttons to the left
+  padding-left: 40px; // Default padding to match categories-container
+  overflow-x: auto;
+  /* Allow horizontal scrolling for many genders on small screens */
+  -webkit-overflow-scrolling: touch;
+  /* smoother momentum scrolling on iOS */
+
+
+  .gender-btn {
+    background: none;
+    border: none;
+    font-family: 'Qebil';
+    font-size: 24px;
+    padding: 10px 0;
+    margin: 0;
+    /* Ensure no margin */
+    cursor: pointer;
+    position: relative;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    /* Reduced letter spacing */
+
+    &.active {
+      font-weight: bold;
+
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #000;
+      }
+    }
+  }
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #ccc;
+  margin: 0 8px 5px 0;
+  margin-top: -14px;
+}
+
+// Search section styles - responsive for all devices
+.menu-search-section {
+  padding: 15px 20px;
+  position: relative;
+
+  .search-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+
+    .search-input {
+      width: 100%;
+      padding: 10px 18px;
+      border: 1px solid #e0e0e0;
+      border-radius: 9px;
+      background-color: #f5f5f5;
+      font-size: 15px;
+      outline: none;
+
+      &:focus {
+        border-color: #ccc;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .search-button {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+
+      i {
+        color: #777;
+        font-size: 16px;
+      }
+    }
+  }
+
+  // Gender filter buttons
+  .gender-filter-buttons {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+
+    .gender-filter-btn {
+      background: none;
+      border: none;
+      font-family: 'std55';
+      font-size: 16px;
+      padding: 5px 10px;
+      cursor: pointer;
+      position: relative;
+      color: #777;
+      transition: color 0.2s ease;
+
+      &.active {
+        color: #000;
+        font-weight: bold;
+
+        &:after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: #000;
+        }
+      }
+
+      &:hover {
+        color: #000;
+      }
+    }
+  }
+
+  // Search results dropdown
+  .search-results-container {
+    position: absolute;
+    top: calc(100% - 15px);
+    left: 20px;
+    right: 20px;
+    z-index: 1100;
+    background-color: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+
+    .search-results {
+      padding: 10px 0;
+
+      .search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-family: 'std55';
+        font-size: 14px;
+
+        &:hover,
+        &.selected {
+          background-color: #f5f5f5;
+        }
+
+        // Style for the highlighted text is handled by the component
+      }
+    }
+  }
+}
+
+.menu-content {
+  display: flex;
+  height: 100%;
+}
+
+.categories-container {
+  width: 100%; // mobile: full width for readability
+  max-width: 100%;
+  padding: 20px 20px;
+}
+
+.menu-item {
+  margin-bottom: 10px;
+}
+
+.menu-link {
+  text-decoration: none;
+  color: #000;
+  font-size: 20px;
+  display: flex;
+  font-family: 'std55';
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 0;
+  text-transform: uppercase;
+  font-weight: 500;
+
+  &:hover {
+    font-weight: bold;
+  }
+
+  /* Style for the dropdown arrow icon */
+  i {
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+    cursor: pointer;
+
+    &.rotated {
+      transform: rotate(-135deg);
+    }
+  }
+}
+
+.sub-menu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 15px;
+
+  &.open {
+    max-height: 500px;
+    /* Allow enough height for all items */
+
+    /* Scrollable container - height limited to show ~4 items */
+    .scrollable-container {
+      max-height: 140px;
+      /* Height for approximately 4 items */
+      overflow-y: auto;
+      /* Enable vertical scrolling */
+      scroll-behavior: smooth;
+      /* Ensure smooth scrolling */
+      scrollbar-width: thin;
+      /* For Firefox */
+      scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+      /* For Firefox */
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      /* Very subtle border to indicate more content */
+
+      /* Custom scrollbar for Webkit browsers */
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+      }
+    }
+  }
+}
+
+.sub-menu-item {
+  padding: 4px 0;
+  cursor: pointer;
+  /* Add pointer cursor to the entire item */
+}
+
+.sub-menu-link {
+  text-decoration: none;
+  color: #1b1a1a;
+  font-family: 'std55';
+  font-size: 18px;
+  display: block;
+  cursor: pointer;
+  /* Add pointer cursor to indicate clickable */
+
+  &:hover {
+    color: #000;
+  }
+}
+
+/* Removed scroll indicator dots */
+
+/* Add a subtle hover effect for better UX */
+.sub-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Add a gradient at the bottom of scrollable container to indicate more content */
+.sub-menu.scrollable.open .scrollable-container {
+  position: relative;
+
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    /* Slightly taller gradient */
+    //background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.7), transparent);
+    pointer-events: none;
+    /* Allow clicks to pass through */
+  }
+}
+
+/* Desktop styles (min-width: 1450px) - full desktop */
+@media (min-width: 1450px) {
+  .menu-overlay {
+    display: none;
+  }
+
+  .menu-popup {
+    top: var(--menuTop, 240px);
+    width: 21%;
+    height: calc(100vh - var(--menuTop, 240px));
+    overflow-y: auto;
+    left: 0;
+    right: auto;
+  }
+
+  .gender-selector {
+    gap: 50px;
+  }
+
+  .gender-btn {
+    font-size: 24px;
+  }
+
+  .menu-search-section {
+    padding: 15px 40px;
+
+    .search-container {
+      max-width: 400px;
+
+      .search-input {
+        font-size: 16px;
+        padding: 12px 20px;
+      }
+    }
+
+    .gender-filter-buttons {
+      gap: 30px;
+
+      .gender-filter-btn {
+        font-size: 18px;
+      }
+    }
+
+    .search-results-container {
+      left: 40px;
+      right: 40px;
+      max-width: 400px;
+    }
+  }
+}
+
+/* Mid-screen styles: 1024px to 1449px - compact menu, no page scroll */
+@media (min-width: 1024px) and (max-width: 1449px) {
+  .menu-overlay {
+    display: none;
+  }
+
+  .menu-popup {
+    top: var(--menuTop, 0px);
+    width: 21%;
+    height: calc(100vh - var(--menuTop, 0px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    left: 0;
+    right: auto;
+  }
+
+  .menu-header {
+    padding: 8px 16px;
+  }
+
+  .gender-selector {
+    gap: 20px;
+    padding-left: 20px;
+
+    .gender-btn {
+      font-size: 14px;
+      padding: 6px 0;
+      letter-spacing: 0;
+    }
+  }
+
+  .menu-divider {
+    margin-top: -8px;
+  }
+
+  .categories-container {
+    padding: 10px 16px;
+  }
+
+  .menu-link {
+    font-size: 15px;
+    padding: 2px 0;
+  }
+
+  .sub-menu-link {
+    font-size: 13px;
+  }
+
+  .sub-menu {
+    &.open {
+      .scrollable-container {
+        max-height: 120px;
+      }
+    }
+  }
+
+  .menu-search-section {
+    padding: 10px 16px;
+
+    .search-container {
+      max-width: 100%;
+
+      .search-input {
+        font-size: 14px;
+        padding: 8px 14px;
+      }
+    }
+
+    .search-results-container {
+      left: 16px;
+      right: 16px;
+    }
+  }
+}
+
+/* Tablet styles (min-width: 768px and max-width: 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .menu-popup {
+    top: var(--menuTop, 200px);
+    height: calc(100vh - var(--menuTop, 200px));
+    width: 35%; // Reduced by ~30% from 50%
+  }
+
+  .gender-selector {
+    gap: 20px;
+    padding-left: 20px;
+
+    .gender-btn {
+      font-size: 14px;
+      padding: 6px 0;
+      letter-spacing: 0;
+    }
+  }
+
+  .close-button {
+    font-size: 35px;
+  }
+
+  .menu-search-section {
+    padding: 15px 30px;
+
+    .search-container {
+      max-width: 100%;
+
+      .search-input {
+        font-size: 15px;
+        padding: 10px 18px;
+      }
+    }
+
+    .gender-filter-buttons {
+      gap: 25px;
+
+      .gender-filter-btn {
+        font-size: 16px;
+      }
+    }
+
+    .search-results-container {
+      left: 30px;
+      right: 30px;
+    }
+  }
+
+  .categories-container {
+    padding: 15px 30px;
+  }
+
+  .menu-link {
+    font-size: 18px;
+  }
+
+  .sub-menu {
+    &.open {
+      .scrollable-container {
+        max-height: 130px;
+        /* Medium max height for tablet scrollable area */
+      }
+    }
+  }
+
+  .sub-menu-link {
+    font-size: 13px;
+    padding: 8px 12px;
+    /* bigger touch target */
+  }
+}
+
+/* Mobile styles (max-width: 767px) */
+@media (max-width: 767px) {
+  .menu-popup {
+    top: var(--menuTop, 150px);
+    height: calc(100vh - var(--menuTop, 150px));
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .menu-header {
+    padding: 10px 15px;
+    flex-direction: row; // Keep header elements in a row
+    justify-content: flex-start; // Align to the left
+    align-items: center;
+    width: 100%;
+  }
+
+  .close-button {
+    font-size: 30px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .gender-selector {
+    flex-direction: row; // Keep gender buttons horizontal
+    gap: 30px; // Increased gap for better spacing
+    margin-top: 30px; // Add space for the close button
+    padding-left: 20px; // Match the categories-container padding (20px)
+    justify-content: flex-start; // Align to the left
+
+    .gender-btn {
+      font-size: 22px;
+      text-align: left; // Align text to the left
+    }
+  }
+
+  .menu-search-section {
+    padding: 10px 20px;
+
+    .search-container {
+      margin-bottom: 15px;
+
+      .search-input {
+        font-size: 14px;
+        padding: 10px 15px;
+        height: 40px;
+      }
+
+      .search-button {
+        right: 10px;
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .gender-filter-buttons {
+      gap: 20px;
+
+      .gender-filter-btn {
+        font-size: 14px;
+        padding: 5px 8px;
+      }
+    }
+
+    .search-results-container {
+      left: 20px;
+      right: 20px;
+      max-height: 250px;
+
+      .search-result-item {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
+  }
+
+  .menu-content {
+    flex-direction: column; // Stack content vertically
+  }
+
+  .categories-container {
+    width: 100%;
+    padding: 10px 20px;
+  }
+
+  .menu-item {
+    margin-bottom: 10px;
+  }
+
+  .menu-link {
+    font-size: 16px;
+    padding: 12px 20px;
+    /* larger touch-friendly padding on mobile */
+  }
+
+  .sub-menu {
+    padding-left: 10px;
+
+    &.open {
+      .scrollable-container {
+        max-height: 120px;
+        /* Smaller max height for mobile scrollable area */
+      }
+    }
+  }
+
+  .sub-menu-link {
+    font-size: 12px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+
+  .menu-popup {
+    top: var(--menuTop, 210px);
+    width: 100%;
+    height: calc(100vh - var(--menuTop, 210px));
+  }
+
+  .close-button {
+    font-size: 25px;
+  }
+
+  .gender-selector {
+    padding-left: 15px; // Match the categories-container padding (15px)
+    gap: 20px; // Reduced gap for very small screens
+
+    .gender-btn {
+      font-size: 20px;
+    }
+  }
+
+  .menu-search-section {
+    padding: 10px 15px;
+
+    .search-container {
+      margin-bottom: 12px;
+
+      .search-input {
+        font-size: 13px;
+        padding: 8px 12px;
+        height: 38px;
+      }
+
+      .search-button {
+        right: 8px;
+
+        i {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+
+  .categories-container {
+    padding: 10px 15px;
+    width: 100%; // Ensure full width
+  }
+
+  .menu-link {
+    font-size: 14px;
+  }
+
+  .sub-menu-link {
+    font-size: 11px;
+  }
+}
+
+/* Style for the 'Afficher tout' link inside sub-menus */
+.sub-menu-item.all-link {
+  padding-top: 8px;
+  /* Slightly more padding to separate it from header */
+
+  .sub-menu-link {
+    font-weight: 700;
+    /* Make it more visible */
+    text-transform: uppercase;
+    /* Optional to match menu styling */
+    color: #000;
+  }
+}

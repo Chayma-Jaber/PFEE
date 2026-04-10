@@ -1,0 +1,107 @@
+
+
+<div class="container">
+<!-- Tab Navigation -->
+<div class="tab-navigation">
+  <div class="tab-item" [class.active]="activeTab === 'panier'" (click)="setActiveTab('panier')">Panier</div>
+  <div class="tab-item" [class.active]="activeTab === 'gift-card'" (click)="setActiveTab('gift-card')">Gift card</div>
+  <div class="tab-item" [class.active]="activeTab === 'mes-coupons'" (click)="setActiveTab('mes-coupons')">Mes coupons</div>
+  <div class="tab-item" [class.active]="activeTab === 'favoris'" (click)="setActiveTab('favoris')">favoris</div>
+  <!-- <div class="tab-item" [class.active]="activeTab === 'favoris'" (click)="setActiveTab('favoris')">Favoris</div> -->
+</div>
+
+<!-- Tab Content -->
+<div [ngSwitch]="activeTab">
+  <!-- Panier Tab Content -->
+  <div *ngSwitchCase="'panier'" class="tab-content">
+    <div class="cart-container">
+      <div class="cart-items">
+        <!-- Message panier vide -->
+        <div *ngIf="cartItems.length === 0" class="empty-cart-message">
+          <div class="empty-cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <h3>Votre panier est vide</h3>
+          <p>Découvrez nos produits et ajoutez-les à votre panier</p>
+          <button class="shop-now-btn" [routerLink]="['/']">Commencer vos achats</button>
+        </div>
+
+        <!-- Liste des articles -->
+        <div class="cart-item" *ngFor="let item of displayItems">
+            <div class="item-image">
+            <img [src]="item.product.colors[item.product.selectedColorIndex].mainImage"
+                [alt]="item.product.title"
+                class="product-image"
+                (click)="navigateToProductDetail(item.sourceCartItem || item)"
+                [title]="'Voir les détails de ' + item.product.title" >
+          </div>
+          <div class="item-details">
+            <div class="price-and-controls">
+              <!-- Affichage des prix avec offres (item est maintenant une ligne display) -->
+              <div class="item-price-section">
+                <div class="item-price-wrapper" *ngIf="item.hasDiscount; else notDiscount">
+                  <span class="promo-badge">Promo</span>
+                  <span class="original-price">{{ item.originalUnitPrice | number: '1.2-2' }} TND</span>
+                  <span class="discounted-price">{{ item.unitPrice.toFixed(3) }} TND</span>
+                  <span class="discount-percent">-{{ item.discountPercent }}%</span>
+                </div>
+                <ng-template #notDiscount>
+                  <div class="item-price-wrapper">
+                    <span class="regular-price">{{ item.unitPrice | number: '1.2-2' }} TND</span>
+                  </div>
+                </ng-template>
+              </div>
+              
+              <div class="item-controls">
+                <div class="quantity-control">
+                  <button class="quantity-btn" (click)="decreaseQuantityDisplay(item)">-</button>
+                  <span class="quantity">{{ item.quantity }}</span>
+                  <button class="quantity-btn" (click)="increaseQuantityDisplay(item)">+</button>
+                </div>
+                <span class="sep"> | </span>
+                <button class="remove-btn" (click)="removeDisplayLine(item)">×</button>
+              </div>
+            </div>
+            <div class="item-name">{{ item.product.title }}</div>
+            <div class="item-ref">Ref: {{ item.product.sku }}</div>
+            <div class="item-color">COULEUR : {{ item.product.colors[item.product.selectedColorIndex].name }}</div>
+            <div class="item-size">TAILLE : {{ item.selectedSize }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Résumé du panier - affiché uniquement s'il y a des articles -->
+      <div class="cart-summary" *ngIf="cartItems.length > 0">
+        <div class="total-section">
+          <div class="total-label">TOTAL <span class="vat-text">(TVA compris)</span></div>
+          <div class="total-amount">{{ total }} TND</div>
+        </div>
+
+        <div class="cart-actions">
+          <button class="continue-shopping-btn" [routerLink]="['/']">Continuer mes achats</button>
+          <button class="checkout-btn" (click)="verif(hasUserCoupons)" [disabled]="isCheckingOffers">
+            <span *ngIf="!isCheckingOffers">{{ hasUserCoupons ? "Profiter d'une réduction" : "Commander" }}</span>
+            <span *ngIf="isCheckingOffers" class="btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <!-- <div class="offer-check-info" *ngIf="lastOfferResponseTimeMs !== null">
+          <small>Dernière vérification offres: {{ lastOfferResponseTimeMs }} ms</small>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Gift Card Tab Content -->
+  <div *ngSwitchCase="'gift-card'" class="tab-content">
+    <app-gift-card></app-gift-card>
+  </div>
+  <div *ngSwitchCase="'mes-coupons'" class="tab-content">
+    <app-coupons></app-coupons>
+  </div>
+  <div *ngSwitchCase="'favoris'" class="tab-content">
+    <app-favoris></app-favoris>
+  </div>
+
+</div>
+</div>
+<p-toast></p-toast>

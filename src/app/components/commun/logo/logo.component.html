@@ -1,0 +1,26 @@
+<!-- Spinner (hidden on navbar to avoid dot overlay in header) -->
+<section class="dots-container" *ngIf="isLoading && !inNavbar">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</section>
+
+<div class="logo-container" *ngIf="!isLoading" [ngClass]="{'in-navbar': inNavbar}">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6 col-lg-4 text-center">
+                <div class="logo">
+                    <img
+                        [src]="searchResults?.hits[0]?.slides[0]?.logo?.url"
+                        [routerLink]="['/']"
+                        [alt]="searchResults?.hits[0]?.slides[0]?.logo?.name"
+                        alt="BARSHA Logo" appLazyLoadImage
+                        class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Small placeholder for navbar while loading: avoids showing full-screen dots -->
+<div *ngIf="isLoading && inNavbar" class="logo-placeholder in-navbar" aria-hidden="true"></div>

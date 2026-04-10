@@ -1,0 +1,32 @@
+
+  
+  <div class="main-content">
+    <div class="content-container">
+      <div class="otp-section">
+        <h1 class="page-title">VÉRIFICATION OTP</h1>
+  
+        <div class="otp-form">
+          <div class="form-intro">
+            <p>Un code de vérification a été envoyé à votre numéro</p>
+            <p class="phone-number">{{ user.phone }}</p>
+
+          </div>
+          <div class="form-group">
+           <input type="text" class="form-input" [(ngModel)]="codeOtp" autocomplete="off" maxlength="6" inputmode="numeric" pattern="[0-9]*" (keypress)="onlyNumbers($event)" (input)="sanitizeOtpInputFromEvent($event)">
+          </div>
+  
+          <!-- Bouton pour vérifier l'OTP -->
+          <button class="verify-button" (click)="verifyOtp()">Vérifier</button>
+  
+          <!-- Lien pour renvoyer le code -->
+          <div class="resend-link">
+            <span>Vous n'avez pas reçu le code? </span>
+            <a href="javascript:void(0)" (click)="resendOtp()">Renvoyer le code</a>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <p-toast></p-toast>

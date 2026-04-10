@@ -1,0 +1,74 @@
+<!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+
+
+<div class="container favoris-scale">
+  <!-- Message pour wishlist vide -->
+  <div class="empty-wishlist" *ngIf="!isLoading && (!produits || produits.length === 0)">
+    <div class="empty-wishlist-content">
+      <i class="fa-regular fa-heart empty-heart"></i>
+      <h2>TA WISHLIST EST VIDE</h2>
+      <p>Découvre notre collection et ajoute tes articles préférés</p>
+      <button class="btn-explore" routerLink="/">Explorer la collection</button>
+    </div>
+  </div>
+
+  <!-- Liste des produits -->
+  <div class="row">
+    <div *ngFor="let produit of produits" class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+      <div class="card h-100"
+           (mouseenter)="changeActiveImage(produit)"
+           (mouseleave)="resetActiveImage(produit)">
+        <!-- Icône de wishlist -->
+        <div class="wishlist-icon" (click)="toggleWishlist(produit)">
+          <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
+        </div>
+
+        <!-- Image du produit -->
+        <div class="card-image-container">
+          <a [href]="getProductDetailUrl(produit)"
+             [routerLink]="['/produit', productService.generateProductSlug(produit)]"
+             class="product-link">
+            <img [src]="produit.colors[produit.selectedColorIndex].mainImage"
+                 [alt]="produit.nom"
+                 [title]="produit.nom"
+                 class="card-image img-fluid">
+          </a>
+        </div>
+
+        <!-- Contenu du produit -->
+        <div class="card-content">
+          <h3 class="card-title">{{ produit.nom }}</h3>
+          <p class="card-price">{{ produit.prix }}</p>
+
+          <!-- Sélecteur de couleur -->
+          <div class="color-variations">
+            <img *ngFor="let color of produit.colors; let i = index"
+                 [src]="color.textureImage"
+                 [alt]="color.name"
+                 class="color-circle"
+                 [class.selected]="produit.selectedColorIndex === i"
+                 (click)="selectColor(produit, i)">
+          </div>
+
+          <!-- Tailles disponibles -->
+          <div class="sizes-container">
+            <div class="sizes-title">TAILLES</div>
+            <div class="sizes-list">
+              <div *ngFor="let taille of produit.tailles" class="size-item-container">
+                
+                <span [ngClass]="{'out-of-stock': !isInStock(produit, taille.size)}">{{ taille.size }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

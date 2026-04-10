@@ -1,0 +1,417 @@
+<div class="stepper-toast-row">
+  <div class="stepper-container">
+  <ng-container *ngIf="hasCoupons; else noCouponStepper">
+    <div class="step" [ngClass]="{'active': currentStep >= 1}">
+      <div class="circle">1</div>
+      <span>Réduction</span>
+    </div>
+    <div class="line" [ngClass]="{'active': currentStep >= 2}"></div>
+    <div class="step" [ngClass]="{'active': currentStep >= 2}">
+      <div class="circle">2</div>
+      <span>Livraison</span>
+    </div>
+    <div class="line" [ngClass]="{'active': currentStep >= 3}"></div>
+    <div class="step" [ngClass]="{'active': currentStep >= 3}">
+      <div class="circle">3</div>
+      <span>Paiement</span>
+    </div>
+    <div class="line" [ngClass]="{'active': currentStep >= 4}"></div>
+    <div class="step" [ngClass]="{'active': currentStep >= 4}">
+      <div class="circle">4</div>
+      <span>Confirmation</span>
+    </div>
+  </ng-container>
+  <ng-template #noCouponStepper>
+    <div class="step" [ngClass]="{'active': currentStep >= 1}">
+      <div class="circle">1</div>
+      <span>Livraison</span>
+    </div>
+    <div class="line" [ngClass]="{'active': currentStep >= 2}"></div>
+    <div class="step" [ngClass]="{'active': currentStep >= 2}">
+      <div class="circle">2</div>
+      <span>Paiement</span>
+    </div>
+    <div class="line" [ngClass]="{'active': currentStep >= 3}"></div>
+    <div class="step" [ngClass]="{'active': currentStep >= 3}">
+      <div class="circle">3</div>
+      <span>Confirmation</span>
+    </div>
+  </ng-template>
+
+  </div>
+  <app-coupon-toast
+    *ngIf="showCouponToast"
+    [couponCode]="appliedCoupon?.code || privateCouponCode"
+    [visible]="showCouponToast"
+    [onClose]="onClose"
+    class="coupon-toast-right"
+  ></app-coupon-toast>
+</div>
+<div class="linee"></div>
+
+<!-- Coupon Step (shown only when user has coupons) -->
+<div class="main-content coupon-content" *ngIf="hasCoupons && currentStep === 1">
+  <div class="content-container">
+    <div class="left-column centered">
+      <!-- Reuse coupon UI here, centered for visibility -->
+      <div class="promo-section">
+        <div class="promo-header">
+          <!-- <h2>Appliquer un code</h2> -->
+          <!-- <span class="color-black">AVEZ-VOUS UN CODE COUPON ?</span> -->
+        </div>
+       
+        <div class="promo-inputs-container">
+          <!-- Section Code Coupon -->
+          <div class="promo-section-wrapper" [class.disabled-section]="privateCouponApplied">
+            <div class="promo-header">
+              <span class="color-black">AVEZ-VOUS UN CODE COUPON ?</span>
+            </div>
+            <div class="promo-input-group">
+              <div class="coupon-dropdown-container">
+                <div class="coupon-input" (click)="toggleCouponDropdown()"
+                  [class.disabled]="privateCouponApplied"
+                  [title]="privateCouponApplied ? 'Un code promo est déjà appliqué' : ''">
+                  <span *ngIf="!selectedCouponText" class="placeholder-text">Sélectionnez votre code coupon</span>
+                  <div *ngIf="selectedCouponText" class="selected-coupon-container">
+                    <span class="selected-coupon-text">{{ selectedCouponText }}</span>
+                    <span class="coupon-discount" *ngIf="selectedCouponDiscount">{{ selectedCouponDiscount }}</span>
+                  </div>
+                  <i class="fas fa-chevron-down dropdown-icon"></i>
+                </div>
+                <div class="coupon-dropdown" [class.show]="showCouponDropdown"
+                  [class.disabled]="privateCouponApplied">
+                  <ng-container *ngIf="!loadingCoupons && availableCoupons.length > 0">
+                    <div class="coupon-item" *ngFor="let coupon of availableCoupons" (click)="selectCoupon(coupon)"
+                      [class.disabled]="privateCouponApplied">
+                      <span class="coupon-code">{{ coupon.code }}</span>
+                      <span class="coupon-discount">{{ coupon.discount_amount > 0 ? coupon.discount_amount + 'TND' :
+                        coupon.discount_percent > 0 ? coupon.discount_percent + '%' : '' }}</span>
+                    </div>
+                  </ng-container>
+                  <div class="coupon-item no-coupons" *ngIf="!loadingCoupons && availableCoupons.length === 0">
+                    Pas de coupon
+                  </div>
+                  <div class="coupon-item loading" *ngIf="loadingCoupons">
+                    Chargement des coupons...
+                  </div>
+                </div>
+              </div>
+              <button class="btn-clear" (click)="clearCouponCode()"
+                [disabled]="!selectedCouponText || privateCouponApplied"
+                [class.disabled]="privateCouponApplied"
+                title="Supprimer le code coupon">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <!-- Message de succès coupon -->
+            <span *ngIf="appliedCoupon && promoCodeApplied" class="success-message success-coupon">
+              <i class="fas fa-check-circle"></i> Code Coupon appliqué avec succès!
+            </span>
+            <!-- Message désactivation -->
+            <span *ngIf="privateCouponApplied" class="disabled-message">
+              <i class="fas fa-lock"></i> Désactivé - Un code promo est actif
+            </span>
+          </div>
+
+          <!-- Section Code Promo -->
+          <div class="promo-section-wrapper promo-private-section" *ngIf="privateCoupons.length > 0" [class.disabled-section]="promoCodeApplied">
+            <div class="promo-header">
+              <span class="color-black">AVEZ-VOUS UN CODE PROMO ?</span>
+            </div>
+            <div class="promo-input-group">
+              <input type="text" class="code-input" placeholder="Saisissez votre code promo privé"
+                [(ngModel)]="privateCouponCode" 
+                [disabled]="promoCodeApplied"
+                [class.disabled]="promoCodeApplied"
+                title="Entrez votre code promo privé">
+              <button class="btn-apply2" (click)="applyPrivateCoupon()"
+                [disabled]="!privateCouponCode || promoCodeApplied"
+                [class.disabled]="promoCodeApplied"
+                title="Appliquer le code promo">
+                <i class="fa-solid fa-check"></i>
+              </button>
+              <button class="btn-clear" (click)="clearPrivateCoupon()" 
+                [disabled]="!privateCouponApplied"
+                [class.disabled]="promoCodeApplied"
+                title="Supprimer le code promo">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <!-- Message de succès promo -->
+            <span *ngIf="appliedCoupon && privateCouponApplied" class="success-message success-promo">
+              <i class="fas fa-check-circle"></i> Code promo appliqué avec succès!
+            </span>
+            <!-- Message désactivation -->
+            <span *ngIf="promoCodeApplied" class="disabled-message">
+              <i class="fas fa-lock"></i> Désactivé - Un code coupon est actif
+            </span>
+          </div>
+        </div>
+    
+      </div>
+    </div>
+    <div class="right-column">
+      <div class="total-box">
+        <div class="total-header">Résumé de la commande</div>
+        <div class="total-content">
+          <div class="price-row">
+            <span class="amount">{{cartItems.length}} produit(s)</span>
+            <span class="amount">{{subtotal}} TND</span>
+          </div>
+          <div class="price-row" *ngIf="appliedCoupon && discountAmount > 0">
+            <span class="amount">Réduction</span>
+            <span class="amount discount">-{{discountAmount.toFixed(2)}} TND</span>
+          </div>
+          <!-- Livraison omitted from reduction-step summary -->
+          <div class="price-row total">
+            <span class="amount">Total TTC</span>
+            <span class="amount">{{ (subtotal - discountAmount + deliveryCost) | number:'1.2-2' }} TND</span>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-continue-delivery btn btn-dark" (click)="nextStep()">Continuer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content" *ngIf="currentStep === (hasCoupons ? 2 : 1)">
+  <div class="content-container">
+    <div class="delivery-section">
+      <div class="section-header">
+        <div class="circle-number">{{ hasCoupons ? 2 : 1 }}</div>
+        <h2>Où souhaitez-vous la recevoir ?</h2>
+      </div>
+
+      <div class="delivery-form">
+        <!-- Options de livraison -->
+        <div class="delivery-method-options">
+          <div class="delivery-method-option">
+            <input type="radio" id="homeDelivery" name="deliveryMethod" [(ngModel)]="deliveryMethod" value="home"
+              (change)="onDeliveryMethodChange()">
+            <label for="homeDelivery">Livraison à domicile</label>
+
+            <div class="address-selection" *ngIf="deliveryMethod === 'home'">
+              <div class="form-group adresse_form">
+                <div class="form-input adresse_form_input" (click)="openAddressList()">
+                  {{selectedAddress?.address || 'Sélectionnez une adresse'}}
+                </div>
+                <button class="add-button" (click)="openModal()">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="delivery-method-option">
+            <input type="radio" id="storePickup" name="deliveryMethod" [(ngModel)]="deliveryMethod" value="store"
+              (change)="onDeliveryMethodChange()">
+            <label for="storePickup">Retrait en magasin</label>
+
+            <div class="store-selection" *ngIf="deliveryMethod === 'store'">
+              <div class="form-group">
+                <select class="form-input" (change)="onStoreSelect($event)" required>
+                  <option value="">Sélectionnez un magasin</option>
+                  <option *ngFor="let store of stores" [value]="store.id">
+                    {{store.name}} ({{store.address}})
+                  </option>
+                </select>
+              </div>
+              <div class="location-inputs">
+                <div class="form-group location-input">
+                  <input type="text" [value]="selectedStore?.city || ''" placeholder="Ville*" class="form-input"
+                    readonly>
+                </div>
+                <div class="form-group location-input">
+                  <input type="text" [value]="selectedStore?.name || ''" placeholder="Magasin" class="form-input"
+                    readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-prev" *ngIf="hasCoupons" (click)="prevStep()">Retour</button>
+        <button class="btn-continue-delivery btn btn-dark" [disabled]="!isDeliveryMethodValid()" (click)="nextStep()">
+          Continuer vers la livraison
+        </button>
+      </div>
+    </div>
+
+
+
+    <div class="delivery-options-summary">
+      <div *ngFor="let method of shippingMethods" class="delivery-option">
+        <div class="delivery-option-icon">
+          <i [ngClass]="method.id === 'domicile' ? 'fas fa-home' : 'fas fa-store'"></i>
+        </div>
+        <div class="delivery-option-details">
+          <div class="delivery-option-title">{{ method.name }}</div>
+          <div class="delivery-option-info">{{ method.description }}</div>
+          <div class="delivery-option-info">Livraison en {{ method.deliveryTime }}</div>
+        </div>
+        <div class="delivery-option-price">{{ method.cost === 0 ? 'GRATUITE' : (method.cost + ' TND') }}</div>
+      </div>
+      <div class="policy-section">
+        <div class="policy-header">ÉCHANGES</div>
+        <div class="policy-content">
+          <div class="policy-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="policy-details">
+            Vous disposez de <strong>15 jours</strong> à compter de la date de la réception de votre colis pour échanger
+            votre achat en magasin <strong>Barsha</strong>.
+          </div>
+        </div>
+      </div>
+      <div class="policy-section">
+        <div class="policy-header">RETOURS</div>
+        <div class="policy-content">
+          <div class="policy-icon">
+            <i class="fas fa-undo"></i>
+          </div>
+          <div class="policy-details">
+            <div>Retour dans un magasin <strong>Barsha</strong> - GRATUIT</div>
+            <div>Retour en ligne - GRATUIT</div>
+            <div>Pour plus d'informations, nous vous conseillons de visiter la rubrique Livraison & retour.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="main-content payment-content" *ngIf="currentStep === (hasCoupons ? 3 : 2)">
+  <div class="content-container">
+    <div class="payment-section">
+      <div class="payment-header">
+        <div class="circle-number">{{ hasCoupons ? 3 : 2 }}</div>
+        <h2>Veuillez choisir votre moyen de paiement</h2>
+      </div>
+      <div class="payment-options">
+        <div class="payment-option" *ngFor="let method of availablePaymentMethods"
+          [ngClass]="{'selected': selectedPaymentMethod === method.codeErp}"
+          (click)="selectPaymentMethod(method.codeErp)">
+          <div class="payment-option-content">
+            <div class="payment-option-title">{{ method.name }}</div>
+            <div class="payment-option-info">{{ method.name_en }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-prev" (click)="prevStep()">Retour</button>
+        <button class="btn-continue-payment" (click)="nextStep()">Continuer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content confirmation-content" *ngIf="currentStep === (hasCoupons ? 4 : 3)">
+  <div class="content-container">
+    <div class="left-column">
+      <div class="confirmation-title">
+        <div class="circle-number">{{ hasCoupons ? 4 : 3 }}</div>
+        <h2>Confirmez et finalisez l'achat</h2>
+      </div>
+
+
+      <div class="info-box">
+        <div class="info-row">
+          <div class="info-label">Livraison</div>
+          <div class="info-content">
+            <p class="name"> {{ currentUser.firstName }}</p>
+            <p class="address">{{selectedAddress?.address || (selectedStore?.address || 'Adresse non spécifiée')}}</p>
+            <p class="delivery-type">
+              {{deliveryMethod === 'home' ? 'STANDARD À DOMICILE' : 'RETRAIT EN MAGASIN'}}
+            </p>
+            <p class="delivery-date" *ngIf="deliveryMethod === 'home'">
+              Vous le recevez dans 2-3 jours ouvrables
+            </p>
+            <p class="delivery-date" *ngIf="deliveryMethod === 'store'">
+              Disponible immédiatement en magasin
+            </p>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Paiement</div>
+          <div class="info-content">
+            <p>{{getSelectedPaymentMethodName()}}</p>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Panier</div>
+          <div class="info-content">
+            <p>{{cartItems.length}} produit(s)</p>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+    <div class="right-column">
+      <div class="total-box">
+        <div class="total-header">Total TTC</div>
+        <div class="total-content">
+          <div class="price-row">
+            <span class="amount">{{cartItems.length}} produit(s)</span>
+            <span class="amount">{{subtotal}} TND</span>
+          </div>
+          <div class="price-row" *ngIf="appliedCoupon && discountAmount > 0">
+            <span class="amount">Réduction</span>
+            <span class="amount discount">-{{discountAmount.toFixed(2)}} TND</span>
+          </div>
+          <div class="price-row">
+            <span class="amount">Livraison</span>
+            <span class="amount">
+              {{deliveryCost === 0 ? '0' : (deliveryCost.toFixed(2) + ' TND')}}
+            </span>
+          </div>
+          <!-- Afficher la réduction du code promo si un coupon est appliqué -->
+
+
+          <div class="price-row total">
+            <span class="amount">Total TTC</span>
+            <span class="amount">{{total}} TND</span>
+          </div>
+        </div>
+        <div class="terms">
+          <p>
+            En validant votre commande, vous acceptez nos
+            <a href="#" class="terms-link">Conditions d'achat</a>
+            et confirmez que vous comprenez notre
+            <a href="#" class="terms-link">Politique de confidentialité</a>
+          </p>
+        </div>
+        <div class="form-actions">
+          <button class="btn-prev" (click)="prevStep()">Retour</button>
+          <button class="confirm-button" (click)="confirmOrder()"
+            [disabled]="!selectedPaymentMethod || confirmingOrder || cartItems.length === 0">
+            {{ confirmingOrder ? 'Traitement...' : 'confirmer la commande' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Ajouter une section de statut de paiement -->
+<div *ngIf="paymentStatus" class="payment-status">
+  <div *ngIf="paymentStatus === 'processing'" class="processing">
+    <i class="fas fa-spinner fa-spin"></i> Traitement du paiement...
+  </div>
+  <div *ngIf="paymentStatus === 'success'" class="success">
+    <i class="fas fa-check-circle"></i> Paiement réussi!
+  </div>
+  <div *ngIf="paymentStatus === 'error'" class="error">
+    <i class="fas fa-times-circle"></i> Échec du paiement
+  </div>
+</div>
+<p-toast  class="center"  position="top-center"></p-toast>
+<div *ngIf="orderError" class="alert alert-danger">
+  {{ orderError }}
+</div>
+

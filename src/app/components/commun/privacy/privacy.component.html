@@ -1,0 +1,8 @@
+<div class="container">
+  <div *ngIf="privacyData">
+    <h1 class="text">{{ privacyData.title }}</h1>
+    <div class="markdown-container">
+      <markdown [data]="privacyData.text"></markdown>
+    </div>
+  </div>
+</div>

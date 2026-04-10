@@ -1,0 +1,9 @@
+<div class="confirmation-container">
+    <h2>Merci pour votre commande !</h2>
+    <div *ngIf="orderDetails">
+      <p>id de commande: {{ orderDetails.id }}</p>
+      <p>Numéro de commande: {{ orderDetails.slug }}</p>
+      <p>Total: {{ orderDetails.total }} TND</p>
+      <p>Statut: {{ orderDetails.status }}</p>
+    </div>
+  </div>

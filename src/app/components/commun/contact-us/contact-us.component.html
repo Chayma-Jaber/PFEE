@@ -1,0 +1,132 @@
+<div class="contact-us-container" *ngIf="contactUsData">
+  <h1 class="main-title">{{ contactUsData.title }}</h1>
+
+  <div class="contact-content">
+    <!-- Left side: Contact Form -->
+    <div class="contact-form-section">
+      <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+        <!-- Form fields container -->
+        <div class="form-fields-container">
+          <!-- Sujet field -->
+          <div class="form-group">
+            <label for="subject">Sujet</label>
+
+            <input type="subject" id="subject" formControlName="subject" class="form-input" placeholder="Selection votre contact*" autocomplete="off">
+            <div *ngIf="submitted && f['subject'].errors" class="error-message">
+              <div *ngIf="f['subject'].errors['required']">Le sujet est requis</div>
+              <div *ngIf="f['subject'].errors['minlength']">Le sujet doit contenir au moins 5 caractères</div>
+            </div>
+          </div>
+
+
+          
+          <!-- Email field -->
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" formControlName="email" class="form-input" placeholder="Votre adresse mail*" autocomplete="off">
+            <div *ngIf="submitted && f['email'].errors" class="error-message">
+              <div *ngIf="f['email'].errors['required']">L'email est requis</div>
+
+            </div>
+          </div>
+
+          <!-- Phone field -->
+          <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <div class="phone-input-container">
+              <span class="phone-prefix">+216</span>
+              <input type="tel" id="phone" formControlName="phone" class="form-input phone-field" autocomplete="off">
+            </div>
+            <div *ngIf="submitted && f['phone'].errors" class="error-message">
+              <div *ngIf="f['phone'].errors['required']">Le téléphone est requis</div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification code button -->
+        <button type="button" class="verification-button" (click)="sendVerificationCode()" [disabled]="!f['phone'].valid">
+          Envoyer code de vérification
+        </button>
+
+        <!-- OTP Code field -->
+        <div class="form-group">
+          <label for="codeOtp">Code de vérification</label>
+          <input type="text" id="codeOtp" formControlName="codeOtp" class="form-input" placeholder="Entrez le code reçu par SMS" autocomplete="off">
+          <div *ngIf="submitted && f['codeOtp'].errors" class="error-message">
+            <div *ngIf="f['codeOtp'].errors['required']">Le code de vérification est requis</div>
+          </div>
+        </div>
+
+        <!-- Message field -->
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" formControlName="message" class="form-input message-area" rows="5" autocomplete="off"></textarea>
+          <div *ngIf="submitted && f['message'].errors" class="error-message">
+            <div *ngIf="f['message'].errors['required']">Le message est requis</div>
+          </div>
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" class="submit-button" [disabled]="loading" (click)="onButtonClick($event)">
+          <span *ngIf="!loading">Envoyer</span>
+          <span *ngIf="loading">Envoi en cours...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Right side: Contact Information -->
+    <div class="contact-info-section">
+      <h2 class="info-title">INFORMATIONS DE CONTACT</h2>
+      <div class="info-block">
+
+
+        <!-- Address -->
+        <div class="info-section">
+          <h3 class="section-title">ADRESSE</h3>
+          <div class="contact-item">
+
+            <p>{{ contactUsData.contacts[0].text }}</p>
+          </div>
+        </div>
+
+        <!-- Working Hours -->
+        <div class="info-section">
+          <h3 class="section-title">HORAIRE DE TRAVAIL</h3>
+          <div class="working-hours">
+            <p>{{ contactUsData.contacts[0].text }}</p>
+          </div>
+        </div>
+
+        <!-- Contact Details -->
+        <div class="info-section">
+          <h3 class="section-title">CONTACTEZ NOUS</h3>
+          <div class="contact-item">
+
+            <p>{{ contactUsData.contacts[1].text }}</p>
+          </div>
+          <div class="contact-item">
+
+            <p>{{ contactUsData.contacts[2].text }}</p>
+          </div>
+        </div>
+
+        <!-- Social Networks -->
+        <div class="info-section">
+          <h3 class="section-title">RÉSEAUX SOCIAUX</h3>
+          <div class="social-icons">
+
+    <div class="social-media">
+      <div class="icons">
+        <a *ngFor="let link of socialLinks" [href]="link.link" target="_blank">
+          <i [class]="'fab fa-' + link.title.toLowerCase()"></i>
+        </a>
+      </div>
+    </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p-toast></p-toast>

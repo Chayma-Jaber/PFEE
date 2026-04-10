@@ -1,0 +1,133 @@
+<!-- Search Modal Below Navbar -->
+<div class="search-modal-overlay" (click)="onOverlayClick($event)">
+  <div class="search-modal-container" #modalContainer (click)="onContentClick($event)"
+  onKeyPress=" " onKeyDown=" " onKeyUp=" " >
+
+    <!-- Close Button -->
+    <button class="modal-close-btn" (click)="closeModal()" aria-label="Fermer">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Gender Filter Tabs -->
+    <div class="gender-tabs">
+      <button
+        *ngFor="let gender of genders"
+        (click)="switchGender(gender)"
+        [class.active]="selectedGender === gender"
+        class="gender-tab">
+        {{ gender.toUpperCase() }}
+      </button>
+    </div>
+
+
+    <!-- Search Input Section -->
+    <div class="search-section">
+      <div class="search-input-container">
+        <input
+          type="text"
+          placeholder="Chercher"
+          class="search-input"
+          autocomplete="off"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput($event)" (keyup.enter)="onSubmitSearch()" #searchInput>
+        <button *ngIf="searchQuery.trim() === '' || isSkuQuery(searchQuery)" class="search-icon" aria-label="Rechercher" (click)="onSubmitSearch()">
+          <i class="fas fa-search"></i>
+        </button>
+        <button *ngIf="searchQuery.trim() !== '' && !isSkuQuery(searchQuery)" class="search-clear-icon" aria-label="Effacer" (click)="clearSearchCompletely()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Search Results -->
+      <div class="search-results-dropdown" *ngIf="showSearchResults">
+        <div class="search-results">
+          <div
+            *ngFor="let result of searchResults; let i = index"
+            class="search-result-item"
+            [class.selected]="i === selectedResultIndex"
+            (click)="selectSearchResult(result)">
+            <span [innerHTML]="highlightMatchingText(result.text, searchQuery)"></span>
+          </div>
+
+    
+        </div>
+      </div>
+
+      <!-- No results message for explicit searches -->
+      <div class="no-results text-center" *ngIf="showNoResults && (!relatedProducts || relatedProducts.length === 0) && searchQuery.trim() !== ''">
+        <p>Aucun résultat trouvé pour "{{ searchQuery }}"</p>
+      </div>
+
+      <!-- Articles qui pourraient vous intéresser -->
+      <div class="related-products-section" *ngIf="relatedProducts && relatedProducts.length > 0">
+        <div class="container">
+          <h1 class=" font2 txt-center mb-4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          </h1>
+          <h1 class="font txt-center" *ngIf="!isTitleFiltered()">ARTICLES QUI POURRAIENT VOUS INTERESSER</h1>
+          <div class="related-products-carousel">
+            <!-- Navigation arrows - only shown when there are more than 4 products and not on mobile -->
+            <button *ngIf="relatedProducts.length > 4" class="related-nav-arrow related-prev d-none d-sm-flex" (click)="prevRelatedProduct()">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="related-products-container">
+              <!-- On mobile, we show all products with horizontal scroll -->
+              <div class="related-products-grid">
+                <!-- For mobile, we use all products instead of just visible ones -->
+                <div *ngFor="let produit of isMobileView() ? relatedProducts : visibleRelatedProducts" class="related-product-item">
+                  <div class="related-card" [class.navigating]="isNavigating">
+                    <div class="wishlist-icon" (click)="toggleWishlist(produit); $event.stopPropagation();">
+                      <i class="fa-heart" [ngClass]="{'fa-solid': produit?.isInWishlist === true, 'fa-regular': produit?.isInWishlist !== true}"></i>
+                    </div>
+                    <div class="related-image-container">
+                      <a [href]="getProductDetailUrl(produit)"
+                         [routerLink]="['/produit', productService.generateProductSlug(produit)]"
+                         class="product-link"
+                         (click)="navigateToProduct(produit)">
+                        <img [src]="getProductImage(produit)"
+                             [alt]="produit.title"
+                             class="related-image"
+                             loading="lazy">
+                             
+                      </a>
+                    </div>
+                    <div class="related-content">
+                      <div class="related-title">{{ produit.title }}</div>
+                      <div class="related-price">{{ produit.currentPrice.toFixed(3) }} TND</div>
+                      <div class="related-colors">
+                        <span *ngFor="let declinaison of produit.declinaisons.slice(0, 4); let i = index"
+                              class="related-color-circle"
+                              [class.selected]="produit.selectedColorIndex === i"
+                              [style.background-image]="'url(' + (declinaison.texture?.url || '') + ')'"
+                              [style.background-size]="'cover'"
+                              [style.background-position]="'center'"
+                              [title]="declinaison.libellet"
+                              (click)="selectColor(produit, i); $event.stopPropagation();">
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation arrows - next -->
+            <button *ngIf="relatedProducts.length > 4" class="related-nav-arrow related-next d-none d-sm-flex" (click)="nextRelatedProduct()">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- Loading More Products Indicator -->
+          <div class="loading-more-container" *ngIf="isLoadingMore">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

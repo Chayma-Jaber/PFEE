@@ -1,0 +1,670 @@
+$primary-color: #000;
+$secondary-color: #fff;
+$border-color: #ccc;
+$hover-color: #f5f5f5;
+$active-color: $primary-color;
+$text-color: #333;
+$error-color: #dc3545;
+
+// FAQ Button styles
+.btn-faq {
+  background-color: transparent;
+  border: 1px solid $primary-color;
+  color: $primary-color;
+  padding: 8px 16px;
+  margin: 10px 0;
+  font-family: 'std55';
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: $primary-color;
+    color: $secondary-color;
+  }
+  
+  i {
+    margin-right: 8px;
+  }
+}
+
+// Container styles
+.gift-card-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  font-family: 'std55';
+  transition: filter 0.3s ease;
+  transform: scale(0.83);
+  transform-origin: top center;
+  
+  &.blur-background {
+    filter: blur(2px);
+    pointer-events: none;
+  }
+}
+
+// Breadcrumb
+.breadcrumb-text {
+  font-size: 14px;
+  color: $text-color;
+}
+
+
+.gift-card-title {
+  font-size: 55px;
+  font-weight: bold;
+  color: $primary-color;
+  margin-bottom: 1rem;
+  font-family: 'Qebil';
+}
+
+.gift-card-description {
+  font-size: 16px;
+  color: $text-color;
+  max-width: 800px;
+}
+
+// Selection cards
+.selection-card {
+  border: 1px solid $border-color;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: rgba(255, 255, 255, 0.7);
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+.selection-title {
+  font-size: 18px;
+  font-weight: bolder;
+  margin-bottom: 1.5rem;
+ 
+}
+
+// Event and amount buttons
+.event-buttons, .amount-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-family: 'std95';
+  .event-btn, .amount-btn {
+    background-color: $secondary-color;
+    border: 1px solid $primary-color;
+    color: $primary-color;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    text-align: center;
+    
+    &:hover {
+      background-color: $hover-color;
+    }
+    
+    &.active {
+      background-color: $active-color;
+      color: $secondary-color;
+    }
+  }
+}
+
+// Payment note
+.payment-note {
+  font-size: 12px;
+  color: $text-color;
+  margin-top: 10px;
+}
+
+// Image selection
+.image-preview-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  
+  .selected-image {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+    
+    .main-image {
+      width: 100%;
+      height: auto;
+      border: 1px solid $border-color;
+    }
+    
+    .price-overlay {
+      position: absolute;
+      bottom: 35%;
+      left: 50%;
+      transform: translateX(-50%);
+     
+      padding: 5px 15px;
+
+      font-weight: bolder;
+    }
+  }
+}
+
+.image-thumbnails-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  .carousel-control {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: $primary-color;
+    cursor: pointer;
+    padding: 0 10px;
+  }
+  
+  .thumbnails-wrapper {
+    overflow-x: auto;
+    max-width: calc(100% - 80px);
+    
+    .image-thumbnails {
+      display: flex;
+      gap: 10px;
+      padding: 0 10px;
+      
+      .thumbnail-item {
+        width: 60px;
+        height: 60px;
+        border: 1px solid $border-color;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &.active {
+          border: 2px solid $active-color;
+        }
+        
+        .thumbnail {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+  } 
+}
+
+// Form controls
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+// Form controls
+.form-label-message {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-family: 'std55';
+  color:gray;
+}
+.form-label-phone {
+  font-weight: bolder;
+  margin-bottom: 0.5rem;
+  font-size: 18px;
+  font-family: 'std55';
+
+}
+.input-group-text {
+  background-color: gainsboro;
+  border-right: none;
+  color:white;
+  font-family: 'std55';
+}
+
+.form-control {
+  border-radius: 0;
+  
+  &:focus {
+    box-shadow: none;
+    border-color: $primary-color;
+  }
+}
+
+// FAQ section
+.accordion {
+  .accordion-item {
+    border-radius: 0;
+    margin-bottom: 10px;
+    
+    .accordion-button {
+      background-color: $secondary-color;
+      color: $text-color;
+      font-weight: 500;
+      
+      &:focus {
+        box-shadow: none;
+      }
+      
+      &:not(.collapsed) {
+        background-color: $hover-color;
+      }
+    }
+    
+    .accordion-body {
+      padding: 1.5rem;
+      color: $text-color;
+    }
+  }
+}
+
+// Buy button
+.btn-buy {
+  background-color: $primary-color;
+  color: $secondary-color;
+  border-radius: 0;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .gift-card-title {
+    font-size: 24px;
+  }
+  
+  .event-buttons, .amount-buttons {
+    .event-btn, .amount-btn {
+      min-width: 80px;
+      font-size: 14px;
+      padding: 6px 12px;
+    }
+  }
+  
+  .image-thumbnails-container {
+    .thumbnails-wrapper {
+      max-width: calc(100% - 60px);
+    }
+    
+    .thumbnail-item {
+      width: 50px;
+      height: 50px;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .gift-card-container {
+    padding: 0 10px;
+  }
+  
+  .gift-card-title {
+    font-size: 20px;
+  }
+  
+  .selection-card .card-body {
+    padding: 1rem;
+  }
+  
+  .event-buttons, .amount-buttons {
+    gap: 5px;
+    
+    .event-btn, .amount-btn {
+      min-width: auto;
+      flex: 1 0 calc(50% - 5px);
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+  }
+}
+
+
+/* Add these styles to the component's CSS */
+.gift-card-confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.popup-header {
+margin-left:100px ;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.popup-body {
+  padding: 20px;
+}
+
+.amount-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #555;
+ 
+}
+.amount-text-bold {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 16px;
+  color: #000000;
+  font-family: 'std55';
+  font-weight: bold;
+}
+
+.gift-card-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.gift-card-img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #eee;
+}
+
+.price-badge {
+  position: absolute;
+  bottom: 47%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  padding: 5px 15px;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.beneficiary-info {
+  text-align: center;
+  margin-bottom: 20px;
+  font-family: 'std95';
+  font-weight: bold;
+}
+
+.beneficiary-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #444;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+}
+
+.btn-modify, .btn-confirm {
+  padding: 10px 20px;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-modify {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.btn-modify:hover {
+  background-color: #e9ecef;
+}
+
+.btn-confirm {
+  background-color: #000;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background-color: #333;
+}
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// FAQ Dialog Styles
+::ng-deep .faq-dialog {
+margin-top:49px ;
+  .p-dialog {
+    background: #ffffff !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-height: 90vh;
+    margin-top: 40vh;
+
+    .p-dialog-content {
+      background: #ffffff !important;
+      color: #000000 !important;
+      padding: 0;
+    }
+  }
+
+  .faq-header {
+    background: #ffffff !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    
+    h2 {
+      color: #000000 !important;
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+
+      font-family: 'Qebil';
+    }
+    
+    .close-button {
+      color: #000000 !important;
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: #333333 !important;
+      }
+    }
+  }
+
+  .faq-container {
+    background: #ffffff !important;
+    padding: 1.5rem;
+    max-height: calc(80vh - 100px);
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #000000;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #333333;
+    }
+  }
+
+  .faq-intro {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    
+    p {
+      color: #000000 !important;
+      font-size: 1.5rem;
+      margin: 0;
+      font-family: 'std55';
+      line-height: 1.5;
+    }
+  }
+
+  .faq-list {
+    .faq-item {
+      background: #ffffff !important;
+      margin-bottom: 0.75rem;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      
+      .faq-question {
+        background: #ffffff !important;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        transition: background-color 0.2s ease;
+        font-family: 'std55';
+        gap: 1rem;
+        
+        .question-text {
+          color: #000000 !important;
+          font-weight: 500;
+          font-size: 0.95rem;
+          line-height: 1.4;
+          flex: 1;
+        }
+        
+        i {
+          color: #000000 !important;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
+          transition: transform 0.2s ease;
+
+          &.pi-chevron-up {
+            transform: rotate(180deg);
+          }
+        }
+        
+        &:hover {
+          background: #f8f9fa !important;
+        }
+      }
+      
+      .faq-answer {
+        background: #ffffff !important;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease-out;
+        opacity: 0;
+
+        &.open {
+          max-height: 1000px;
+          opacity: 1;
+          border-top: 1px solid #e9ecef;
+        }
+        
+        p {
+          color: #000000 !important;
+          margin: 0;
+          padding: 1rem 1.25rem;
+          line-height: 1.5;
+          font-size: 0.95rem;
+          font-family: 'std55';
+          white-space: pre-line;
+        }
+      }
+    }
+  }
+}
+
+// Responsive styles
+@media screen and (max-width: 768px) {
+  ::ng-deep .faq-dialog {
+    .p-dialog {
+      width: 95vw !important;
+      margin: 0.5rem;
+      max-height: 95vh;
+    }
+
+    .faq-header {
+      padding: 1rem;
+      
+      h2 {
+        font-size: 1.1rem;
+      }
+    }
+
+    .faq-container {
+      padding: 1rem;
+      max-height: calc(90vh - 80px);
+    }
+
+    .faq-list {
+      .faq-item {
+        .faq-question {
+          padding: 0.875rem 1rem;
+          
+          .question-text {
+            font-size: 0.9rem;
+          }
+        }
+
+        .faq-answer p {
+          padding: 0.875rem 1rem;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}

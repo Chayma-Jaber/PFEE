@@ -1,0 +1,111 @@
+<div class="delivery-band">
+  <div class="scrolling-text" [style.color]="homePageData?.hits[0]?.ticker?.color">
+    {{ homePageData?.hits[0]?.ticker?.text }}&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    {{ homePageData?.hits[0]?.ticker?.text }}
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    {{ homePageData?.hits[0]?.ticker?.text }}
+  </div>
+</div>
+
+
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container-fluid">
+    <!-- Mobile and Desktop Navbar -->
+    <div class="d-flex align-items-center w-100 justify-content-between">
+      <!-- Left Side: Hamburger Menu and Search Icon -->
+      <div class="d-flex align-items-center">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" (click)="toggleMenu()" aria-label="Toggle navigation menu">
+          <i class="fa fa-bars" aria-hidden="true"></i>
+        </button>
+        <!-- Search Icon -->
+        <button class="search-icon-btn" (click)="openSearchMenu()" aria-label="Ouvrir la recherche">
+          <i class="fas fa-search" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Center Logo -->
+      <div class="navbar-logo">
+        <app-logo [inNavbar]="true"></app-logo>
+      </div>
+
+      <!-- Right Side: User Icons and Language Selector -->
+      <div class="d-flex align-items-center auth-container">
+
+        <ng-container *ngIf="isLoggedIn(); else notLoggedIn">
+          <a class="nav-link px-2 d-flex align-items-center" [routerLink]="['/profile']">
+            <i class="fas fa-user-circle"></i>
+            <span class="nav-text d-none d-lg-inline">COMPTE</span>
+          </a>
+          <span class="separator d-none d-lg-inline">|</span>
+          <!-- Gift Card Icon for Logged In Users -->
+            <a class="nav-link px-2 d-flex align-items-center" (click)="goToGiftCard()">
+            <img src="icones/gift.png" alt="Gift Card" class="me-2">
+          </a>
+          <span class="separator d-none d-lg-inline">|</span>
+          <a class="nav-link px-2 d-flex align-items-center" [routerLink]="['/favoris']">
+            <i class="fa-regular fa-heart"></i>
+            <span class="nav-text d-none d-lg-inline">FAVORIS</span>
+          </a>
+          <span class="separator d-none d-lg-inline">|</span>
+          <a class="nav-link px-2 d-flex align-items-center" [routerLink]="['/cart']">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="nav-text d-none d-lg-inline">PANIER</span>
+            <span *ngIf="cartItemCount > 0" class="badge bg-dark text-white">{{ cartItemCount }}</span>
+          </a>
+        </ng-container>
+        <ng-template #notLoggedIn>
+          <a class="nav-link px-2 d-none d-md-inline" >
+            <i class="fas fa-user"></i>
+          </a>
+          <div class="auth-links-container d-flex align-items-center">
+            <a class="nav-link px-2" [routerLink]="['/login']">
+              <span class="nav-text auth-text">SE CONNECTER</span>
+            </a>
+            <span class="separator d-inline">ou</span>
+            <a class="nav-link px-2" [routerLink]="['/register']">
+              <span class="nav-text auth-text">S'INSCRIRE</span>
+            </a>
+          </div>
+          <!-- Gift Card Icon for Non-Logged In Users -->
+          <span class="separator d-lg-inline">|</span>
+          <a class="nav-link px-2 d-flex align-items-center" (click)="goToGiftCard()">
+            <img src="icones/gift.png" alt="Gift Card" class="me-2">
+          </a>
+        </ng-template>
+        <span class="separator d-lg-inline">|</span>
+        <ng-container *ngIf="isLoggedIn(); else languageSelector">
+          <a class="nav-link px-2" (click)="logout()" title="Déconnexion">
+            <i class="fas fa-sign-out-alt"></i>
+          </a>
+        </ng-container>
+        <ng-template #languageSelector>
+          <a class="nav-link px-2 language-selector">
+            <span class="nav-text">FR</span>
+          </a>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Mobile Search Bar moved to menu component -->
+  </div>
+</nav>
+
+<app-menu *ngIf="menuVisible" (closeMenuEvent)="closeMenu()"></app-menu>
+<app-search-modal *ngIf="searchModalVisible" (closeModalEvent)="closeSearchModal()"></app-search-modal>
+<p-toast></p-toast>

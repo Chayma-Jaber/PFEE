@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+google-genai
+pydantic
+python-dotenv
+fastapi-cors
+httpx
+numpy
+torch
+transformers
+pillow

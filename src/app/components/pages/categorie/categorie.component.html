@@ -1,0 +1,87 @@
+<!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+
+<div class="category-container" *ngIf="!isLoading">
+  <!-- Header avec logo -->
+  <!-- Section Nouveauté -->
+  <section class="top-images-container" *ngIf="!isLoading">
+    <div class="image-item center-image">
+      <div class="image-aspect-ratio-container">
+        <img [routerLink]="['/tn', selectedPage?.heroSections[0]?.linkTo]"
+          [src]="selectedPage?.heroSections[0]?.media.url" class="img-fluid w-90" loading="eager"
+          [alt]="selectedPage?.heroSections[0]?.title" [title]="selectedPage?.heroSections[0]?.title" appLazyLoadImage>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Carousel des catégories -->
+  <!-- Carousel des catégories -->
+  <section class="category-carousel" *ngIf="categories.length > 0">
+    <div class="carousel-container">
+      <button class="carousel-nav carousel-prev" (click)="prevSlide($event)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <p-carousel #carousel [value]="categories" [numVisible]="4" [numScroll]="1" [circular]="true"
+        [responsiveOptions]="responsiveOptions" [showNavigators]="false">
+        <ng-template let-category pTemplate="item">
+          <div class="category-item" (click)="onCategoryClick(category, $event)">
+            <div class="image-container">
+              <img class="carousel-image" [src]="category.image" [alt]="category.nom" [title]="category.nom"
+                loading="lazy" appLazyLoadImage>
+            </div>
+            <p class="name">{{ category.nom }}</p>
+          </div>
+        </ng-template>
+      </p-carousel>
+      <button class="carousel-nav carousel-next" (click)="nextSlide($event)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- Section Denim -->
+  <section class="denim-text" *ngIf="selectedPage">
+
+    <h2 class="font">
+      {{ selectedPage?.collections[0]?.title }}
+    </h2>
+  </section>
+  <div class="ratio ratio-custom">
+    <img class="img-fluid" appLazyLoadImage [src]="selectedPage?.collections[0]?.items[0]?.media?.url"
+      [alt]="selectedPage?.collections[0]?.items[0]?.title"
+      [routerLink]="['/tn', selectedPage?.collections[0]?.items[0]?.linkTo]"
+      [title]="selectedPage?.collections[0]?.items[0]?.title" [ngStyle]="{'object-fit': 'cover'}">
+  </div>
+
+  <!-- Section Barsha Looks -->
+  <!-- <section class="barsha-looks-title">
+    <h2 class="font">Barsha LOOKs</h2>
+  </section> -->
+  <!-- Section Barsha Looks -->
+  <section class="barsha-looks-title" *ngIf="selectedPage">
+    <h2 class="font">
+      {{ selectedPage?.collections[1]?.title }}
+    </h2>
+  </section>
+
+  <section class="barsha-looks" *ngIf="selectedPage">
+    <ng-container *ngFor="let item of selectedPage?.collections[1]?.items">
+      <div class="look-item">
+        <div class="look-image-container">
+          <img [src]="item.media.url" [alt]="item.title" appLazyLoadImage
+            [ngStyle]="{'object-fit': 'cover','cursor':'pointer'}" [routerLink]="['/tn',item.linkTo]">
+          <button class="look-button" [routerLink]="['/tn', item.linkTo]" [title]="item.title">
+            {{ item.title | uppercase }}
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+</div>

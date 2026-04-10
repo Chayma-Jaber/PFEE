@@ -1,0 +1,37 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: 'Tafel Sans Pro'}
+
+/* Remove outline from buttons when focused */
+button {
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+}
+@font-face {
+    font-family: 'Qebil';
+    src: url('./assets/fonts/QEBIL.otf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'std55';
+    src: url('./assets/fonts/avenir-lt-std-55-roman.otf') format('truetype');
+
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: 'std95';
+    src: url('./assets/fonts/avenir-lt-std-95-black.otf') format('truetype');
+
+    font-style: normal;
+  }
+    @font-face {
+    font-family: 'franklin';
+    src: url('./assets/fonts/Franklin_Gothic_Demi_Regular.ttf') format('truetype');
+
+    font-style: normal;
+  }

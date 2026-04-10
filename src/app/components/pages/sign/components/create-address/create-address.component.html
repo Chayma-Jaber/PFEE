@@ -1,0 +1,90 @@
+<p-toast></p-toast>
+<div class="modal-content modern-form">
+  <div class="modal-header">
+    <h5 class="modal-title">Ajouter une adresse</h5>
+    <button type="button" class="close-btn" (click)="activeModal.dismiss('Cross click')" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="addressForm" class="address-form">
+      <div class="create-address">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">Nom*</label>
+            <input type="text" id="firstName" placeholder="Entrez votre nom" formControlName="firstName" class="form-input">
+            <div *ngIf="addressForm.controls['firstName'].invalid && addressForm.controls['firstName'].touched" class="error-message">Champ requis.</div>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Prénom*</label>
+            <input type="text" id="lastName" placeholder="Entrez votre prénom" formControlName="lastName" class="form-input">
+            <div *ngIf="addressForm.controls['lastName'].invalid && addressForm.controls['lastName'].touched" class="error-message">Champ requis.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Téléphone*</label>
+          <input type="tel" id="phone" placeholder="Entrez votre numéro de téléphone" formControlName="phone" class="form-input">
+          <div *ngIf="addressForm.controls['phone'].invalid && addressForm.controls['phone'].touched" class="error-message">Champ requis.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="address">Adresse*</label>
+          <input type="text" id="address" placeholder="Entrez votre adresse" formControlName="address" class="form-input">
+          <div *ngIf="addressForm.controls['address'].invalid && addressForm.controls['address'].touched" class="error-message">Champ requis.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">Ville*</label>
+            <select id="city" formControlName="city" class="form-input" (change)="onCityChange($event)" [disabled]="isLoading">
+              <option value="">{{ isLoading ? 'Chargement des villes...' : 'Sélectionnez une ville' }}</option>
+              <option *ngFor="let cityName of cityNames" [value]="cityName">{{cityName}}</option>
+            </select>
+            <div *ngIf="addressForm.controls['city'].invalid && addressForm.controls['city'].touched" class="error-message">Champ requis.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="delegation">Délégation*</label>
+            <select id="delegation" formControlName="delegation" class="form-input" (change)="onDelegationChange($event)" [disabled]="!selectedCity">
+              <option value="">Sélectionnez une délégation</option>
+              <option *ngFor="let delegationName of delegationNames" [value]="delegationName">{{delegationName}}</option>
+            </select>
+            <div *ngIf="addressForm.controls['delegation'].invalid && addressForm.controls['delegation'].touched" class="error-message">Champ requis.</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="locality">Localité*</label>
+            <select id="locality" formControlName="locality" class="form-input" (change)="onLocalityChange($event)" [disabled]="!selectedDelegation" #localitySelect>
+              <option value="">Sélectionnez une localité</option>
+              <option *ngFor="let localityName of localityNames" [value]="localityName">{{localityName}}</option>
+            </select>
+            <div *ngIf="addressForm.controls['locality'].invalid && addressForm.controls['locality'].touched" class="error-message">Champ requis.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="codepost">Code postal*</label>
+            <input type="text" id="codepost" placeholder="Code postal" formControlName="codepost" class="form-input" [disabled]="true" [ngClass]="{'filled': addressForm.getRawValue().codepost}">
+            <div *ngIf="addressForm.controls['codepost'].invalid && addressForm.controls['codepost'].touched" class="error-message">Champ requis.</div>
+          </div>
+        </div>
+
+        <div class="form-group switch-group">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="defaultAddress" id="flexSwitchCheckDefault">
+            <label class="form-check-label" for="flexSwitchCheckDefault">Adresse par défaut</label>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+    <button type="button" class="btn btn-primary" 
+            [disabled]="!isFormValid()" 
+            [class.btn-disabled]="!isFormValid()"
+            (click)="createAddress()">Ajouter</button>
+  </div>
+</div>

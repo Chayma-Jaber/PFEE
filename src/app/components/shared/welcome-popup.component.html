@@ -1,0 +1,37 @@
+<div class="welcome-popup-backdrop" (click)="onClose()">
+  <div class="welcome-popup-content" 
+       [class.animate-in]="showContent && imageLoaded"
+       [class.loading]="!imageLoaded"
+       (click)="$event.stopPropagation()">
+    
+    <!-- Indicateur de chargement -->
+    <div class="loading-spinner" *ngIf="!imageLoaded">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <button class="close-btn" (click)="onClose()" aria-label="Fermer">
+      <span>&times;</span>
+    </button>
+    
+    <!-- Image avec gestion du chargement -->
+     
+    <img [src]="popupData?.bg_img?.url" 
+         [alt]="popupData?.bg_img?.name" 
+         class="popup-image"
+         [class.loaded]="imageLoaded"
+         (load)="imageLoaded = true"
+         (error)="imageLoaded = true" />
+    
+    <div class="store-buttons" *ngIf="imageLoaded">
+      <a class="store-btn appstore" [href]="popupData?.appStoreLink" target="_blank" rel="noopener">
+        <img src="images/logo-applee.png" alt="App Store" class="store-icon" />
+        <span><span style="font-size:0.85em;">Télécharger sur<br></span><span class="store-bold">l'App Store</span></span>
+      </a>
+      <a class="store-btn playstore" [href]="popupData?.playStoreLink" target="_blank" rel="noopener">
+        <img src="images/logo-playstore.png" alt="Google Play" class="store-icon" />
+        <span><span style="font-size:0.85em;">Disponible sur<br></span><span class="store-bold">Google Play</span></span>
+      </a>
+    </div>
+  </div>
+</div> 

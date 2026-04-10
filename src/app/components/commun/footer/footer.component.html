@@ -1,0 +1,78 @@
+<div class="footer-wrapper">
+  <div class="newsletter-section">
+    <h2>Abonnez-vous à notre newsletter</h2>
+    <div class="newsletter-form">
+      <input type="email" class="newsletter-input" [(ngModel)]="email" placeholder="Entrez votre e-mail"
+        autocomplete="off" />
+      <button class="newsletter-button" (click)="subscribeToNewsletter()">
+        <i class="fa-regular fa-paper-plane"></i> Envoyer
+      </button>
+    </div>
+    <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-section" *ngIf="footerData?.widgets[0]">
+        <h3>{{ footerData.widgets[0].title }}</h3>
+        <ul>
+
+          <li *ngFor="let item of footerData.widgets[0].items">
+            <a [routerLink]="item.linkTo" (click)="onItemClick(item,$event)">{{ item.title }}</a>
+          </li>
+
+        </ul>
+      </div>
+      <div class="footer-section" *ngIf="footerData?.widgets[1]">
+        <h3>{{ footerData.widgets[1].title }}</h3>
+        <ul>
+          <li *ngFor="let item of footerData.widgets[1].items">
+            <a [routerLink]="item.linkTo" (click)="onItemClick(item,$event)">{{ item.title }}</a>
+          </li>
+        </ul>
+      </div>
+      <div class="footer-section" *ngIf="footerData?.widgets[2]">
+
+        <h3>{{ footerData.widgets[2].title }}</h3>
+        <ul>
+          <li *ngFor="let item of footerData.widgets[2].items">
+            <a [routerLink]="item.linkTo" (click)="onItemClick(item,$event)">{{ item.title }}</a>
+          </li>
+        </ul>
+      </div>
+      <div class="footer-section" *ngIf="footerData?.widgets[3]">
+        <h3>{{ footerData.widgets[3].title }}</h3>
+        <ul>
+
+          <li *ngFor="let item of footerData.widgets[3].items">
+            <a [routerLink]="item.linkTo" (click)="onItemClick(item,$event)">{{ item.title }}</a>
+          </li>
+        </ul>
+      </div>
+      <div class="footer-section" *ngIf="footerData?.widgets[4]">
+        <h3>{{ footerData.widgets[4].title }}</h3>
+        <ul>
+          <li *ngFor="let item of footerData.widgets[4].items">
+            <a [routerLink]="item.linkTo" (click)="onItemClick(item,$event)">{{ item.title }}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="social-media">
+      <h4 class="boldd">SUIVEZ-NOUS!</h4>
+      <div class="icons">
+        <a *ngFor="let link of socialLinks" [href]="link.link" target="_blank"
+          [attr.aria-label]="'Visit our ' + link.title + ' page'">
+          <i [class]="'fab fa-' + link.title.toLowerCase()"></i>
+        </a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Copyright © <span class="bold">{{ currentYear }}.</span> All Rights Reserved By <span class="bold">{{
+          footerData?.brand }}</span></p>
+      <a (click)="scrollToTop()" class="back-to-top"><i class="fa-solid fa-chevron-up"></i></a>
+    </div>
+  </footer>
+</div>
+<p-toast></p-toast>

@@ -1,0 +1,162 @@
+
+<div class="fidelite-container">
+    <!-- Toast notification - version améliorée et plus visible -->
+    <div class="toast-overlay" *ngIf="showToast">
+        <div class="toast-container">
+            <div class="toast-message">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ toastMessage }}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <!-- Titre -->
+                <h1 class="text-center mb-4">Carte de fidelite Barsha</h1>
+                <div class="line mb-4"></div>
+
+                <!-- Carte de fidélité -->
+                <div class="card-display-container">
+                    <div class="card-wrapper">
+                        <div class="image-loading-container position-relative">
+                            <!-- Loading spinner -->
+                            <div *ngIf="isImageLoading" class="image-loader">
+
+                                  <!-- Spinner -->
+<section class="dots-container" >
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</section>
+
+                            </div>
+                            <!-- Refresh button -->
+                            <button *ngIf="isImageLoadFailed"
+                                    class="btn btn-dark refresh-button position-absolute"
+                                    (click)="refreshCardImage()">
+                                <i class="fas fa-sync-alt me-2"></i> Rafraîchir
+                            </button>
+                            <!-- Card image with loyalty points overlay -->
+                            <div class="position-relative">
+                                <img *ngIf="cardImageUrl" [src]="cardImageUrl + '?t=' + timestamp"
+                                    [alt]="currentLoyaltyLevel?.title || 'Carte de fidélité'"
+                                    [title]="currentLoyaltyLevel?.title || 'Carte de fidélité'"
+                                    class="img-fluid"
+                                    (load)="onImageLoaded()"
+                                    (error)="onImageError()"
+                                    [ngClass]="{'loading': isImageLoading}">
+
+                                <!-- Loyalty points overlay -->
+                                <div *ngIf="!isImageLoading && !isImageLoadFailed" class="loyalty-points-overlay">
+                                    <div class="loyalty-points-value" aria-label="Points de fidélité">
+                                        <strong>{{ loyaltyCard?.data?.points || 0 }}</strong> <span>points</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Navigation -->
+                <div class="nav-buttons d-flex justify-content-center gap-3 my-4">
+                    <button class="btn" [class.btn-dark]="selectedTab === 'exchange'"
+                            [class.btn-light]="selectedTab !== 'exchange'"
+                            (click)="selectTab('exchange')">Convertir</button>
+                    <button class="btn" [class.btn-dark]="selectedTab === 'historique'"
+                            [class.btn-light]="selectedTab !== 'historique'"
+                            (click)="selectTab('historique')">Historique</button>
+                    <button class="btn" [class.btn-dark]="selectedTab === 'regles'"
+                            [class.btn-light]="selectedTab !== 'regles'"
+                            (click)="selectTab('regles')">Règles</button>
+                </div>
+
+                <!-- Section Échange -->
+                <div class="content-section" *ngIf="selectedTab === 'exchange'">
+                    <h2 class="section-title">• Convertissez vos points</h2>
+
+                    <div class="conversion-manual p-3 mb-3" (click)="toggleConversionSection()">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-white">Conversion manuelle</span>
+                            <span class="text-white">></span>
+                        </div>
+                    </div>
+
+                    <div class="conversion-panel bg-white p-4" *ngIf="showConversionSection">
+                        <h3 class="panel-title mb-4">Convertir vos points</h3>
+
+                        <div class="input-group mb-3">
+                            <div class="form-control border">
+                                <small class="text-muted d-block">Points</small>
+                                <input type="number" class="text-end fw-bold form-control border-0 p-0" [(ngModel)]="points" (input)="updatePointsValue()">
+                            </div>
+                        </div>
+
+                        <div class="exchange-icon-container text-center my-4">
+                            <div class="exchange-icon">⇅</div>
+                        </div>
+
+                        <div class="input-group mb-4">
+                            <div class="form-control border">
+                                <small class="text-muted d-block">valeur</small>
+                                <div class="text-end fw-bold">{{ pointsValue }}</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-outline-dark flex-grow-1" (click)="cancelConversion()" [disabled]="isConverting">Annuler</button>
+                            <button class="btn btn-dark flex-grow-1" (click)="convertPoints()" [disabled]="isConverting">
+                                <span *ngIf="isConverting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                {{ isConverting ? 'Conversion en cours...' : 'Convertir' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Historique -->
+                <div class="content-section" *ngIf="selectedTab === 'historique'">
+                    <h2 class="section-title">• Votre historique</h2>
+
+                    <div *ngIf="loyaltyCardTransactions && loyaltyCardTransactions.data && loyaltyCardTransactions.data.length > 0">
+                        <div class="history-item p-3 bg-white border mb-2" *ngFor="let transaction of loyaltyCardTransactions.data">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">{{ transaction.notes || transaction.type }}</div>
+                                    <small class="text-muted">{{ formatTransactionDate(transaction.createdAt) }}</small>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold">{{ transaction.amount}}</span>
+                                    <span>></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="!loyaltyCardTransactions || !loyaltyCardTransactions.data || loyaltyCardTransactions.data.length === 0"
+                         class="p-3 bg-white border mb-2 text-center">
+                        <p class="mb-0">Aucune transaction trouvée</p>
+                    </div>
+                </div>
+
+                <!-- Section Règles -->
+                <div class="content-section" *ngIf="selectedTab === 'regles'">
+                    <h2 class="section-title">• Règles du programme</h2>
+
+                    <div class="rules-content p-3">
+                        <div *ngIf="faqData && faqData.hits && faqData.hits.length > 0">
+                            <div *ngFor="let answer of faqData.hits[0].questions">
+                                <p class="mb-4" [innerHTML]="formatAnswerText(answer.answer)"></p>
+                            </div>
+                        </div>
+                        <div *ngIf="!faqData || !faqData.hits || faqData.hits.length === 0">
+                            <p class="mb-4">Chargement des règles du programme...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

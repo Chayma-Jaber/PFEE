@@ -1,0 +1,108 @@
+h1  .fw-bold{
+  font-family: 'Qebil' !important; /* Fallback font */
+}
+.text-dark{
+  color: #000;
+  font-family: 'Qebil'; 
+}
+.border.rounded {
+  font-family: 'std55'/* Fallback font */
+}
+
+.border.rounded strong,
+.border.rounded .fw-bold {
+  font-family: 'std95' /* Fallback font */
+} .barsha-title {
+  font-family: 'Qebil' !important; /* Fallback font */
+}
+
+
+
+.about-container {
+  border: 10px solid #bebebe;
+  background-color: rgb(255, 255, 255);
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+
+  padding: 0 0;
+  margin-top:20px
+}
+
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+
+}
+
+.barsha-logo {
+  .barsha-title {
+    font-family: 'Qebil';
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+  }
+}
+
+.separator {
+  border-color: #000;
+  color: #000;
+  opacity: 5;
+  width: 30%;
+  margin: 2rem auto;
+}
+
+.subtitle {
+  font-family: 'Std95'; 
+  letter-spacing: 1px;
+  font-size: 1.3rem;
+}
+
+p {
+  font-family: 'Std55';
+  line-height: 1.8;
+  margin-bottom: 0rem;
+  font-size: 1rem;
+  
+  strong {
+    font-family: 'Std95';
+  }
+}
+
+.poetic-list {
+  margin: 2.5rem 0;
+  
+  li {
+    font-family: 'Std95';
+    font-size: 1rem;
+    margin: 0.4rem 0;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .about-container {
+    width: 95%;
+    padding: 1rem 0;
+  }
+  
+  .content-wrapper {
+    padding: 0 1rem;
+  }
+  
+  .barsha-logo .barsha-title {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+  }
+  
+  p {
+    font-size: 0.95rem;
+  }
+  
+  .poetic-list li {
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,288 @@
+
+
+// Variables
+$primary-color: #000;
+$secondary-color: #f7f6f6;
+$border-color: #ccc;
+$error-color: #dc3545;
+$button-color: #000;
+$button-text-color: #fff;
+$section-border: 1px solid #eee;
+
+// Main container
+.contact-us-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'std55';
+}
+
+.main-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+
+// Layout for form and info sections
+.contact-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+// Form section
+.contact-form-section {
+  flex: 1;
+  min-width: 300px;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+
+  label {
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+}
+
+.form-input {
+  padding: 12px 15px;
+  border: 1px solid $border-color;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+  }
+}
+
+.phone-input-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid $border-color;
+
+  .phone-prefix {
+    padding: 12px 15px;
+    background-color: #f9f9f9;
+    border-right: 1px solid $border-color;
+    color: #333;
+  }
+
+  .phone-field {
+    border: none;
+    flex: 1;
+  }
+}
+
+.message-area {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.verification-button, .submit-button {
+  padding: 12px 15px;
+  background-color: $button-color;
+  color: $button-text-color;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-bottom: 15px;
+
+  &:hover:not(:disabled) {
+    background-color: #333;
+  }
+
+  &:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+  }
+}
+
+.error-message {
+  color: $error-color;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+// Contact info section
+.contact-info-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.info-block {
+  background-color: $secondary-color;
+  padding: 20px;
+}
+
+.info-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-family: 'std55';
+}
+
+.info-section {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: $section-border;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+
+  fa-icon {
+    margin-right: 10px;
+    margin-top: 3px;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.working-hours {
+  p {
+    margin: 5px 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+
+  .social-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: transparent;
+    color: $primary-color;
+    font-size: 20px;
+    transition: all 0.3s;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+  .contact-us-container {
+    padding: 15px;
+  }
+
+  .main-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-input, .phone-input-container .phone-prefix {
+    padding: 10px;
+  }
+
+  .verification-button, .submit-button {
+    padding: 10px;
+  }
+
+  .info-block {
+    padding: 15px;
+  }
+
+  .info-title, .section-title {
+    font-size: 16px;
+  }
+}
+// Conteneur avec cadre pour les trois champs
+.form-fields-container {
+  border: 1px solid #929191;
+  //border-radius: 5px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  //box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+  // Ajustement des marges pour les groupes à l'intérieur du conteneur
+  .form-group {
+    margin-bottom: 15px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Séparateur entre les champs (optionnel)
+.form-group + .form-group {
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.icons {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.icons a {
+  //display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 80%;
+  background-color: transparent;
+  color: #000;
+  font-size: 18px;
+  transition: all 0.3s;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+p{
+  font-family: 'std55';
+  font-size: 16px;
+  font-weight: 500;
+  color: #ada9a9;
+}

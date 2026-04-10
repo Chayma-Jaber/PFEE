@@ -1,0 +1,205 @@
+<!-- Filter Popup -->
+<div class="filter-popup filter-popup-left" *ngIf="showFilterPopup">
+  <div class="filter-popup-content" #filterContent>
+    <div class="filter-header">
+      <h3>Filtrer par</h3>
+      <button class="close-btn" (click)="toggleFilterPopup()">
+        X
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Classer par Section -->
+    <div class="filter-section">
+      <h4>Classer par</h4>
+      <div class="sort-buttons d-flex flex-row gap-2">
+
+        <button
+          class="sort-btn flex-1"
+          [class.active]="selectedFilters.ordre === 'croissant'"
+          (click)="toggleOrder('croissant')"
+        >
+          Prix par croissant
+        </button>
+        <button
+          class="sort-btn flex-1"
+          [class.active]="selectedFilters.ordre === 'décroissant'"
+          (click)="toggleOrder('décroissant')"
+        >
+          Prix  par décroissant
+        </button>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Taille Section -->
+    <div class="filter-section">
+      <h4>Taille</h4>
+
+      <!-- Hauts Section -->
+      <div *ngIf="shouldShowSizeCategory('hauts')" class="size-category">
+        <!-- <p class="category-label">{{ getSizeCategoryLabel('hauts') }}</p> -->
+        <div class="size-grid">
+          <button
+            *ngFor="let size of getSizesForCategory('hauts')"
+            class="size-btn"
+            [class.selected]="selectedFilters.taille.includes(size)"
+            (click)="toggleFilter('taille', size)"
+          >
+            {{ size }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Bas Section -->
+      <div *ngIf="shouldShowSizeCategory('bas')" class="size-category mt-3">
+        <!-- <p class="category-label">{{ getSizeCategoryLabel('bas') }}</p> -->
+        <div class="size-grid">
+          <button
+            *ngFor="let size of getSizesForCategory('bas')"
+            class="size-btn"
+            [class.selected]="selectedFilters.taille.includes(size)"
+            (click)="toggleFilter('taille', size)"
+          >
+            {{ size }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Autre Section -->
+      <div *ngIf="shouldShowSizeCategory('autre')" class="size-category mt-3">
+        <!-- <p class="category-label">{{ getSizeCategoryLabel('autre') }}</p> -->
+        <div class="size-grid">
+          <button
+            *ngFor="let size of getSizesForCategory('autre')"
+            class="size-btn"
+            [class.selected]="selectedFilters.taille.includes(size)"
+            (click)="toggleFilter('taille', size)"
+          >
+            {{ size }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="isLoading" class="loading-placeholder">
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Couleur Section -->
+    <div class="filter-section">
+      <h4>Couleur</h4>
+      <div class="color-grid" *ngIf="!isLoading">
+        <div *ngFor="let color of filterOptions.couleur" class="color-item">
+          <button
+            class="color-btn"
+            [style.background]="color.texture ? 'none' : color.code"
+            [class.selected]="selectedFilters.couleur.includes(color.name)"
+            (click)="toggleFilter('couleur', color.name)"
+            [attr.title]="color.name"
+          >
+            <img *ngIf="color.texture" [src]="color.texture.url" [alt]="color.name" class="color-texture" />
+          </button>
+          <span class="color-label">{{ color.name }}</span>
+        </div>
+      </div>
+      <div *ngIf="isLoading" class="loading-placeholder">
+        <div class="skeleton-loader"></div>
+        <div class="skeleton-loader"></div>
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Prix Section -->
+    <div class="filter-section">
+      <div class="price-header">
+        <h4>Prix</h4>
+        <div class="price-value">
+          {{ selectedFilters.minPrix || filterOptions.prix.min }} DT - {{ isDraggingPriceSlider ? tempPriceValue : selectedFilters.prix }} DT
+        </div>
+      </div>
+      <div class="price-slider">
+        <div class="slider-container">
+          <div class="slider-track">
+            <div class="slider-track-filled"
+                 [style.width]="((isDraggingPriceSlider ? tempPriceValue : selectedFilters.prix) - filterOptions.prix.min) / (filterOptions.prix.max - filterOptions.prix.min) * 100 + '%'">
+            </div>
+          </div>
+          <div class="slider-dot slider-dot-start"></div>
+
+          <input
+            type="range"
+            class="range"
+            [min]="filterOptions.prix.min"
+            [max]="filterOptions.prix.max"
+            [ngModel]="isDraggingPriceSlider ? tempPriceValue : selectedFilters.prix"
+            (input)="updatePriceFilter($event)"
+            (mousedown)="onPriceSliderStart()"
+            (mouseup)="onPriceSliderEnd()"
+            (touchstart)="onPriceSliderStart()"
+            (touchend)="onPriceSliderEnd()"
+          />
+        </div>
+      </div>
+      <div *ngIf="isLoading" class="loading-placeholder">
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Type de produit Section -->
+    <!-- <div class="filter-section">
+      <h4>Type de produit</h4>
+      <div class="sort-buttons">
+        <button
+          class="sort-btn"
+          [class.active]="selectedFilters.type === 'nouveautes'"
+          (click)="toggleProductType('nouveautes')"
+        >
+          Nouveautés
+        </button>
+        <button
+          class="sort-btn"
+          [class.active]="selectedFilters.type === 'croissant'"
+          (click)="toggleProductType('croissant')"
+        >
+          Prix par ordre croissant
+        </button>
+        <button
+          class="sort-btn"
+          [class.active]="selectedFilters.type === 'décroissant'"
+          (click)="toggleProductType('décroissant')"
+        >
+          Prix par ordre décroissant
+        </button>
+      </div>
+    </div> -->
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
+    <!-- Action Buttons -->
+    <div class="filter-actions d-flex flex-row justify-content-between gap-3">
+      <button class="reset-btn flex-grow-1" (click)="resetFilters()" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Réinitialiser les filtres</span>
+        <span *ngIf="isLoading">Chargement...</span>
+      </button>
+      <button class="view-btn flex-grow-1" (click)="applyFilters()" [disabled]="isLoading">
+        <span *ngIf="!isLoading">voir {{ filteredProductsCount || filterOptions.count || '0' }} articles</span>
+        <span *ngIf="isLoading">Chargement...</span>
+      </button>
+    </div>
+  </div>
+</div>

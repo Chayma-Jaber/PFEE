@@ -1,0 +1,18 @@
+{
+  "google/gemini-flash-1.5": {
+    "code": 404,
+    "body": "{\"error\":{\"message\":\"No endpoints found for google/gemini-flash-1.5.\",\"code\":404},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  },
+  "meta-llama/llama-3.2-11b-vision-instruct:free": {
+    "code": 404,
+    "body": "{\"error\":{\"message\":\"No endpoints found for meta-llama/llama-3.2-11b-vision-instruct:free.\",\"code\":404},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  },
+  "openai/gpt-4o-mini": {
+    "code": 402,
+    "body": "{\"error\":{\"message\":\"This request requires more credits, or fewer max_tokens. You requested up to 400 tokens, but can only afford 320. To increase, visit https://openrouter.ai/settings/credits and upgrade to a paid account\",\"code\":402,\"metadata\":{\"provider_name\":null}},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  },
+  "google/gemini-2.0-flash-lite-preview-02-05:free": {
+    "code": 400,
+    "body": "{\"error\":{\"message\":\"google/gemini-2.0-flash-lite-preview-02-05:free is not a valid model ID\",\"code\":400},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  }
+}

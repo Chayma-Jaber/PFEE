@@ -1,0 +1,460 @@
+// Variables
+$primary-color: #000;
+$secondary-color: #fff;
+$font-family: 'std55';
+$custom-font: 'Qebil';
+
+* {
+  box-sizing: border-box;
+  /* Solution globale pour éviter les débordements */
+}
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Styles globaux
+:host {
+  display: block;
+  font-family: $font-family;
+  color: $primary-color;
+  overflow-x: hidden;
+  /* Empêche le scroll horizontal */
+}
+
+.category-container {
+  padding: 30px 0;
+  max-width: 100%;
+  /* Assure que le conteneur ne dépasse pas la largeur de l'écran */
+  overflow-x: hidden;
+  /* Empêche le scroll horizontal */
+
+  @media (max-width: 767px) {
+    padding-top: 0;
+    /* Suppression de l'espacement supérieur sur mobile */
+  }
+}
+
+.top-images-container {
+  width: 100%;
+  margin-bottom: 2rem;
+
+  .image-item {
+    width: 100%;
+
+    .image-aspect-ratio-container {
+      width: 100%;
+      /* Corrigé de 101% à 100% pour éviter le débordement */
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+  }
+}
+
+.img-fluid.w-100 {
+  max-height: 600px;
+  object-fit: cover !important;
+  width: 100%;
+  display: block;
+  height: 100%;
+}
+
+.top-images-container {
+  width: 100%;
+  margin: 20px 0 40px;
+  /* Supprime les marges négatives pour utiliser toute la largeur */
+
+  @media (max-width: 767px) {
+    margin-top: 0;
+    /* Suppression de la marge supérieure sur mobile */
+  }
+
+  .image-item {
+    width: 100%;
+    /* Utilise toute la largeur disponible */
+    position: relative;
+    margin-top: -43px;
+
+    @media (max-width: 767px) {
+      margin-top: 0;
+      /* Suppression du décalage négatif sur mobile */
+    }
+
+    .fashion-image {
+      width: 100%;
+      height: 600px;
+      object-fit: cover;
+    }
+
+    &.center-image {
+      .new-text {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: $secondary-color;
+        font-size: 50px;
+        font-weight: bold;
+        font-family: 'Qebil';
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+}
+
+.category-carousel {
+  margin: 0;
+  /* Supprime les marges négatives pour éviter le scroll horizontal */
+
+  ::ng-deep {
+    .p-carousel {
+
+      .p-carousel-prev,
+      .p-carousel-next {
+        width: 60px;
+        height: 60px;
+        color: $primary-color;
+        background: transparent;
+        border: none;
+        margin-top: -20px;
+
+        &:hover {
+          background: transparent;
+        }
+
+        &:focus {
+          box-shadow: none;
+        }
+      }
+
+      .p-carousel-prev {
+        left: -50px;
+      }
+
+      .p-carousel-next {
+        right: -50px;
+      }
+
+      .p-carousel-indicators {
+        display: none;
+      }
+
+      .p-carousel-item {
+        height: 100%;
+        touch-action: pan-y !important;
+        /* Allow vertical scroll while swiping horizontally */
+      }
+
+      .p-carousel-container {
+        height: 100%;
+        touch-action: pan-y !important;
+        /* Allow vertical scroll on the whole carousel container */
+      }
+
+      .p-carousel-content {
+        touch-action: pan-y !important;
+      }
+    }
+  }
+
+  .category-item {
+    @include flex-center;
+    flex-direction: column;
+    padding: 0 10px;
+    height: 100%;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    .image-container {
+      width: 100%;
+      height: 512px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      position: relative;
+
+      @media (max-width: 767px) {
+        height: 250px; // Reduced height for 2-column mobile layout
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        display: block;
+
+        &:hover {
+          transform: scale(1.05);
+        }
+      }
+    }
+
+    .name {
+      font-family: $custom-font;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+
+      @media (max-width: 767px) {
+        font-size: 18px; // Smaller font for mobile
+      }
+    }
+  }
+}
+
+.img-fluid {
+  object-fit: cover;
+  /* Assure que l'image couvre tout le conteneur */
+  height: 100%;
+  /* Remplit la hauteur du conteneur */
+}
+
+.carousel-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.denim-text,
+.barsha-looks-title {
+  @include flex-center;
+  margin: 30px 0;
+
+  h2 {
+    font-family: $custom-font;
+    font-size: 33px;
+    font-weight: bold;
+  }
+}
+
+.ratio-custom {
+  --bs-aspect-ratio: 50%;
+  /* Réduit la hauteur proportionnelle */
+  cursor: pointer;
+}
+
+// .additional-images {
+//   display: flex;
+//   gap: 2px;
+
+//   img {
+//     height: 100%;
+//     object-fit: cover;
+
+//     &:first-child { flex: 3; margin-left: -40px; }
+//     &:last-child { flex: 1; margin-right: -30px; }
+//   }
+// }
+
+.additional-images img {
+
+  max-height: 700px;
+  /* Limite la hauteur de l'image */
+  object-fit: cover;
+  /* Assure que l'image couvre toute la zone sans déformation */
+  //border-radius: 8px; /* Coins arrondis */
+  margin-bottom: 20px;
+  /* Marge en bas */
+}
+
+.barsha-looks {
+  display: flex;
+  gap: 20px;
+
+  .look-item {
+    flex: 1;
+
+    .look-image-container {
+      position: relative;
+      height: 900px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .look-button {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: transparent;
+        color: $secondary-color;
+        border: 3px solid $secondary-color;
+        padding: 10px 20px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 767px) {
+  .top-images-container {
+    flex-direction: column;
+    justify-content: center;
+
+    /* Recentre sur mobile */
+    .image-item {
+      margin-bottom: 15px;
+      margin-left: 0;
+      /* Supprime le décalage sur mobile */
+    }
+  }
+
+  .barsha-looks {
+    flex-direction: column;
+    gap: 15px;
+
+    .look-item .look-image-container {
+      height: 500px;
+    }
+  }
+
+  .home {
+    margin-top: 100px;
+
+    .logo img {
+      width: 240px;
+      height: 100px;
+    }
+  }
+
+
+}
+
+/* home-all.component.scss */
+.dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; // Prend toute la hauteur de l'écran
+  width: 100%;
+}
+
+.dot {
+  height: 20px;
+  width: 20px;
+  margin-right: 10px;
+  border-radius: 10px;
+  background-color: #000307;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.dot:last-child {
+  margin-right: 0;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.3s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.1s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  50% {
+    transform: scale(1.2);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  100% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+}
+
+.carousel-container {
+  position: relative;
+  padding: 0 20px;
+
+  .carousel-nav {
+    position: absolute;
+    top: 50%;
+
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    i {
+      font-size: 13px;
+      color: $primary-color;
+    }
+  }
+
+  .carousel-prev {
+    left: 40px;
+
+    @media (max-width: 767px) {
+      left: 10px; // Move closer to edge on mobile
+    }
+  }
+
+  .carousel-next {
+    right: 40px;
+
+    @media (max-width: 767px) {
+      right: 10px; // Move closer to edge on mobile
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 767px) {
+  .carousel-nav {
+    width: 30px;
+    height: 30px;
+
+    i {
+      font-size: 14px;
+    }
+  }
+}
+
+.filter-button.selected {
+  color: red;
+  font-weight: bold;
+}

@@ -1,0 +1,150 @@
+<!-- chatbot.component.html -->
+<div class="chatbot-wrapper" [class.chat-open]="isOpen">
+
+  <!-- Hidden Image Input -->
+  <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
+
+  <!-- Floating FAB (Hidden when open on mobile if preferred) -->
+  <button class="chat-fab" (click)="toggleChat()" [class.open]="isOpen" aria-label="Ouvrir le chat">
+    <div class="fab-icon-wrapper">
+      <svg *ngIf="!isOpen" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <svg *ngIf="isOpen" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+  </button>
+
+  <!-- Chat Window -->
+  <div class="chat-window" [class.visible]="isOpen" [class.full-screen]="isFullScreen">
+
+    <!-- Premium Header -->
+    <div class="chat-header">
+      <div class="header-main">
+        <div class="ai-orb"><span></span></div>
+        <div class="header-text">
+          <h1>Barsha Assistant</h1>
+          <p>Intelligence Mode Active</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="header-expand desktop-only" (click)="toggleFullScreen()" title="Agrandir">
+          <svg *ngIf="!isFullScreen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+          </svg>
+          <svg *ngIf="isFullScreen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>
+          </svg>
+        </button>
+        <button class="header-close" (click)="toggleChat()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="chat-messages" #messagesContainer>
+      
+      <div *ngFor="let msg of messages" 
+           class="msg-group" 
+           [class.user]="msg.role === 'user'" 
+           [class.bot]="msg.role === 'assistant'">
+        
+        <!-- User Image Preview -->
+        <div *ngIf="msg.imagePreview" class="msg-image-attachment">
+          <img [src]="msg.imagePreview" alt="Analyse">
+        </div>
+
+        <!-- Message Bubble -->
+        <div class="msg-bubble" [class.is-loading]="msg.loading">
+          <div *ngIf="!msg.loading" [innerHTML]="formatMessage(msg.content)"></div>
+          
+          <!-- Intelligent Loader within Bubble -->
+          <div *ngIf="msg.loading" class="intelligent-loader">
+             <div class="shimmer-line"></div>
+             <div class="shimmer-line short"></div>
+             <p class="loader-text">{{ loadingText }}</p>
+          </div>
+        </div>
+
+        <!-- Results Gallery (Moment Magique) -->
+        <div *ngIf="!msg.loading && msg.products && msg.products.length > 0" class="results-container">
+          <div class="results-header">
+            <span>✨ Suggestions pour vous</span>
+          </div>
+          <div class="premium-gallery">
+            <div *ngFor="let prod of msg.products" class="premium-card clickable" (click)="window.open(prod.url, '_blank')">
+              <div class="card-media">
+                <img [src]="prod.image || 'assets/logo.jpg'" [alt]="prod.nom" onerror="this.src='https://placehold.co/400x600/000/fff?text=Barsha+Mode'">
+                <div class="card-actions">
+                   <button class="action-btn">Voir</button>
+                  
+                </div>
+              </div>
+              <div class="card-body">
+                <h3>{{ prod.nom }}</h3>
+                <p class="price">{{ prod.prix }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bonus: Complete the Look -->
+        <div *ngIf="!msg.loading && msg.complementProducts && msg.complementProducts.length > 0" class="bonus-section">
+          <div class="bonus-header">
+             <span class="icon">🎁</span>
+             <span>Complétez votre look</span>
+          </div>
+          <div class="bonus-scroll">
+             <div *ngFor="let prod of msg.complementProducts" class="bonus-item clickable" (click)="window.open(prod.url, '_blank')">
+                <img [src]="prod.image" [alt]="prod.nom">
+                <div class="bonus-info">
+                   <p>{{ prod.nom }}</p>
+                   <span>{{ prod.prix }}</span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Replies -->
+      <div class="quick-replies" *ngIf="quickReplies.length > 0 && !isLoading">
+        <button *ngFor="let reply of quickReplies" (click)="sendMessage(reply)">
+          {{ reply }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="chat-footer">
+      <div class="input-shell">
+        <button class="tool-btn" (click)="triggerImageUpload()" title="Recherche visuelle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </button>
+        <input type="text" 
+               placeholder="Demandez n'importe quoi..." 
+               [(ngModel)]="userInput"
+               maxlength="300"
+               (keypress)="onKeyPress($event)">
+        <button class="send-btn" [disabled]="!userInput.trim() || isLoading" (click)="sendMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="char-counter" [class.limit-reached]="userInput.length >= 300">
+        {{ userInput.length }}/300
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="address-modal">
+  <div class="address-modal__header">
+    <h2 class="address-modal__title">Vos adresses</h2>
+    <button type="button" class="address-modal__close" aria-label="Fermer" (click)="closeModal()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="address-modal__body">
+    <div class="address-modal__instruction" *ngIf="addresses && addresses.length > 0">
+      <p>Veuillez sélectionner une adresse pour votre commande</p>
+    </div>
+
+    <div class="address-card address-card--add" (click)="openCreateAddressModal()">
+      <div class="address-card__content">
+        <div class="address-card__icon">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+        <div class="address-card__info">
+          <h3 class="address-card__title">Ajouter une adresse</h3>
+          <p class="address-card__subtitle">Ajouter une adresse pour cette commande</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="address-list">
+      <div *ngFor="let address of addresses; let i = index" class="address-card">
+        <div class="address-card__content" (click)="selectAddress(address)">
+          <div class="address-card__radio">
+            <input type="radio" name="address" [checked]="selectedAddress === address">
+          </div>
+          <div class="address-card__info">
+            <div class="address-card__header">
+              <h3 class="address-card__title">{{ address.address }}</h3>
+              <span class="address-card__badge" *ngIf="address.defaultAddress">Par défaut</span>
+            </div>
+            <p class="address-card__name">{{ address.firstName }} {{ address.lastName }}</p>
+            <p class="address-card__details">{{ address.city }}, {{ address.delegation }}, {{ address.codepost }}</p>
+            <p class="address-card__phone">{{ address.phone }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="address-modal__footer">
+    <button type="button" 
+            class="btn btn-primary" 
+            [disabled]="!selectedAddress" 
+            (click)="closeModal()">
+      {{ selectedAddress ? 'Enregistrer' : 'Veuillez sélectionner une adresse' }}
+    </button>
+  </div>
+</div>

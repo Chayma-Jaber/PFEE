@@ -1,0 +1,124 @@
+
+<div class="order-details-container">
+  <div *ngIf="isLoading" class="text-center py-4">
+   <!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!isLoading && !error && order" class="card">
+    <div class="card-header bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Détails de la commande #{{ order.slug }}</h2>
+        <span class="badge" [ngClass]="{
+          'bg-success': order.status === 'completed',
+          'bg-warning': order.status === 'processing',
+          'bg-danger': order.status === 'cancelled'
+        }">{{ order.status }}</span>
+      </div>
+      <small class="text-muted">
+        Passée le {{ order.createdAt | date:'dd/MM/yyyy' }}
+      </small>
+    </div>
+
+    <div class="card-body">
+      <!-- Liste des produits -->
+      <h3 class="mb-3">Produits commandés</h3>
+      <div *ngFor="let product of order.products" class="product-item mb-3">
+        <div class="d-flex">
+          <img [src]="product.image" [alt]="product.title"
+               class="img-thumbnail">
+          <div class="ms-3">
+            <h5>{{ product.title }}</h5>
+            <p class="mb-1">
+              <span class="text-muted">Couleur:</span> {{ product.color }}<br>
+              <span class="text-muted">Taille:</span> {{ product.size }}<br>
+              <span class="text-muted">Prix unitaire:</span> {{ product.unitPrice }} TND<br>
+              <span class="text-muted">Quantité:</span> {{ product.quantity || 1 }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations de livraison -->
+      <div class="border-top pt-3 mt-3">
+        <h3 class="mb-3">Informations de livraison</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              <i class="fas fa-truck me-2"></i>
+              <strong>Méthode de livraison:</strong> {{ order.shippingMethod }}
+            </p>
+            <p *ngIf="order.shippingAddress">
+              <i class="fas fa-map-marker-alt me-2"></i>
+              <strong>Adresse de livraison:</strong><br>
+              {{ order.shippingAddress.address }}, {{ order.shippingAddress.city }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p>
+              <i class="fas fa-credit-card me-2"></i>
+              <strong>Méthode de paiement:</strong> {{ order.paymentMethod }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Récapitulatif des prix -->
+      <div class="border-top pt-3 mt-3">
+        <h3 class="mb-3">Récapitulatif</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Sous-total:</strong> {{ order.subTotal }} TND</p>
+
+            <!-- Affichage détaillé du coupon s'il existe -->
+            <div *ngIf="order.coupon" class="coupon-details mb-3">
+              <div class="coupon-header">
+                <i class="fas fa-ticket-alt me-2"></i>
+                <span class="coupon-title">Coupon appliqué</span>
+              </div>
+              <div class="coupon-body">
+                <div class="coupon-row">
+                  <span class="coupon-label">Code:</span>
+                  <span class="coupon-value coupon-code">{{ order.coupon.code }}</span>
+                </div>
+                <div class="coupon-row">
+                  <span class="coupon-label">Réduction:</span>
+                  <span class="coupon-value coupon-discount">
+                    {{ order.coupon.discount_amount > 0 ? order.coupon.discount_amount + ' TND' :
+                       order.coupon.discount_percent > 0 ? order.coupon.discount_percent + '%' : '' }}
+                  </span>
+                </div>
+                <div class="coupon-row" *ngIf="order.coupon.details">
+                  <span class="coupon-label">Détails:</span>
+                  <span class="coupon-value">{{ order.coupon.details }}</span>
+                </div>
+                <div class="coupon-row" *ngIf="order.coupon.min_total > 0">
+                  <span class="coupon-label">Minimum d'achat:</span>
+                  <span class="coupon-value">{{ order.coupon.min_total }} TND</span>
+                </div>
+              </div>
+            </div>
+
+            <p><strong>Frais de livraison:</strong> {{ order.shippingCost }} TND</p>
+            <p class="fw-bold"><strong>Total:</strong> {{ order.total }} TND</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <button class="btn btn-secondary" routerLink="/profile">
+        Retour à mon compte
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,10 @@
+<div class="coupon-toast" *ngIf="visible">
+  <div class="toast-header">
+    <span class="icon">✔</span>
+    <span class="title">Code Coupon appliqué</span>
+    <span class="close" (click)="close()">×</span>
+  </div>
+  <div class="toast-body">
+    Le code coupon {{ couponCode }} a été appliqué avec succès
+  </div>
+</div>

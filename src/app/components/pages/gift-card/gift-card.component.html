@@ -1,0 +1,225 @@
+<p-toast></p-toast>
+<div class="container gift-card-container mt-4 mb-5" [class.blur-background]="showFaqPopup">
+    <!-- Title -->
+    <div class="text-center mb-4">
+      <h1 class="gift-card-title">Gift Card BARSHA</h1>
+      
+      <!-- FAQ Button -->
+      <!-- <button class="btn btn-faq" (click)="openFaqPopup()">
+        <i class="pi pi-question-circle"></i> FAQ
+      </button> -->
+      
+      <!-- Description -->
+      <p class="gift-card-description mx-auto">
+        Offrez le cadeau idéal à vos proches! Choisissez une carte cadeau, personnalisez-la et partagez-la instantanément.
+      </p>
+    </div>
+  
+    <!-- 4 Quadrants Layout -->
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="row">
+          <!-- Top Left: Event Selection -->
+          <div class="col-md-6 mb-4">
+            <div class="card selection-card h-100">
+              <div class="card-body">
+                <h5 class="selection-title mb-3">Sélectionner un événement</h5>
+                
+                <div class="event-buttons">
+                  <button *ngFor="let event of events; let i = index" 
+                          class="event-btn" 
+                          [class.active]="selectedEventIndex === i"
+                          (click)="selectEvent(i)">
+                    {{ event.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Top Right: Amount Selection -->
+          <div class="col-md-6 mb-4">
+            <div class="card selection-card h-100">
+              <div class="card-body">
+                <h5 class="selection-title mb-3">Sélectionner un montant <span class="text-danger">(*)</span></h5>
+                
+                <div class="amount-buttons">
+                  <button *ngFor="let price of prices; let i = index" 
+                          class="amount-btn" 
+                          [class.active]="selectedPriceIndex === i"
+                          (click)="selectPrice(i)">
+                    {{ price.amount }} TND
+                  </button>
+                </div>
+                
+                <p class="payment-note mt-3">* Paiement par carte bancaire en ligne.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="row">
+          <!-- Bottom Left: Image Selection -->
+          <div class="col-md-6 mb-4">
+            <div class="card selection-card h-100">
+              <div class="card-body">
+                <h5 class="selection-title mb-3">Choisir une image</h5>
+                
+                <div class="image-preview-container">
+                  <div class="selected-image">
+                    <img [src]="getSelectedImageUrl()" alt="Selected gift card design" class="img-fluid main-image">
+                    <div class="price-overlay" *ngIf="selectedPrice" [style.color]="getSelectedTextColor()">
+                      {{ selectedPrice.amount }} TND
+                    </div>
+                    
+                  </div>
+                </div>
+                
+                <div class="image-thumbnails-container mt-3">
+                  <button class="carousel-control prev" (click)="prevImage()">
+                    <i class="fa fa-chevron-left"></i>
+                  </button>
+                  
+                  <div class="thumbnails-wrapper">
+                    <div class="image-thumbnails">
+                      <div *ngFor="let image of giftCardImages; let i = index" 
+                          class="thumbnail-item" 
+                          [class.active]="selectedImageIndex === i"
+                          (click)="selectImage(i)">
+                        <img [src]="image.url" [alt]="image.alt" class="img-fluid thumbnail">
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button class="carousel-control next" (click)="nextImage()">
+                    <i class="fa fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Bottom Right: Recipient Info and Buy Button -->
+          <div class="col-md-6 mb-4">
+            <div class="card selection-card h-100">
+              <div class="card-body d-flex flex-column">
+                <!-- Phone Number -->
+                <div class="mb-3">
+                  <label for="phoneNumber" class="form-label-phone">N° de téléphone du bénéficiaire </label>
+                  <div class="input-group">
+                    <span class="input-group-text">+216</span>
+                    <input type="tel" class="form-control" id="phoneNumber"  [(ngModel)]="recipientPhone" (ngModelChange)="saveGiftCardToSession()">
+                  </div>
+                </div>
+                
+                <!-- Message -->
+                <div class="mb-4">
+                  <span class="form-label-message"> * &nbsp;&nbsp;&nbsp;</span> <label for="message" class="form-label-message">Message </label>
+                  <textarea class="form-control" id="message" rows="4" [(ngModel)]="customMessage" (ngModelChange)="saveGiftCardToSession()"></textarea>
+                </div>
+                
+                <!-- Buy Button - positioned at bottom -->
+               
+              </div>
+              
+            </div>
+           
+          </div>
+          <div class="d-grid mt-auto">
+            <button class="btn btn-buy" (click)="buyGiftCard()" [disabled]="!isFormValid()">
+              Acheter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- popup pour validation lors d'un click sur acheter il s'affiche qui contient un titre :Confirmation de d'chat de carte cadeau  +le top right un bouton pour fermer
+ le montant a payer :, image de la carte cadeau avec le montant ,Beneficiaire ;,le message,
+
+ un boutton pour la confirmation + un bouton pour modifier 
+-->
+<!-- Add this popup HTML at the end of the template -->
+<div class="gift-card-confirmation-popup" *ngIf="showConfirmationPopup">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h3 class="popup-title">Confirmation d'achat de carte cadeau</h3>
+      <button class="close-btn" (click)="closePopup()">×</button>
+    </div>
+    
+    <div class="popup-body">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <p class="amount-text">Montant à payer: 
+        <span class="amount-text-bold">{{ selectedPrice?.amount || '0' }} TND</span>
+        (Paiement par carte bancaire en ligne)
+      </p>
+      
+      <div class="gift-card-preview">
+        <img [src]="getSelectedImageUrl()" alt="Gift card preview" class="gift-card-img">
+        <div class="price-badge" [style.color]="getSelectedTextColor()">
+          {{ selectedPrice?.amount || '0' }} TND
+        </div>
+      </div>
+      
+      <div class="beneficiary-info">
+        <p><strong>Bénéficiaire:</strong> {{ recipientPhone }}</p>
+        <p><strong>Message:</strong> {{ customMessage }}</p>
+      </div>
+    </div>
+    
+    <div class="popup-footer">
+      <button class="btn btn-modify" (click)="showConfirmationPopup = false">Modifier</button>
+      <button class="btn btn-confirm" (click)="confirmPurchase()" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Confirmer et Payer</span>
+        <div *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Popup -->
+<p-dialog 
+  [(visible)]="showFaqPopup" 
+  [style]="{width: '90vw', maxWidth: '700px'}" 
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closeOnEscape]="true"
+  [baseZIndex]="10000"
+  [dismissableMask]="true"
+  styleClass="faq-dialog">
+  
+  <ng-template pTemplate="header">
+    <div class="faq-header">
+      <h2>Questions Fréquentes - Gift Card BARSHA </h2>
+      <button class="close-button" (click)="closeFaqPopup()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="faq-container">
+    <div class="faq-intro">
+      <p>Trouvez les réponses à vos questions concernant les cartes cadeaux BARSHA.</p>
+      
+    </div>
+
+    <div class="faq-list">
+      <div *ngFor="let faq of faqs" class="faq-item">
+        <div class="faq-question" (click)="faq.isOpen = !faq.isOpen">
+          <span class="question-text">{{faq.question}}</span>
+          <i class="pi" [ngClass]="{'pi-chevron-down': !faq.isOpen, 'pi-chevron-up': faq.isOpen}"></i>
+        </div>
+        <div class="faq-answer" [class.open]="faq.isOpen">
+          <p [innerHTML]="faq.answer"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</p-dialog>

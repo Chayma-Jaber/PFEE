@@ -1,0 +1,82 @@
+// Styles for the 404 error page
+.error-page-container {
+  margin-top: 40px;
+  margin-bottom: 60px;
+  padding: 20px;
+}
+
+.error-image {
+  margin-bottom: 30px;
+
+  img {
+    width: 300px;
+    height: 300px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+}
+
+.error-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.error-description {
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #333;
+
+  p {
+    margin-bottom: 20px;
+  }
+}
+
+.error-reasons, .suggestions-list {
+  margin: 20px 0;
+  padding-left: 30px;
+
+  li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+}
+
+.brand-message {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-style: italic;
+  color: #555;
+}
+
+.btn-primary {
+  background-color: #000000;
+  border-color: #000000;
+  color: white;
+  padding: 10px 25px;
+  font-size: 1.1rem;
+
+  &:hover {
+    background-color: #333;
+    border-color: #333;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .error-page-container {
+    margin-top: 20px;
+    margin-bottom: 40px;
+  }
+
+  .error-image img {
+    width: 200px;
+    height: 200px;
+  }
+
+  .error-description {
+    font-size: 1rem;
+  }
+}

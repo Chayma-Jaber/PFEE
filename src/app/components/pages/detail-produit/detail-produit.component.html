@@ -1,0 +1,355 @@
+<!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+
+<div class="blur-wrapper" [ngClass]="{'blurred': isBlurred}" *ngIf="!isLoading">
+
+
+  <div class="container product-page-container" *ngIf="!isLoading">
+    <div class="product-container row">
+
+      <!-- Mobile Image Slider -->
+      <div class="col-12 d-md-none mobile-image-slider">
+        <div class="mobile-images-container">
+          <div class="d-flex">
+            <div class="mobile-image-item" *ngFor="let image of images; let index = index">
+              <img [src]="image" class="mobile-product-image" [title]="product.title"
+                alt="{{product.title}} - Vue {{index + 1}}" (touchstart)="onMobileTouchStart($event)"
+                (touchmove)="onMobileTouchMove($event)" (touchend)="onMobileTouchEnd($event)"
+                (click)="handleMobileImageClick($event); setActiveThumbnail(index)"
+                [style.transform]="'scale(' + mobileZoomLevel + ') translate(' + mobileTranslateX + 'px, ' + mobileTranslateY + 'px)'"
+                [style.transition]="mobileIsDragging ? 'none' : 'transform 0.3s ease'"
+                [class.mobile-zoomed]="mobileIsZoomed" appLazyLoadImage>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile zoom controls -->
+        <div class="mobile-zoom-controls" *ngIf="mobileIsZoomed">
+          <button class="zoom-reset-btn" (click)="resetMobileZoom()">
+            <i class="fas fa-search-minus"></i>
+          </button>
+          <span class="zoom-level-indicator">{{ (mobileZoomLevel * 100).toFixed(0) }}%</span>
+        </div>
+        <!-- Mobile zoom hint -->
+        <div class="mobile-zoom-hint" *ngIf="!mobileIsZoomed && isMobileView()">
+          <i class="fas fa-search-plus"></i>
+          <span>Double-tap pour zoomer</span>
+        </div>
+      </div>
+
+      <!-- Left side: Thumbnails (Desktop/Tablet only) -->
+      <div class="col-2 col-sm-2 col-md-1 thumbnail-column d-none d-md-flex flex-column align-items-center h-100">
+        <div class="thumbnail-wrapper">
+          <div class="thumbnail-nav d-none d-md-flex justify-content-center">
+            <button class="nav-arrow up-arrow mb-2" aria-label="Previous thumbnails">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+          </div>
+          <div class="thumbnail-list">
+            <div class="thumbnail-item" *ngFor="let image of images; let index = index"
+              [ngClass]="{'active': activeThumbnail === index}" (click)="setActiveThumbnail(index)">
+              <img [src]="image" class="thumbnail-img" alt="{{product.title}} - Miniature {{index + 1}}"
+                appLazyLoadImage>
+            </div>
+          </div>
+          <div class="thumbnail-nav d-none d-md-flex justify-content-center">
+            <button class="nav-arrow down-arrow mt-2" aria-label="Next thumbnails">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Main product image (Desktop/Tablet only) -->
+      <div class="col-10 col-sm-10 col-md-6 main-image-col d-none d-md-flex align-items-center">
+        <div class="main-image-container">
+          <img [src]="images[activeThumbnail]" class="main-product-image img-fluid"
+            alt="{{product.title}} - {{product.colors && product.selectedColorIndex >= 0 ? product.colors[product.selectedColorIndex].name : 'Image principale'}}"
+            appLazyLoadImage (click)="handleImageClick($event)" (mousedown)="startDragging($event)"
+            (mousemove)="onDrag($event)" (mouseup)="stopDragging()" (mouseleave)="stopDragging()"
+            [style.transform]="'scale(' + zoomLevel + ') translate(' + translateX + 'px, ' + translateY + 'px)'"
+            [style.transition]="isDragging ? 'none' : 'transform 0.3s ease'" [class.zoomed]="isZoomed">
+        </div>
+      </div>
+
+      <!-- Right side: Product details -->
+      <div class="col-12 col-md-5 product-details-col">
+        <div class="product-details">
+          <h1 class="product-title">{{ product.title }}</h1>
+          <div class="product-ref">Réf:{{ product.sku }}</div>
+
+          <!-- Price display with discount support -->
+          <div class="product-price-container" *ngIf="product.discount; else regularPrice">
+            <div class="current-price">{{ (product.currentPrice || 0).toFixed(3) }} TND</div>
+            <div class="price-with-discount">
+              <span class="original-price">{{ (product.price || 0).toFixed(3) }} TND</span>
+              <span class="discount-badge">{{ product.discountValue }}%</span>
+            </div>
+          </div>
+          <ng-template #regularPrice>
+            <div class="product-price">{{ (product.currentPrice|| 0).toFixed(3) }} TND</div>
+          </ng-template>
+
+          <!-- Color selection -->
+          <div class="color-section mt-4">
+            <div class="color-options d-flex flex-wrap justify-content-center mt-2">
+              <div *ngFor="let color of product?.colors; let i = index" class="color-option"
+                [class.active]="product.selectedColorIndex === i" (click)="selectColor(i)">
+                <img [src]="color.textureImage" [alt]="'Couleur ' + color.name + ' pour ' + product.title"
+                  class="color-swatch">
+              </div>
+              <br>
+
+
+            </div>
+            <br>
+            <p class="text-center p mt-2" *ngIf="product?.colors?.length">
+              COULEUR : {{ product.colors[product.selectedColorIndex].name }}
+            </p>
+          </div>
+
+          <!-- Size selection -->
+          <div class="size-section mt-4" *ngIf="isSizeSelectionRequired">
+            <div class="size-options d-flex justify-content-center">
+
+              <div class="size-dropdown">
+                <button class="size-btn" (click)="toggleSizeTable()">
+                  <ng-container *ngIf="selectedSize; else selectSizeText">
+                    {{ sizeLabel }} SELECTIONNÉE EST <span class="taille">{{ selectedSize }}</span>
+                  </ng-container>
+                  <ng-template #selectSizeText>
+                    SELECTIONNER {{ sizeLabel }}
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                  </ng-template>
+                </button>
+              </div>
+            </div>
+
+            <!-- Size table in a separate div -->
+            <div class="size-table-wrapper" *ngIf="showSizeTable">
+              <div class="size-table-container">
+                <table class="size-table">
+                  <tbody>
+                    <tr *ngFor="let taille of product.tailles"
+                      (click)="taille.state !== 'Rupture de stock' && selectSize(taille.size)"
+                      [ngClass]="{'selected-size': selectedSize === taille.size, 'out-of-stock': taille.state === 'Rupture de stock'}">
+                      <td>
+                        <div class="size-content">
+                          <span class="size-value">{{ taille.size }}</span>
+                          <span class="size-state" *ngIf="taille.state">{{ taille.state }}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add to cart button -->
+          <div class="cart-section mt-4 d-flex justify-content-center">
+            <button class="add-to-cart-btn" (click)="addToCart()">
+              AJOUTER AU PANIER
+            </button>
+          </div>
+
+          <!-- Total Look section -->
+          <div class="total-look-section mt-5" *ngIf="produits.length > 0">
+            <h2 class="section-title">Total Look</h2>
+
+            <!-- Loading indicator for total look -->
+            <div class="total-look-loading" *ngIf="totalLookLoading">
+              <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total look products -->
+            <div class="total-look-products" *ngIf="!totalLookLoading">
+              <div class="total-look-container">
+                <!-- Navigation arrows - only shown when there are more than 3 products -->
+                <button *ngIf="produits.length > 3" class="total-look-nav-arrow total-look-prev"
+                  (click)="scrollTotalLook('prev')">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <!-- Scrollable container for total look products -->
+                <div class="total-look-items" [class.center-items]="produits.length <= 2" #totalLookItems>
+                  <div class="total-look-item" *ngFor="let produit of produits">
+                    <div class="look-product-card">
+                      <a [href]="getProductDetailUrl(produit)" [routerLink]="[getProductDetailUrl(produit)]"
+                        class="product-link" (click)="onProductClick()">
+                        <div class="product-image-container">
+                          <img [src]="produit.image" [alt]="'Total Look - ' + produit.nom" class="look-product-image"
+                            appLazyLoadImage>
+                        </div>
+                        <div class="look-product-info">
+                          <div class="look-product-name">{{ produit.nom }}</div>
+                          <div class="look-product-price">{{ produit.prix }}</div>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Navigation arrows - only shown when there are more than 3 products -->
+                <button *ngIf="produits.length > 3" class="total-look-nav-arrow total-look-next"
+                  (click)="scrollTotalLook('next')">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="favorites-action mt-3 d-flex justify-content-center">
+            <button class="favorites-btn" (click)="addToWishlist()">
+              <i class="fa-heart" [ngClass]="{'fa-solid': isInWishlist, 'fa-regular': !isInWishlist}"></i>
+              {{ isInWishlist ? 'RETIRER DES FAVORIS' : 'AJOUTER AUX FAVORIS' }}
+            </button>
+          </div>
+
+          <!-- Product information accordions -->
+          <div class="product-info-section mt-4" *ngIf="!isLoading">
+            <div class="info-accordion">
+              <div class="info-header" (click)="toggleDetails()">
+                <div class="info-icon">
+                  <i class="fa-regular fa-star"></i>
+                </div>
+                <div class="info-title">QUALITÉS ET CARACTÉRISTIQUES</div>
+                <div class="info-toggle">
+                  <i class="fas" [ngClass]="showDetails ? 'fa-minus' : 'fa-plus'"></i>
+                </div>
+              </div>
+              <div class="info-content" *ngIf="showDetails">
+                <p class="comp" *ngIf="productMeta?.shortDesc">{{ productMeta?.shortDesc }}</p>
+                <p *ngIf="productMeta?.longDesc">{{ productMeta?.longDesc }}</p>
+              </div>
+            </div>
+
+            <!-- Composition Accordion -->
+            <div class="info-accordion" *ngIf="productMeta?.composition">
+              <div class="info-header" (click)="toggleComposition()">
+                
+                <div class="info-title">Composition</div>
+                <div class="info-toggle">
+                  <i class="fas" [ngClass]="showComposition ? 'fa-minus' : 'fa-plus'"></i>
+                </div>
+              </div>
+              <div class="info-content" *ngIf="showComposition">
+                <p class="comp">{{ productMeta?.composition }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="related-products-section" *ngIf="!isLoading && produitss && produitss.length > 0">
+    <div class="container">
+      <h1 class="font text-center mb-4">ARTICLES QUI POURRAIENT VOUS INTERESSER</h1>
+      <div class="related-products-carousel">
+        <!-- Navigation arrows - only shown when there are more than 4 products and not on mobile -->
+        <button *ngIf="produitss.length > 4" class="related-nav-arrow related-prev d-none d-sm-flex"
+          (click)="prevRelatedProduct()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <div class="related-products-container">
+          <!-- On mobile, we show all products with horizontal scroll -->
+          <div class="related-products-grid">
+            <!-- For mobile, we use all products instead of just visible ones -->
+            <div *ngFor="let produit of isMobileView() ? produitss : visibleRelatedProducts"
+              class="related-product-item">
+              <div class="related-card">
+                <div class="wishlist-icon" (click)="toggleWishlist(produit); $event.stopPropagation();">
+                  <i class="fa-heart"
+                    [ngClass]="{'fa-solid': produit?.isInWishlist === true, 'fa-regular': produit?.isInWishlist !== true}"></i>
+                </div>
+                <div class="related-image-container">
+                  <a [href]="getProductDetailUrl(produit)" [routerLink]="[getProductDetailUrl(produit)]"
+                    class="product-link" (click)="onProductClick()">
+                    <img [src]="produit.image"
+                      alt="{{produit.nom}} - {{produit.colors && produit.colors.length > 0 ? produit.colors[0] : 'Article similaire'}}"
+                      class="related-image" appLazyLoadImage>
+                  </a>
+                </div>
+                <div class="related-content">
+                  <h3 class="related-title">{{ produit.nom }}</h3>
+                  <p class="related-price">{{ produit.prix }}</p>
+                  <!-- <div class="related-colors">
+                    <span *ngFor="let color of produit.colors"
+                          class="related-color-circle"
+                          [style.backgroundColor]="color">
+                    </span>
+                  </div> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation arrows - only shown when there are more than 4 products and not on mobile -->
+        <button *ngIf="produitss.length > 4" class="related-nav-arrow related-next d-none d-sm-flex"
+          (click)="nextRelatedProduct()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Close blur wrapper so popup isn't affected by filter -->
+</div>
+
+<!-- Cart Popup -->
+<div class="cart-popup" *ngIf="showCartPopup">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h3 class="popup-title">PANIER</h3>
+      <button class="close-btn" (click)="closeCartPopup()">
+        X
+      </button>
+    </div>
+
+    <div class="popup-item">
+      <img [src]="cartItem.image" alt="{{product.title}} ajouté au panier" class="popup-image" appLazyLoadImage>
+      <div class="popup-details">
+        <span class="popup-ref">Taille {{selectedSize}} Ajouté au panier &nbsp;
+          <button class="button" [routerLink]="['/cart']">Voir panier</button>
+        </span>
+      </div>
+    </div>
+
+
+
+
+  </div>
+</div>
+<p-toast></p-toast>
+
+<div class="fullscreen-image-popup" *ngIf="showFullScreenImage">
+  <div class="fullscreen-image-container" #fullscreenContainer>
+    <button class="close-fullscreen-btn" (click)="closeFullScreenImage()">
+      <i class="fas fa-times"></i>
+    </button>
+    <div class="fullscreen-zoom-hint" *ngIf="!fsIsZoomed">
+      <i class="fas fa-search-plus"></i>
+      <span>Double-cliquez sur l'image pour zoomer</span>
+    </div>
+    <img #fullscreenImage [src]="fullScreenImageSrc" [title]="product.title" alt="Vue agrandie - {{product.title}}"
+      class="fullscreen-image" appLazyLoadImage (dblclick)="toggleFullscreenZoom($event)"
+      (mousedown)="startFullscreenDrag($event)" (mousemove)="onFullscreenDrag($event)" (mouseup)="stopFullscreenDrag()"
+      (mouseleave)="stopFullscreenDrag()"
+      [style.transform]="'translate(' + fsTranslateX + 'px, ' + fsTranslateY + 'px) scale(' + fsZoomLevel + ')'"
+      [style.transition]="fsIsDragging ? 'none' : 'transform 0.3s ease'" [class.fs-zoomed]="fsIsZoomed"
+      [class.fs-dragging]="fsIsDragging">
+  </div>
+</div>

@@ -1,0 +1,369 @@
+<!-- Interface principale - Liste des commandes -->
+
+
+
+<h2 class=" title mb-2">DEMANDE DE RETOUR</h2>
+            <div class="line mb-2"></div>
+<div class="container my-5" *ngIf="!showReturnInterface && !showRefundType && !showViewReturnInterface && !showAddressSelection">
+  <h2 class="fw-bold mb-4 text-start titre-principal">Mes commandes</h2>
+
+  <div class="row g-3">
+    <ng-container *ngFor="let retour of retours">
+      
+      <div class="col-12 d-flex align-items-center justify-content-start" style="margin-left: 20px;">
+        <div class="flex-grow-1">
+          <div class="row align-items-center">
+            <div class="col-3 col-md-3">{{ retour.date }}</div>
+            <div class="col-3 col-md-2">{{ retour.ref }}</div>
+            <div class="col-3 col-md-3">{{ retour.montant }}</div>
+            <div class="col-3 col-md-3 livre" [ngClass]="{'etat-green': retour.source === 'order', 'etat-orange': retour.source === 'return'}">{{ retour.etat }}</div>
+
+          </div>
+        </div>
+        <div class="ms-3 d-flex align-items-center" style="min-width:unset;">
+          <button
+            class="btn btn-retourner"
+            *ngIf="retour.etat !== 'Enregistré'; else voirBtn"
+            (click)="showReturnForm(retour.ref)"
+            [disabled]="loadingReturnRef === retour.ref || loadingViewRef !== null">
+            <ng-container *ngIf="loadingReturnRef === retour.ref; else retourText">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </ng-container>
+            <ng-template #retourText>RETOURNER</ng-template>
+          </button>
+          <ng-template #voirBtn>
+            <button class="btn btn-retourner " (click)="voirRetour(retour.ref)" [disabled]="loadingViewRef === retour.ref || loadingReturnRef !== null">
+              <ng-container *ngIf="loadingViewRef === retour.ref; else voirText">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              </ng-container>
+              <ng-template #voirText>VOIR</ng-template>
+            </button>
+          </ng-template>
+        </div>
+        
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Interface de retour -->
+<div class="container-fluid return-interface" *ngIf="showReturnInterface">
+  <!-- Contenu principal de l'interface de retour -->
+  <div class="return-content">
+    <div class="container">
+      <!-- En-tête avec référence de commande -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h3 class="command-ref text-start">Commande réf: {{ selectedOrderRef }}</h3>
+        </div>
+      </div>
+
+      <!-- En-têtes des colonnes (Desktop uniquement) -->
+      <div class="row mb-3 d-none d-md-flex column-headers ">
+        <div class="col-md-1"></div> <!-- Checkbox column -->
+        <div class="col-md-2 ">
+          <span class="column-header">PRODUIT</span>
+        </div>
+        <div class="col-md-2">
+          <span class="column-header">REF</span>
+        </div>
+        <div class="col-md-1">
+          <span class="column-header">QUANTITÉ</span>
+        </div>
+        <div class="col-md-2">
+          <span class="column-header">TAILLE</span>
+        </div>
+        <div class="col-md-4">
+          <span class="column-header">MOTIF</span>
+        </div>
+      </div>
+
+      <!-- Liste des produits -->
+      <div class="products-list " *ngIf="detailRetours && detailRetours.length > 0">
+        <ng-container *ngFor="let item of detailRetours; let i = index">
+          <div class="row product-row align-items-center mb-3 ">
+            <!-- Checkbox -->
+            <div class="col-12 col-md-1 mb-2 mb-md-0">
+              <div class="checkbox-container">
+                <input
+                  type="checkbox"
+                  [id]="'product-' + i"
+                  [checked]="item.selected"
+                  (change)="onProductCheckboxChange(i, $event)"
+                  class="product-checkbox">
+                  <img [src]="item.image" [alt]="item.produit" class="product-image ms-2" style="width: 100px; height: 100px; object-fit: contain;">
+              </div>
+            </div>
+            <!-- Image et nom du produit -->
+            <div class="col-6 col-md-2 mb-2 mb-md-0">
+              <div class="product-info d-flex align-items-center">
+                <span class="product-name">{{ item.produit }}</span>
+              </div>
+            </div>
+
+            <!-- Référence -->
+            <div class="col-6 col-md-2 mb-2 mb-md-0">
+ 
+            </div>
+            <!-- Quantité -->
+            <div class="col-6 col-md-1 mb-2 mb-md-0">
+              <div class="product-field">
+                <span class="field-label d-md-none">QUANTITÉ:</span>
+                <div class="quantity-control">
+                  <button class="quantity-btn minus" (click)="decreaseQuantity(i)" [disabled]="!item.selected || item.quantite <= 1">-</button>
+                  <span class="product-quantity">{{ item.quantite }}</span>
+                  <button class="quantity-btn plus" (click)="increaseQuantity(i)" [disabled]="!item.selected || item.quantite >= item.quantiteMax">+</button>
+                </div>
+              </div>
+            </div>
+            <!-- Taille -->
+            <div class="col-6 col-md-2 mb-2 mb-md-0">
+              <div class="product-field">
+                <span class="field-label d-md-none">TAILLE:</span>
+                <span class="product-size">{{ item.taille }}</span>
+              </div>
+            </div>
+            <!-- Motif -->
+            <div class="col-6 col-md-4 mb-2 mb-md-0">
+              <div class="product-field">
+                <span class="field-label d-md-none">MOTIF:</span>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary w-100 motif-select-button"
+                  (click)="openMotifModal(i)"
+                  [disabled]="!item.selected">
+                  {{ item.selectedMotif || 'sélectionnez' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <div *ngIf="detailRetours && detailRetours.length === 0" class="text-center text-muted py-5">
+        Aucun produit à retourner.
+      </div>
+
+      <!-- Boutons de navigation -->
+      <div class="row mt-4">
+        <div class="col-12 d-flex justify-content-center" style="gap: 5px;">
+          <button class="btn btn-suivant" (click)="goBack()">
+            PRÉCÉDENT
+          </button>
+          <button
+            class="btn btn-suivant"
+            [disabled]="!canProceed()"
+            (click)="processReturn()">
+            SUIVANT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Motif Selection Modal -->
+<div class="motif-modal" *ngIf="showMotifModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Motif</h5>
+      <button type="button" class="close-button" (click)="closeMotifModal()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="motif-options">
+        <button
+          *ngFor="let motif of motifs"
+          class="btn btn-outline-primary motif-option-button"
+          [class.active]="selectedMotifInModal === motif.name"
+          (click)="selectMotifInModal(motif.name)">
+          {{ motif.name }}
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-dark" (click)="applyMotif()">APPLIQUER</button>
+    </div>
+  </div>
+</div>
+
+<!-- Interface de sélection du type de remboursement -->
+<div class="container my-5" *ngIf="showRefundType && selectedRefundType !== 'bancaire'">
+  <h2 class="fw-bold mb-4 text-start titre-principal">Type De Remboursement</h2>
+  <div class="refund-type-options">
+    <div>
+      <button class="refund-option" [ngClass]="{'selected': selectedRefundType === 'avoir'}" (click)="selectRefundType('avoir')">
+        Bon d'achat (avoir)
+      </button>
+      <div class="refund-info">
+        <span class="refund-icon">&#9432;</span>
+        <span class="refund-text">Un bon d'achat sera créé automatiquement dans votre compte à compter de la date àlequelle nous recevrons votre retour dans nos entrepots</span>
+      </div>
+    </div>
+    <div>
+      <button class="refund-option" [ngClass]="{'selected': selectedRefundType === 'bancaire'}" (click)="selectRefundType('bancaire')">
+        Remboursement bancaire
+      </button>
+      <div class="refund-info">
+        <span class="refund-icon">&#9432;</span>
+        <span class="refund-text">Un remboursement bancaire sera effectué en utilisant que vous l'avez indiqué sur le formulaire de retour à compter de la date àlaquelle nous recevrons votre retour dans nos entrepots</span>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="submitError" class="alert alert-danger mt-2">{{ submitError }}</div>
+  <div *ngIf="submitSuccess" class="alert alert-success mt-2">Votre demande de retour a été envoyée avec succès.</div>
+  <div class="text-center mt-4 d-flex justify-content-center" style="gap: 5px;">
+    <button class="btn btn-dark px-4 py-3" style="background-color: black; color: white;" (click)="goBack()" [disabled]="loadingSubmit">PRÉCÉDENT</button>
+    <button class="btn btn-dark px-4 py-3" style="background-color: black; color: white;" (click)="submitReturnRequest()" [disabled]="loadingSubmit">
+      <span *ngIf="loadingSubmit" class="spinner-border spinner-border-sm me-2"></span>
+      CONFIRMER
+    </button>
+  </div>
+</div>
+
+<!-- Interface bancaire -->
+<div *ngIf="selectedRefundType === 'bancaire' && !showReturnInterface && showRefundType">
+  <h2 class="fw-bold mb-4 text-start titre-principal">Type De Remboursement</h2>
+  <button class="refund-option dark selected" style="margin-bottom: 32px; width: 100%; max-width: 700px; display: block; margin-left: auto; margin-right: auto;">Remboursement bancaire</button>
+  <div class="bank-refund-form-wrapper">
+    <form class="bank-refund-form" autocomplete="off" (submit)="$event.preventDefault(); submitReturnRequest();">
+      <div class="form-group mb-3">
+        <input type="text" class="form-control" placeholder="Nom et Prénom*" [(ngModel)]="holderName" name="holderName" required>
+      </div>
+      <div class="form-row d-flex align-items-center gap-2 mb-3">
+        <input type="text" class="form-control rib" placeholder="RIB*" [(ngModel)]="rib" name="rib" required pattern="^[0-9]{20}$" maxlength="20" minlength="20" (input)="onRibInput()" [ngClass]="{'is-invalid': ribTouched && !isRibValid()}" (blur)="ribTouched = true" />
+        <input type="file" id="ribFile" style="display: none;" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileSelected($event)">
+        <button type="button" class="attach-btn" (click)="triggerFileInput()">
+          {{ selectedFileName }}
+          <span class="arrow" style="vertical-align: middle; margin-left: 8px;">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:inline;" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 8L10 13L15 8" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+      <div *ngIf="ribTouched && !isRibValid()" class="invalid-feedback" style="display:block;">
+        Le RIB doit contenir exactement 20 chiffres.
+      </div>
+      <div *ngIf="submitError" class="alert alert-danger mt-2">{{ submitError }}</div>
+      <div *ngIf="submitSuccess" class="alert alert-success mt-2">Votre demande de retour a été envoyée avec succès.</div>
+      <div class="d-flex justify-content-center mt-4 gap-2">
+        <button class="confirm-btn" type="button" (click)="goBack()" [disabled]="loadingSubmit">PRÉCÉDENT</button>
+        <button class="confirm-btn" type="submit" [disabled]="loadingSubmit || !isRibValid()">
+          <span *ngIf="loadingSubmit" class="spinner-border spinner-border-sm me-2"></span>
+          CONFIRMER
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Interface de visualisation du détail de retour -->
+<div class="container-fluid view-return-interface" *ngIf="showViewReturnInterface">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-10">
+      <h2 class="fw-bold mb-2 text-start retour-titre" style="font-family: 'std95';">Les articles de retour en ligne</h2>
+      <div class="commande-ref mb-4 text-start" style="font-family: 'std55'; font-size: 1.1rem;">Commande réf: {{ selectedOrderRef }}</div>
+      <div *ngFor="let item of detailRetours" class="retour-produit-wrapper mb-4 d-flex flex-column flex-md-row align-items-center gap-3">
+        <div class="d-flex flex-row align-items-center me-md-3 mb-2 mb-md-0">
+          <input type="checkbox" checked disabled class="retour-checkbox me-2" style="width: 18px; height: 18px; accent-color: #1a1a18;" />
+          <img [src]="item.image" [alt]="item.produit" class="retour-produit-image" style="width: 120px; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid #e0e0e0;" />
+        </div>
+        <div >
+          <div class="row retour-produit-titres text-uppercase text-secondary fw-bold mb-2" style="font-size: 1rem; letter-spacing: 1px;">
+            <div class="col-3 text-center" style="min-width: 90px;">Produit</div>
+            <div class="col-3 text-center" style="min-width: 90px;">Ref</div>
+            <div class="col-3 text-center" style="min-width: 90px;">Quantité</div>
+            <div class="col-3 text-center" style="min-width: 90px;">Taille</div>
+          </div>
+          <div class="row retour-produit-donnees flex-grow-1" style="font-size: 1.1rem;">
+            <div class="col-3 text-center" style="min-width: 90px;">{{ item.produit }}</div>
+            <div class="col-3 text-center" style="min-width: 90px;">{{ item.ref }}</div>
+            <div class="col-3 text-center" style="min-width: 90px;">{{ item.quantite }}</div>
+            <div class="col-3 text-center" style="min-width: 90px;">{{ item.taille }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center mt-4">
+        <button class="btn" style="background-color: black; color: white; padding: 12px 32px;" (click)="goBack()">PRÉCÉDENT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interface Adresse de Retrait -->
+<div class="container my-5" *ngIf="showAddressSelection && !showReturnInterface && !showRefundType && !showViewReturnInterface">
+  <h2 class="fw-bold mb-4 text-start titre-principal">Adresse De Retrait</h2>
+  <div class="mb-3">
+    <label class="form-label text-start" style="display: block;">Adresse</label>
+    <button class="address-select-btn" (click)="openAddressModal()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; border: 1px solid #ccc; border-radius: 6px; padding: 12px 16px; background: #fff;">
+      <span [ngClass]="{'text-muted': !selectedAddress}">
+        {{ selectedAddress ? selectedAddress.address : 'Vos adresses' }}
+      </span>
+      <span style="font-size: 1.5rem; color: #888;">&#8250;</span>
+    </button>
+  </div>
+  <div class="d-flex justify-content-center mt-4" style="gap: 5px;">
+    <button class="btn btn-dark" (click)="goBack()">Précédent</button>
+    <button class="btn btn-dark" [disabled]="!selectedAddress" (click)="confirmAddress()">Confirmer</button>
+  </div>
+</div>
+
+<p-toast></p-toast>
+
+<!-- Bloc Livré -->
+<div class="container" *ngIf="!showReturnInterface && !showRefundType && !showViewReturnInterface && !showAddressSelection && (retoursLivre.length > 0 || retoursEnregistre.length > 0)">
+  <div class="row mb-2 d-none d-md-flex" style="margin-left:2px;">
+    <div class="col-3 col-md-2 text-secondary ">DATE</div>
+    <div class="col-3 col-md-2 text-secondary ">RÉF</div>
+    <div class="col-3 col-md-3 text-secondary ">MONTANT TOTAL</div>
+    <div class="col-3 col-md-2 text-secondary ">ÉTAT</div>
+    <div class="col-12 col-md-3"></div>
+  </div>
+  <div class="row g-3">
+    <ng-container *ngFor="let retour of retoursLivre">
+      <div class="col-12 d-flex align-items-center justify-content-start" style="margin-left: 20px;">
+        <div class="flex-grow-1">
+          <div class="row align-items-center">
+            <div class="col-3 col-md-3">{{ retour.date }}</div>
+            <div class="col-3 col-md-2">{{ retour.ref }}</div>
+            <div class="col-3 col-md-3">{{ retour.montant }}</div>
+            <div class="col-3 col-md-3 livre etat-green">{{ retour.etat }}</div>
+          </div>
+        </div>
+        <div class="ms-3 d-flex align-items-center" style="min-width:unset;">
+          <button
+            class="btn btn-retourner"
+            (click)="showReturnForm(retour.ref)"
+            [disabled]="loadingReturnRef === retour.ref || loadingViewRef !== null">
+            <ng-container *ngIf="loadingReturnRef === retour.ref; else retourText">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </ng-container>
+            <ng-template #retourText>RETOURNER</ng-template>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+ 
+    <ng-container *ngFor="let retour of retoursEnregistre">
+      <div class="col-12 d-flex align-items-center justify-content-start" style="margin-left: 20px;">
+        <div class="flex-grow-1">
+          <div class="row align-items-center">
+            <div class="col-3 col-md-3">{{ retour.date }}</div>
+            <div class="col-3 col-md-2">{{ retour.ref }}</div>
+            <div class="col-3 col-md-3">{{ retour.montant }}</div>
+            <div class="col-3 col-md-3 etat-orange">{{ retour.etat }}</div>
+          </div>
+        </div>
+        <div class="ms-3 d-flex align-items-center" style="min-width:unset;">
+          <button class="btn btn-retourner " (click)="voirRetour(retour.ref)" [disabled]="loadingViewRef === retour.ref || loadingReturnRef !== null">
+            <ng-container *ngIf="loadingViewRef === retour.ref; else voirText">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </ng-container>
+            <ng-template #voirText>VOIR</ng-template>
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

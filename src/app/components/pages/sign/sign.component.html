@@ -1,0 +1,597 @@
+
+<!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+<div class="main-wrapper" [ngClass]="{'blur-background': showPrivacyDialog}">
+<div class="stepper-container">
+  <div class="step" [ngClass]="{'active': currentStep >= 1}">
+    <div class="circle">1</div>
+    <span>Connectez-vous</span>
+  </div>
+  <div class="line" [ngClass]="{'active': currentStep >= 2}"></div>
+  <div class="step" [ngClass]="{'active': currentStep >= 2}">
+    <div class="circle">2</div>
+    <span>Livraison</span>
+  </div>
+  <div class="line" [ngClass]="{'active': currentStep >= 3}"></div>
+  <div class="step" [ngClass]="{'active': currentStep >= 3}">
+    <div class="circle">3</div>
+    <span>Paiement</span>
+  </div>
+  <div class="line" [ngClass]="{'active': currentStep >= 4}"></div>
+  <div class="step" [ngClass]="{'active': currentStep >= 4}">
+    <div class="circle">4</div>
+    <span>Confirmation</span>
+  </div>
+</div>
+<div class="linee"></div>
+
+<!-- Step 1: Login/Register -->
+<div class="main-content" *ngIf="currentStep === 1">
+  <div class="content-container">
+    <div class="login-section">
+      <!-- Login Form -->
+      <div *ngIf="!showCreateAccount && !showOtpForm && !showForgotPassword">
+        <div class="section-header">
+          <div class="circle-number">1</div>
+          <h2>SE CONNECTER</h2>
+        </div>
+        <!-- <div class="login-info">
+          <p>Connectez-vous sur votre compte sur Barsha</p>
+          <p>Connectez-vous sur votre compte sur Barsha pour suivre vos commandes en ligne</p>
+        </div> -->
+
+        <div class="login-form">
+          <div class="form-group">
+            <input type="text" placeholder="Adresse mail OU numéro de tél *" class="form-input form-control" [(ngModel)]="loginData.identifier">
+          </div>
+          <div class="form-group password-field">
+            <input type="password" placeholder="Mot de passe *" class="form-input form-control" [(ngModel)]="loginData.password" [type]="showPassword ? 'text' : 'password'">
+            <span class="password-toggle" (click)="togglePasswordVisibility()">
+              <i class="material-icons">{{ showPassword ? 'visibility' : 'visibility_off' }}</i>
+            </span>
+          </div>
+          <div class="form-actions">
+            <button class="btn-create btn btn-outline-dark" (click)="toggleCreateAccount()">CRÉER UN COMPTE</button>
+            <button class="btn-connect btn btn-dark" (click)="login()">SE CONNECTER</button>
+          </div>
+          <div class="forgot-password">
+            <a (click)="showForgotPasswordForm()">Mot de passe oublié</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div *ngIf="showForgotPassword">
+        <div class="recover-password-content">
+          <h1 class="title">RÉCUPÉRER MOT DE PASSE</h1>
+          <p class="description">
+            SI VOUS AVEZ OUBLIÉ VOTRE MOT DE PASSE, RENSEIGNEZ VOTRE TELEPHONE ET
+            NOUS VOUS ENVERRONS UN SMS CONTENANT CODE DE VALIDATION POUR LE
+            CONTINUER.
+          </p>
+
+          <!-- Step 1: Phone Number -->
+          <div *ngIf="!otpSent && !otpVerified">
+            <div class="form-group">
+              <label for="phone">Téléphone *</label>
+              <input type="tel" id="phone" class="form-input" [(ngModel)]="phoneNumber">
+            </div>
+            <div class="button-group">
+              <button class="send-code-button" (click)="sendOtp2()">Envoyer un code</button>
+            </div>
+          </div>
+
+          <!-- Step 2: OTP Verification -->
+          <div *ngIf="otpSent && !otpVerified">
+            <div class="verification-section">
+              <p class="verification-text">Entrez votre code de vérification ici</p>
+              <input type="text" class="otp-input" [(ngModel)]="otpCode">
+              <button class="verify-button" (click)="forgotPassword()">Vérifier</button>
+            </div>
+            <div class="resend-info">
+              <p>Vous pourrez renvoyer le code dans ({{ countdown }} secondes)</p>
+            </div>
+          </div>
+
+          <!-- Step 3: Reset Password -->
+          <div *ngIf="otpVerified">
+            <div class="form-group">
+              <label for="new-password">Code OTP</label>
+              <input type="text" id="new-password" class="form-input" [(ngModel)]="otpCode" disabled>
+            </div>
+            <div class="form-group password-field">
+              <label for="new-password">Nouveau mot de passe</label>
+              <input type="password" id="new-password" class="form-input" [(ngModel)]="newPassword" placeholder="Nouveau mot de passe">
+            </div>
+            <div class="form-group password-field">
+              <label for="confirm-password">Confirmer votre mot de passe</label>
+              <input type="password" id="confirm-password" class="form-input" [(ngModel)]="confirmPassword" placeholder="Confirmer votre nouveau mot de passe">
+            </div>
+            <div class="button-group">
+              <button class="continue-button active" (click)="resetPassword()">Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <div *ngIf="showCreateAccount && !showOtpForm">
+        <div class="section-header">
+          <div class="circle-number">1</div>
+          <h2>Saisissez votre adresse e-mail</h2>
+        </div>
+        <!-- <div class="create-account-info">
+          <p>Créez votre compte sur Barsha</p>
+          <p>Créez votre compte sur Barsha pour suivre vos commandes en ligne</p>
+        </div> -->
+        <div class="create-account-form">
+          <form [formGroup]="registrationForm" (ngSubmit)="register()">
+            <div class="form-group">
+              <input type="text" placeholder="Prénom*" class="form-input" formControlName="firstName">
+            </div>
+            <div class="form-group">
+              <input type="text" placeholder="Nom*" class="form-input" formControlName="lastName">
+            </div>
+            <div class="form-group">
+              <input type="tel" placeholder="Numéro de tél*" class="form-input" formControlName="phone" [disabled]="otpSent">
+            </div>
+            <div class="form-group">
+              <input type="email" placeholder="Adresse mail*" class="form-input" formControlName="email">
+              <div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" class="error-message">
+                Veuillez entrer une adresse email valide
+              </div>
+            </div>
+            <div class="form-group password-field">
+              <input type="password" placeholder="Mot de passe*" class="form-input" formControlName="password" [type]="showPassword ? 'text' : 'password'">
+              <span class="password-toggle" (click)="togglePasswordVisibility()">
+                <i class="material-icons">{{ showPassword ? 'visibility' : 'visibility_off' }}</i>
+              </span>
+              <div *ngIf="registrationForm.get('password')?.invalid && registrationForm.get('password')?.touched" class="error-message">
+                Veuillez entrer un mot de passe
+              </div>
+            </div>
+            <div class="form-group">
+              <input type="date" placeholder="Date de naissance*" class="form-input" formControlName="birthday">
+              <div *ngIf="registrationForm.get('birthday')?.invalid && registrationForm.get('birthday')?.touched" class="error-message">
+                La date de naissance ne peut pas être dans le futur
+              </div>
+            </div>
+
+            <div class="gender-selection">
+              <span>Homme</span>
+              <input type="checkbox" id="homme" name="gender" (change)="setGender('Homme')" [checked]="registrationForm.get('gender')?.value === 'Homme'">
+              <span class="gender-space"></span>
+              <span>Femme</span>
+              <input type="checkbox" id="femme" name="gender" (change)="setGender('Femme')" [checked]="registrationForm.get('gender')?.value === 'Femme'">
+            </div>
+
+            <div class="privacy-policy">
+              <input type="checkbox" id="privacy" name="privacy" [(ngModel)]="privacyAccepted" [ngModelOptions]="{standalone: true}" required>
+              <a (click)="openPrivacyDialog()" for="privacy" class="privacy-link"> J'ai lu et compris la politique de confidentialité</a>
+            </div>
+
+            <button class="continue-button" type="submit" [disabled]="registrationForm.invalid || !privacyAccepted" [ngClass]="{'disabled-button': registrationForm.invalid || !privacyAccepted}">
+              Créer le compte
+            </button>
+          </form>
+          <br>
+          <div class="existing-account d-flex justify-content-center align-items-center">
+            <p class="m-0">Vous avez déjà un compte ? <a (click)="navigateToLogin()">Connectez-vous ici</a></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OTP Verification Form -->
+      <div *ngIf="showOtpForm">
+        <div class="otp-section">
+          <h1 class="page-title">VÉRIFICATION OTP</h1>
+          <div class="otp-form">
+            <div class="form-intro">
+              <p>Un code de vérification a été envoyé à votre numéro</p>
+              <p class="phone-number">{{ registrationForm.value.phone }}</p>
+            </div>
+            <div class="form-group">
+              <input
+                type="text"
+                placeholder="Code OTP*"
+                class="form-input"
+                [(ngModel)]="otpCode"
+                maxlength="6"
+                pattern="[0-9]*"
+                inputmode="numeric"
+                autocomplete="off"
+                (keypress)="onlyNumbers($event)">
+            </div>
+            <button class="verify-button" (click)="verifyOtp()">Vérifier</button>
+            <div class="resend-link">
+              <span>Vous n'avez pas reçu le code? </span>
+              <a href="javascript:void(0)" (click)="resendOtp()">Renvoyer le code</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-summary">
+      <div class="order-details">
+        <div class="order-title">VOTRE PANIER ({{ cartItemCount }} ARTICLES)</div>
+        <div class="products-list">
+          <div class="row row-cols-1 row-cols-md-2 g-3">
+            <div *ngFor="let item of displayItems" class="col">
+              <div class="product-item d-flex">
+                <div class="product-image">
+                  <img [src]="item.product.colors[item.product.selectedColorIndex].mainImage"
+                       [alt]="item.product.title"
+                       class="img-fluid">
+                </div>
+                <div class="product-info">
+                  <div class="product-name">
+                    <span class="product-quantity">{{item.quantity}}x</span> {{item.product.title}}
+                  </div>
+                  <div class="product-taille">Taille {{item.selectedSize}}</div>
+                  
+                  <!-- Affichage des prix (l'item ici est une ligne d'affichage, potentiellement issue d'une offre split) -->
+                  <div class="product-price-section">
+                    <ng-container *ngIf="item.hasDiscount">
+                      <div class="price-wrapper">
+                        <span class="promo-badge-small">Promo</span>
+                        <span class="original-price-small">{{ item.originalUnitPrice | number: '1.2-2' }} TND</span>
+                        <span class="discounted-price-small">{{ item.unitPrice | number: '1.2-2' }} TND</span>
+                        <span class="discount-percent-small">-{{ item.discountPercent }}%</span>
+                      </div>
+                    </ng-container>
+                    <ng-container *ngIf="!item.hasDiscount">
+                      <div class="price-wrapper">
+                        <span class="regular-price-small">{{ item.unitPrice | number: '1.2-2' }} TND</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="order-totals">
+
+
+          <!-- Afficher la réduction du code promo si un coupon est appliqué -->
+          <div class="total-row discount" *ngIf="appliedCoupon">
+            <span class="font">Code promo ({{appliedCoupon.code}})</span>
+            <span class="price discount-amount">
+              -{{appliedCoupon.discount_amount > 0 ? appliedCoupon.discount_amount.toFixed(3) : ((subtotal * appliedCoupon.discount_percent / 100).toFixed(3))}} TND
+            </span>
+          </div>
+          <div class="total-row final-total">
+            <span class="font">Total</span>
+            <span class="price">{{ (subtotal - discountAmount + deliveryCost) | number:'1.3-3' }} TND</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 2: Delivery -->
+<div class="main-content" *ngIf="currentStep === 2">
+  <div class="content-container">
+    <div class="delivery-section">
+      <div class="section-header">
+        <div class="circle-number">2</div>
+        <h2>Où souhaitez-vous la recevoir ?</h2>
+      </div>
+
+      <div class="delivery-form">
+        <!-- Delivery Options -->
+        <div class="delivery-method-options">
+          <div class="delivery-method-option">
+            <input type="radio" id="homeDelivery" name="deliveryMethod"
+                  [(ngModel)]="deliveryMethod" value="home" (change)="onDeliveryMethodChange()">
+            <label for="homeDelivery">Livraison à domicile</label>
+
+            <div class="address-selection" *ngIf="deliveryMethod === 'home'">
+              <div class="form-group adresse_form">
+                <div class="form-input adresse_form_input" (click)="openAddressList()">
+                  {{selectedAddress?.address || 'Sélectionnez une adresse'}}
+                </div>
+                <button class="add-button" (click)="openModal()">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="delivery-method-option">
+            <input type="radio" id="storePickup" name="deliveryMethod"
+                  [(ngModel)]="deliveryMethod" value="store" (change)="onDeliveryMethodChange()">
+            <label for="storePickup">Retrait en magasin</label>
+
+            <div class="store-selection" *ngIf="deliveryMethod === 'store'">
+              <div class="form-group">
+                <select class="form-input" (change)="onStoreSelect($event)" required>
+                  <option value="">Sélectionnez un magasin</option>
+                  <option *ngFor="let store of stores" [value]="store.id">
+                    {{store.name}} ({{store.address}})
+                  </option>
+                </select>
+              </div>
+              <div class="location-inputs">
+                <div class="form-group location-input">
+                  <input type="text" [value]="selectedStore?.city || ''" placeholder="Ville*" class="form-input" readonly>
+                </div>
+                <div class="form-group location-input">
+                  <input type="text" [value]="selectedStore?.name || ''" placeholder="Magasin" class="form-input" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-prev" (click)="prevStep()">Retour</button>
+        <button class="btn-continue-delivery"
+                [disabled]="!isDeliveryMethodValid()"
+                (click)="nextStep()">
+          continuer vers la livraison
+        </button>
+      </div>
+    </div>
+
+    <div class="delivery-options-summary">
+      <div *ngFor="let method of shippingMethods"
+           class="delivery-option"
+           [ngClass]="{'selected': deliveryMethod === (method.id === 1 ? 'home' : 'store')}">
+        <div class="delivery-option-icon">
+          <i [ngClass]="method.id === 1 ? 'fas fa-home' : 'fas fa-store'"></i>
+        </div>
+        <div class="delivery-option-details">
+          <div class="delivery-option-title">{{ method.name }}</div>
+          <div class="delivery-option-info">{{ method.description }}</div>
+          <div class="delivery-option-info">Livraison en {{ method.deliveryTime }}</div>
+        </div>
+        <div class="delivery-option-price">{{ method.cost === 0 ? 'GRATUITE' : (method.cost + ' TND') }}</div>
+      </div>
+      <div class="policy-section">
+        <div class="policy-header">ÉCHANGES</div>
+        <div class="policy-content">
+          <div class="policy-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="policy-details">
+            Vous disposez de <strong>15 jours</strong> à compter de la date de la réception de votre colis pour échanger votre achat en magasin <strong>Barsha</strong>.
+          </div>
+        </div>
+      </div>
+      <div class="policy-section">
+        <div class="policy-header">RETOURS</div>
+        <div class="policy-content">
+          <div class="policy-icon">
+            <i class="fas fa-undo"></i>
+          </div>
+          <div class="policy-details">
+            <div>Retour dans un magasin <strong>Barsha</strong> - GRATUIT</div>
+            <div>Retour en ligne - GRATUIT</div>
+            <div>Pour plus d'informations, nous vous conseillons de visiter la rubrique Livraison & retour.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Payment -->
+<div class="main-content payment-content" *ngIf="currentStep === 3">
+  <div class="content-container">
+    <div class="payment-section">
+      <div class="payment-header">
+        <div class="circle-number">3</div>
+        <h2>Veuillez choisir votre moyen de paiement</h2>
+      </div>
+      <div class="payment-options">
+        <div
+          class="payment-option"
+          *ngFor="let method of availablePaymentMethods"
+          [ngClass]="{'selected': selectedPaymentMethod === method.codeErp}"
+          (click)="selectPaymentMethod(method.codeErp)"
+        >
+          <div class="payment-option-content">
+            <div class="payment-option-title">{{ method.name }}</div>
+            <div class="payment-option-info">{{ method.name_en }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-prev" (click)="prevStep()">Retour</button>
+        <button class="btn-continue-payment" (click)="nextStep()">continuer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 4: Confirmation -->
+<div class="main-content confirmation-content" *ngIf="currentStep === 4">
+  <div class="content-container">
+    <div class="left-column">
+      <div class="confirmation-title">
+        <div class="circle-number">4</div>
+        <h2>Confirmez et finalisez l'achat</h2>
+      </div>
+      <div class="info-box">
+        <div class="info-row">
+          <div class="info-label">Livraison</div>
+          <div class="info-content">
+            <p class="name">{{ registrationForm.value.firstName }} {{ registrationForm.value.lastName }}</p>
+            <p class="address">{{selectedAddress?.address || (selectedStore?.address || 'Adresse non spécifiée')}}</p>
+            <p class="delivery-type">
+              {{deliveryMethod === 'home' ? 'STANDARD À DOMICILE' : 'RETRAIT EN MAGASIN'}}
+            </p>
+            <p class="delivery-date" *ngIf="deliveryMethod === 'home'">
+              Vous le recevez dans 2-3 jours ouvrables
+            </p>
+            <p class="delivery-date" *ngIf="deliveryMethod === 'store'">
+              Disponible immédiatement en magasin
+            </p>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Paiement</div>
+          <div class="info-content">
+            <p>{{getSelectedPaymentMethodName()}}</p>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Panier</div>
+          <div class="info-content">
+            <p>{{cartItems.length}} produit(s)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Code Promo -->
+      <div class="promo-section mt-4">
+        <div class="promo-header">
+          <!-- <div class="circle-icon">%</div> -->
+          <span class="color-black">AVEZ-VOUS UN CODE COUPON?</span>
+        </div>
+        <div class="promo-inputs-container">
+          <div class="promo-input-group">
+            <div class="coupon-dropdown-container">
+              <div class="coupon-input"
+                   (click)="!isPublicPromoDisabled() && toggleCouponDropdown()"
+                   [class.disabled]="isPublicPromoDisabled()">
+                <span *ngIf="!selectedCouponText" class="placeholder-text">Saisissez votre code coupon</span>
+                <div *ngIf="selectedCouponText" class="selected-coupon-container">
+                  <span class="selected-coupon-text">{{ selectedCouponText }}</span>
+                  <span class="coupon-discount" *ngIf="selectedCouponDiscount">{{ selectedCouponDiscount }}</span>
+                </div>
+                <i class="fas fa-chevron-down dropdown-icon"></i>
+              </div>
+              <div class="coupon-dropdown" [class.show]="showCouponDropdown" [class.disabled]="isPublicPromoDisabled()">
+                <ng-container *ngIf="!loadingCoupons && availableCoupons.length > 0">
+                  <div class="coupon-item" *ngFor="let coupon of availableCoupons" (click)="selectCoupon(coupon)" [class.disabled]="isManualPromoDisabled() || isPublicPromoDisabled()">
+                    <span class="coupon-code">{{ coupon.code }}</span>
+                    <span class="coupon-discount">{{ coupon.discount_amount > 0 ? coupon.discount_amount + 'TND' : coupon.discount_percent > 0 ? coupon.discount_percent + '%' : '' }}</span>
+                  </div>
+                </ng-container>
+                <div class="coupon-item no-coupons" *ngIf="!loadingCoupons && availableCoupons.length === 0">
+                  Pas de coupon
+                </div>
+                <div class="coupon-item loading" *ngIf="loadingCoupons">
+                  Chargement des coupons...
+                </div>
+              </div>
+            </div>
+            <button class="btn-apply" (click)="applyPromoCode()" [disabled]="!selectedCouponText || isManualPromoDisabled() || isPublicPromoDisabled()"><i class="fa-solid fa-check"></i></button>
+            <button class="btn-clear" (click)="clearCouponCode()" [disabled]="!selectedCouponText">X</button>
+          </div>
+        </div>
+        <!-- Bloc code promo public -->
+        <div *ngIf="coupons.length > 0">
+          <div class="promo-header">
+            <span class="color-black">AVEZ-VOUS UN CODE PROMO?</span>
+          </div>
+          <div class="promo-input-group">
+            <input type="text" class="code-input" placeholder="Saisissez votre code promo" [(ngModel)]="publicUserPromoCode" [disabled]="isPublicPromoDisabled()">
+            <button class="btn-apply2" (click)="applyPublicUserPromo()" [disabled]="isPublicPromoDisabled() || !publicUserPromoCode"><i class="fa-solid fa-check"></i></button>
+            <button class="btn-clear" (click)="clearCouponCode()" [disabled]="!publicUserPromoCode">X</button>
+          </div>
+        </div>
+        <!-- Message de confirmation si un code promo est appliqué -->
+        <div *ngIf="promoCodeApplied" class="promo-success mt-3">
+          <i class="fas fa-check-circle me-2"></i> Code promo appliqué avec succès!
+        </div>
+      </div>
+    </div>
+    <div class="right-column">
+      <div class="total-box">
+        <div class="total-header">Total TTC</div>
+        <div class="total-content">
+          <div class="price-row">
+            <span class="amount">{{cartItems.length}} produit(s)</span>
+            <span class="amount">{{subtotal.toFixed(3)}} TND</span>
+          </div>
+               <!-- Afficher la réduction du code promo si un coupon est appliqué -->
+               <div class="price-row" *ngIf="appliedCoupon && discountAmount > 0">
+                <span class="amount">Réduction</span>
+                <span class="amount discount">-{{discountAmount.toFixed(3)}} TND</span>
+              </div>
+          <!-- Livraison omitted from reduction-step summary -->
+     
+
+          <div class="price-row total">
+            <span class="amount">Total TTC</span>
+            <span class="amount">{{total.toFixed(3)}} TND</span>
+          </div>
+        </div>
+        <div class="terms">
+          <p>
+            En validant votre commande, vous acceptez nos
+            <a href="#" class="terms-link">Conditions d'achat</a>
+            et confirmez que vous comprenez notre
+            <a href="#" class="terms-link">Politique de confidentialité</a>
+          </p>
+        </div>
+        <div class="form-actions">
+          <button class="btn-prev" (click)="prevStep()">Retour</button>
+          <button class="confirm-button"
+                  (click)="confirmOrder()"
+                  [disabled]="!selectedPaymentMethod || confirmingOrder || cartItems.length === 0">
+            {{ confirmingOrder ? 'Traitement...' : 'confirmer la commande' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-toast position="top-center"></p-toast>
+<div *ngIf="orderError" class="alert alert-danger">
+  {{ orderError }}
+</div>
+</div> <!-- Fermeture de main-wrapper -->
+
+
+
+<!-- Overlay semi-transparent -->
+<div class="privacy-overlay" *ngIf="showPrivacyDialog"></div>
+
+<!-- Privacy Policy Dialog -->
+<p-dialog
+  [(visible)]="showPrivacyDialog"
+  [style]="{width: '90vw', maxWidth: '800px', backgroundColor: '#ffffff', marginTop: '30vh'}"
+  [contentStyle]="{maxHeight: '60vh'}"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closeOnEscape]="true"
+  [baseZIndex]="10000"
+  [dismissableMask]="true"
+  styleClass="privacy-dialog">
+
+  <ng-template pTemplate="header">
+    <div class="privacy-header">
+      <h2>Politique de Confidentialité</h2>
+      <button class="close-button" (click)="closePrivacyDialog()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="privacy-container" *ngIf="!isPrivacyLoading && privacyData">
+    <h1 class="privacy-title">{{ privacyData.title }}</h1>
+    <div class="markdown-container">
+      <markdown [data]="privacyData.text"></markdown>
+    </div>
+  </div>
+
+  <div class="privacy-loading" *ngIf="isPrivacyLoading">
+    <p>Chargement de la politique de confidentialité...</p>
+  </div>
+</p-dialog>
+

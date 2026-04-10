@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <!-- Encodage UTF-8 pour supporter tous les caractères -->
+  <meta charset="utf-8">
+
+  <!-- Viewport responsive pour tous les appareils k -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Meta description optimisée pour le SEO -->
+  <meta name="description" content="Découvrez BARSHA, votre boutique de mode tunisienne. Vêtements tendance pour femmes et hommes, qualité premium et prix abordables. Livraison en Tunisie.">
+
+  <!-- Mots clés pour le SEO -->
+  <meta name="keywords" content="BARSHA, prêt-à-porter, vêtements, mode, Tunisie, boutique en ligne, fashion, tendance, collection, homme, femme">
+<!-- //ajouter basehref prod -->
+<base href="/">
+<!-- //ajouter basehref sunevit -->
+<!-- <base href="/barsha/fr/"> -->
+
+
+  <!-- Favicon -->
+   
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+  <link rel="shortcut icon" href="assets/icons/favicon.ico" />
+  
+  
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/android-chrome-512x512.png">
+  
+  <!-- Apple iOS -->
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+  <!-- Manifest pour PWA -->
+  <!-- <link rel="manifest" href="manifest.json"> -->
+
+  <!-- Préchargement des ressources critiques -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" crossorigin="anonymous">
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" crossorigin="anonymous">
+
+  <!-- Chargement CSS non bloquant avec SRI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        media="print"
+        onload="this.media='all'"
+        crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        media="print"
+        onload="this.media='all'"
+        crossorigin="anonymous">
+
+
+  <!-- Préconnexion aux CDNs externes -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Balise canonique pour éviter le contenu dupliqué -->
+  <link rel="canonical" href="https://barsha.com.tn/fr">
+
+  <!-- Titre de page optimisé SEO -->
+  <title>BARSHA - Mode Tunisienne | Vêtements Prêt-à-porter Tendance pour Femmes et Hommes</title>
+
+  <!-- Meta tags supplémentaires pour le SEO -->
+  <meta name="theme-color" content="#ffffff">
+  <meta property="og:title" content="BARSHA - Vêtements Mode Tunisienne | Prêt-à-porter Tendance">
+  <meta property="og:description" content="BARSHA - Découvrez notre collection exclusive de mode tunisienne avec des vêtements tendance pour femmes et hommes. Qualité, élégance et prix abordables. Livraison dans toute la Tunisie.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.barsha.com.tn/fr">
+  <!-- <meta property="og:image" content="https://www.barsha.com.tn/fr/images/og-image.jpg"> -->
+  <meta property="og:site_name" content="BARSHA">
+  <meta property="og:locale" content="fr_FR">
+
+  <!-- Twitter Card data -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BARSHA - Vêtements Mode Tunisienne | Prêt-à-porter Tendance">
+  <meta name="twitter:description" content="BARSHA - Découvrez notre collection exclusive de mode tunisienne avec des vêtements tendance pour femmes et hommes. Qualité, élégance et prix abordables.">
+  <!-- <meta name="twitter:image" content="https://www.barsha.com.tn/fr/images/twitter-card.jpg"> -->
+
+  <!-- JSON-LD pour les données structurées -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    "name": "BARSHA",
+    "url": "https://barsha.com.tn",
+    "logo": "https://barsha.com.tn/fr/images/logo.jpg",
+    "image": "https://barsha.com.tn/fr/images/logo.jpg",
+    "description": "BARSHA est une marque de prêt-à-porter tunisienne proposant des vêtements modernes, élégants et abordables pour femmes et hommes. Découvrez notre collection exclusive de vêtements tendance et de qualité.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "TN"
+    },
+    
+    "priceRange": "TND",
+    "openingHours": "Mo-Sa 09:00-19:00",
+    "sameAs": [
+      "https://www.facebook.com/BARSHA.Tunisie",
+      "https://www.instagram.com/barsha.tunisie/"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.barsha.com.tn/fr/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- Script pour améliorer la crawlabilité des liens -->
+  <script>
+// Version avec gestion des erreurs
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const links = document.querySelectorAll('a[href]:not([rel])');
+    links.forEach(link => {
+      // Liens externes
+      if (link.hostname && link.hostname !== window.location.hostname) {
+        link.setAttribute('rel', 'noopener noreferrer');
+      }
+      // Liens internes
+      if (!link.hasAttribute('title') && link.textContent.trim()) {
+        const title = link.getAttribute('aria-label') || link.textContent.trim();
+        if (title) link.setAttribute('title', `Découvrez ${title} sur BARSHA`);
+      }
+    });
+  } catch (e) {
+    console.error('Erreur dans le script de liens :', e);
+  }
+});
+  </script>
+
+  <!-- Google Analytics 4 avec chargement différé -->
+  <script defer async src="https://www.googletagmanager.com/gtag/js?id=G-2P3LY9HVJ0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2P3LY9HVJ0');
+  </script>
+
+  <!-- Google Tag Manager -->
+  <script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-NZCDW8W');
+  </script>
+  <!-- End Google Tag Manager -->
+</head>
+
+<body class="mat-typography">
+  <!-- Point d'entrée de l'application Angular -->
+  <app-root></app-root>
+
+  <!-- Fallback pour JavaScript désactivé -->
+  <noscript>
+    <div class="noscript-warning">
+      <h2>JavaScript est requis</h2>
+      <p>Notre application nécessite JavaScript pour fonctionner correctement.</p>
+      <p>Veuillez activer JavaScript dans les paramètres de votre navigateur.</p>
+      <a href="/" class="btn btn-primary">Retour à l'accueil</a>
+    </div>
+  </noscript>
+
+  <!-- Styles inline pour le fallback noscript -->
+  <style>
+    .noscript-warning {
+      padding: 2rem;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+      font-family: sans-serif;
+    }
+    .noscript-warning h2 {
+      color: #d32f2f;
+    }
+  </style>
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NZCDW8W"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+</body>
+</html>

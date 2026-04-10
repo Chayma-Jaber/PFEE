@@ -1,0 +1,12 @@
+import re
+
+text = open('ai_output.txt', 'r', encoding='utf-16le', errors='ignore').read()
+pattern = r"(?:^|\n|\s)-?\s*\[ID:(\d+)\]\s*\[([^\]]+)\]\s+([^|]+)\|\s*([^|]+)\|[^|]*\|\s*Couleurs\+Images:\s*([^|]+)\|\s*ImgPrincipale:\s*([^|\n]*)\|?\s*(https?:\/\/[^\s\n]+)"
+
+print("AI Response Lines containing [ID:]")
+for line in text.split('\n'):
+    if "[ID:" in line:
+        print("LINE:", repr(line.strip()))
+        m = re.search(pattern, line, re.IGNORECASE)
+        print("MATCH:", "YES" if m else "NO")
+

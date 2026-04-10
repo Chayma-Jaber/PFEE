@@ -1,0 +1,351 @@
+
+$primary-color: #000000;
+$secondary-color: #6c757d;
+$success-color: #000000;
+$border-color: #dee2e6;
+$background-color: #f8f9fa;
+$text-color: #000000;
+$shadow-color: rgba(0, 0, 0, 0.1);
+
+// Breakpoints
+$breakpoint-xs: 320px;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin card-hover {
+  transition: all 0.3s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px $shadow-color;
+  }
+}
+
+// Modal Styles
+.address-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px $shadow-color;
+  width: 100%;
+  max-width: 800px;
+  margin: 1rem;
+  overflow: hidden;
+  position: relative;
+  height: auto;
+  max-height: 90vh;
+
+  @media (min-width: $breakpoint-sm) {
+    margin: 2rem auto;
+  }
+
+  &__header {
+    padding: 1rem;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: 1.5rem;
+    }
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 1.5rem;
+    }
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: $secondary-color;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $text-color;
+    }
+  }
+
+  &__body {
+    padding: 1rem;
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: 1.5rem;
+      max-height: calc(90vh - 160px);
+    }
+  }
+
+  &__instruction {
+    margin-bottom: 1rem;
+    color: $secondary-color;
+    font-size: 0.9rem;
+    text-align: center;
+
+    @media (min-width: $breakpoint-sm) {
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      text-align: left;
+    }
+  }
+
+  &__footer {
+    padding: 1rem;
+    border-top: 1px solid $border-color;
+    text-align: center;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: 1.5rem;
+      text-align: right;
+    }
+  }
+}
+
+// Address Card Styles
+.address-card {
+  background: white;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  position: relative;
+  @include card-hover;
+
+  @media (min-width: $breakpoint-sm) {
+    padding: 1rem;
+  }
+
+  &__content {
+    display: flex;
+    gap: 0.75rem;
+    cursor: pointer;
+
+    @media (min-width: $breakpoint-sm) {
+      gap: 1rem;
+    }
+  }
+
+  &__radio {
+    padding-top: 0.25rem;
+    
+    input[type="radio"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: $primary-color;
+
+      @media (min-width: $breakpoint-sm) {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0; // Pour éviter le débordement sur mobile
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    flex-wrap: wrap;
+
+    @media (min-width: $breakpoint-sm) {
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-color;
+    margin: 0;
+    word-break: break-word;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 1.1rem;
+    }
+  }
+
+  &__badge {
+    background: $success-color;
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  &__name,
+  &__details,
+  &__phone {
+    color: $secondary-color;
+    margin: 0.2rem 0;
+    font-size: 0.85rem;
+    word-break: break-word;
+
+    @media (min-width: $breakpoint-sm) {
+      margin: 0.25rem 0;
+      font-size: 0.95rem;
+    }
+  }
+
+  // Add Address Card Variant
+  &--add {
+    background: $background-color;
+    border: 2px dashed $border-color;
+    cursor: pointer;
+
+    .address-card__icon {
+      @include flex-center;
+      width: 2rem;
+      height: 2rem;
+      background: white;
+      border-radius: 50%;
+      color: $primary-color;
+      font-size: 1rem;
+
+      @media (min-width: $breakpoint-sm) {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.25rem;
+      }
+    }
+
+    .address-card__title {
+      color: $primary-color;
+    }
+
+    .address-card__subtitle {
+      color: $secondary-color;
+      font-size: 0.8rem;
+      margin: 0;
+
+      @media (min-width: $breakpoint-sm) {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Button Styles
+.btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.95rem;
+
+  @media (min-width: $breakpoint-sm) {
+    width: auto;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  &-primary {
+    background: $primary-color;
+    color: white;
+
+    // &:hover:not(:disabled) {
+    //   background: lighten($primary-color, 20%);
+    // }
+
+    &:disabled {
+      background: $secondary-color;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+}
+
+// Responsive Styles
+@media (max-width: $breakpoint-xs) {
+  .address-modal {
+    margin: 0.5rem;
+    border-radius: 8px;
+
+    &__header {
+      padding: 0.75rem;
+    }
+
+    &__title {
+      font-size: 1.1rem;
+    }
+
+    &__body {
+      padding: 0.75rem;
+    }
+
+    &__footer {
+      padding: 0.75rem;
+    }
+  }
+
+  .address-card {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+
+    &__title {
+      font-size: 0.95rem;
+    }
+
+    &__name,
+    &__details,
+    &__phone {
+      font-size: 0.8rem;
+    }
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+// Support pour les grands écrans
+@media (min-width: $breakpoint-xl) {
+  .address-modal {
+    max-width: 1000px;
+  }
+}
+
+// Support pour les écrans en mode paysage sur mobile
+@media (max-height: 500px) and (orientation: landscape) {
+  .address-modal {
+    max-height: 95vh;
+    
+    &__body {
+      max-height: calc(95vh - 120px);
+    }
+  }
+}

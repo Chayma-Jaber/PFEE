@@ -1,0 +1,171 @@
+<!-- Skeleton Loader for Filters -->
+<app-filter-skeleton *ngIf="isLoading"></app-filter-skeleton>
+
+<!-- Filter Component -->
+<app-filter [showFilterPopup]="showFilterPopup" [categoryId]="categoryId"
+  (filterPopupToggle)="handleFilterPopupToggle($event)" (filtersChanged)="handleFiltersChanged($event)">
+</app-filter>
+
+<div class="my-3 my-md-4"></div>
+
+<!-- Skeleton Loader for Controls -->
+<app-controls-skeleton *ngIf="isLoading"></app-controls-skeleton>
+
+<!-- Controls and Product Cards -->
+<div class="controls-container d-flex justify-content-between align-items-center mb-3 px-3" *ngIf="!isLoading">
+  <!-- Filter Button -->
+  <div class="filter-section-container">
+    <button class="filter-section d-flex justify-content-between align-items-center" (click)="toggleFilterPopup()">
+      <span>Filtrer par</span>
+      <span class="ms-auto">...</span>
+    </button>
+  </div>
+  <div class="view-modes d-flex">
+    <!-- Single view - Desktop only -->
+    <button class="view-mode-btn d-none d-sm-block" (click)="changeViewMode('single')"
+      [class.active]="currentViewMode === 'single'">
+      <img *ngIf="currentViewMode === 'single'" src="icones/carrecolor.png" alt="Description de l'image"
+        class="your-image-class" />
+      <img *ngIf="currentViewMode !== 'single'" src="icones/carrevide.png" alt="Description de l'image"
+        class="your-image-class" />
+    </button>
+
+    <!-- Double view - Mobile (2 colonnes) and Desktop -->
+    <button class="view-mode-btn" (click)="changeViewMode('double')" [class.active]="currentViewMode === 'double'">
+      <img *ngIf="currentViewMode === 'double'" src="icones/colonnecolor.png" alt="Description de l'image"
+        class="your-image-class" />
+      <img *ngIf="currentViewMode !== 'double'" src="icones/colonnevide.png" alt="Description de l'image"
+        class="your-image-class" />
+    </button>
+
+    <!-- Triple view - Mobile only (3 colonnes) -->
+    <button class="view-mode-btn d-sm-none" (click)="changeViewMode('triple')"
+      [class.active]="currentViewMode === 'triple'" title="Affichage 3 colonnes">
+      <i class="fas fa-border-all" *ngIf="currentViewMode === 'triple'" style="color: #000; font-size: 1.1rem;"></i>
+      <i class="fas fa-border-all" *ngIf="currentViewMode !== 'triple'" style="color: #999; font-size: 1.1rem;"></i>
+    </button>
+
+    <!-- Grid view - Desktop only -->
+    <button class="view-mode-btn d-none d-md-block" (click)="changeViewMode('grid')"
+      [class.active]="currentViewMode === 'grid'">
+      <img *ngIf="currentViewMode === 'grid'" src="icones/gridcolor.png" alt="Description de l'image"
+        class="your-image-class" />
+      <img *ngIf="currentViewMode !== 'grid'" src="icones/gridvide.png" alt="Description de l'image"
+        class="your-image-class" />
+    </button>
+  </div>
+</div>
+
+
+
+<!-- Skeleton Loader for Banner -->
+<app-skeleton-loader type="banner" *ngIf="isLoading && selectedFilterIndex === 0"></app-skeleton-loader>
+
+<!-- Dynamic Category Banner -->
+<div *ngIf="!isLoading && selectedFilterIndex === 0 && showCategoryBanner && categoryBannerUrl">
+  <img class="img-fluid w-100" appLazyLoadImage [src]="categoryBannerUrl" alt="BARSHA Category Banner">
+</div>
+
+<!-- Sub-categories Bar -->
+<!-- <div class="subcategories-bar" *ngIf="!isLoading">
+  <div class="subcategories-scroll-wrapper">
+    <button *ngFor="let filter of filters; let i = index" class="subcategory-btn"
+      [class.active]="selectedFilterIndex === i" (click)="selectedFilterIndex = i">
+      {{ filter }}
+    </button>
+  </div>
+</div> -->
+
+<!-- Fallback Home Banner (when no category banner available) -->
+<!-- <div *ngIf="!isLoading && selectedFilterIndex === 0 && !showCategoryBanner">
+  <img class="img-fluid w-100" appLazyLoadImage *ngIf="searchResults?.hits[0]?.slides[0]?.media?.url"
+    [src]="searchResults?.hits[0]?.slides[0]?.media?.url" [title]="searchResults?.hits[0]?.slides[0]?.media?.name"
+    alt="BARSHA Fashion Models">
+</div> -->
+
+<!-- Skeleton Loader for Products -->
+<app-product-skeleton *ngIf="isLoading" [viewMode]="currentViewMode" [count]="6"></app-product-skeleton>
+
+<!-- Product Cards -->
+<div class="card-container" [ngClass]="currentViewMode" *ngIf="!isLoading">
+
+  <div *ngFor="let produit of produits" class="card" [class.active-card]="activePopupProduct === produit"
+    (mouseenter)="changeActiveImage(produit)" (mouseleave)="resetActiveImage(produit)">
+    <div class="wishlist-icon" (click)="toggleWishlist(produit)">
+      <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
+    </div>
+    <div class="card-image-container">
+      <!-- Discount Badge -->
+      <div class="discount-badge" *ngIf="produit.discount && produit.discountValue">
+        {{ produit.discountValue }}%
+      </div>
+
+      <a [href]="getProductDetailUrl(produit)" [routerLink]="['/produit', productService.generateProductSlug(produit)]"
+        class="product-link" (click)="onProductClick()">
+
+        <img
+          *ngIf="(produit.selectedColorIndex >= 0 && produit.colors[produit.selectedColorIndex].mainImage) || produit.firstImg?.url || produit.secondImg?.url"
+          [src]="produit.selectedColorIndex >= 0 && produit.colors[produit.selectedColorIndex].mainImage ? produit.colors[produit.selectedColorIndex].mainImage : (produit.firstImg?.url || produit.secondImg?.url)"
+          [alt]="produit.title" [title]="produit.title" class="card-image img-fluid" appLazyLoadImage /> </a>
+      <div class="sizes-container"
+        *ngIf="produit.selectedColorIndex >= 0 && produit.tailles && produit.tailles.length > 0">
+        <div class="sizes-title">TAILLES</div>
+        <div class="sizes-list">
+          <div *ngFor="let taille of produit.tailles" class="size-item-container">
+            <span [ngClass]="{'out-of-stock': taille.qte === 0}">{{ taille.size }}</span>
+            <div *ngIf="taille.qte === 0 && produit.articlesSimilaires.length > 0" class="similar-article-btn"
+              (mouseenter)="setActivePopup(produit)" (mouseleave)="clearActivePopup()">
+
+              <span class="similar-btn-text">
+                <span class="d-none d-sm-inline">Articles Similaires</span>
+                <span class="d-inline d-sm-none">Similaires</span>
+                <i class="fas fa-chevron-down"></i>
+              </span>
+              <div class="similar-articles-popup">
+                <div class="popup-products">
+                  <div *ngFor="let article of produit.articlesSimilaires" class="popup-product">
+                    <div class="popup-product-image">
+                      <img [src]="article.image" [alt]="article.nom" class="img-fluid" appLazyLoadImage />
+                    </div>
+                    <div class="popup-product-info">
+                      <div class="popup-product-name">{{ article.nom }}</div>
+                      <div class="popup-product-price">{{ article.prix }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-content p-2 p-md-3">
+      <h3 class="card-title h5 mb-2">{{ produit.title }}</h3>
+      <!-- Price display with discount support -->
+      <div class="price-container mb-2 mb-md-3" *ngIf="produit.discount; else regularPrice">
+        <span class="current-price fw-bold">{{ produit.currentPrice.toFixed(3) }} TND</span>
+        <span class="original-price">{{ produit.price.toFixed(3) }} TND</span>
+      </div>
+      <ng-template #regularPrice>
+        <p class="card-price fw-bold mb-2 mb-md-3">{{ produit.currentPrice.toFixed(3) }} TND</p>
+      </ng-template>
+      <div class="color-variations d-flex flex-wrap justify-content-center"
+        *ngIf="produit.colors && produit.colors.length > 0">
+        <div *ngFor="let color of produit.colors; let i = index" class="mx-1 mb-2">
+          <img class="color-circle" [src]="color.textureImage" appLazyLoadImage
+            [class.selected]="produit.selectedColorIndex === i" (click)="selectColor(produit, i)"
+            [alt]="'Texture for ' + color.name" [title]="color.name" *ngIf="color.textureImage">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading More Products Indicator -->
+<div class="loading-more-container" *ngIf="isLoadingMore">
+  <div class="loading-spinner">
+    <i class="fas fa-spinner fa-spin"></i>
+  </div>
+</div>
+
+<p-toast></p-toast>

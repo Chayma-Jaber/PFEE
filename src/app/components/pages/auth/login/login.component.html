@@ -1,0 +1,55 @@
+
+
+<div class="login-container">
+  <div class="login-content">
+    <h1 class="login-title">SE CONNECTER OU CRÉER UN COMPTE</h1>
+    <div class="divider"></div>
+
+    <div class="form-container">
+      <form (ngSubmit)="login()" novalidate>
+        <div class="form-group">
+          <input
+            type="text"
+            class="form-input"
+            placeholder="numéro de téléphone *"
+            [(ngModel)]="loginData.identifier"
+            name="identifier"
+            required
+          >
+        </div>
+
+        <div class="form-group password-field">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            class="form-input"
+            placeholder="Mot de passe *"
+            [(ngModel)]="loginData.password"
+            name="password"
+            required
+          >
+          <span class="password-toggle" (click)="togglePasswordVisibility()">
+            <i class="material-icons">{{ showPassword ? 'visibility ' : 'visibility_off' }}</i>
+          </span>
+        </div>
+
+        <div class="button-group">
+          <!-- Désactiver le bouton si les champs sont vides -->
+          <button
+            type="submit"
+            class="btn btn-solid"
+            [disabled]="!isFormValid()"
+            [ngClass]="{'disabled-button': !isFormValid()}"
+          >
+            SE CONNECTER
+          </button>
+          <button class="btn btn-outline" [routerLink]="['/register']">CRÉER UN COMPTE</button>
+        </div>
+
+        <div class="forgot-password">
+          <a [routerLink]="['/recover-password']">mot de passe oublié</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<p-toast></p-toast>

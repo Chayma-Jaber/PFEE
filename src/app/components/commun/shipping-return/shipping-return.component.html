@@ -1,0 +1,152 @@
+<div class="shipping-container container-fluid">
+  <!-- En-tête -->
+  <div class="shipping-header row mb-4">
+    <div class="col-12">
+      <h1 class="shipping-title">Livraison Barsha</h1>
+      <h2 class="shipping-subtitle">Méthode et Frais de Livraison</h2>
+    </div>
+  </div>
+
+  <div class="shipping-content row">
+    <!-- Colonne de gauche: Options de livraison -->
+    <div class="shipping-options col-md-6 col-gauche">
+      <!-- Livraison point relais -->
+      <div class="delivery-option mb-0" *ngIf="storeDeliveryMethod">
+        <div class="delivery-icon">
+          <i class="fas fa-store"></i>
+        </div>
+        <div class="delivery-details">
+          <h3>{{ storeDeliveryMethod.name }}</h3>
+          <p>Livraison en {{ storeDeliveryMethod.deliveryTime }}.</p>
+          <p class="payment-method">{{ storeDeliveryMethod.description }}</p>
+        </div>
+        <div class="delivery-price">{{ storeDeliveryMethod.cost === 0 ? 'GRATUITE' : (storeDeliveryMethod.cost + ' TND') }}</div>
+      </div>
+
+      <!-- Livraison à domicile -->
+      <div class="delivery-option mb-0" *ngIf="homeDeliveryMethod">
+        <div class="delivery-icon">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="delivery-details">
+          <h3>{{ homeDeliveryMethod.name }}</h3>
+          <p>Livraison en {{ homeDeliveryMethod.deliveryTime }}.</p>
+          <p>{{ homeDeliveryMethod.description }}</p>
+        </div>
+        <div class="delivery-price">{{ homeDeliveryMethod.cost === 0 ? 'GRATUITE' : (homeDeliveryMethod.cost + ' TND') }}</div>
+      </div>
+
+      <!-- Échanges -->
+      <div class="policy-section mb-0">
+        <div class="policy-header">
+          <div class="policy-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <h3>ÉCHANGES</h3>
+        </div>
+        <div class="policy-content">
+          <p>Vous disposez de 10 jours à compter de la date de la réception de votre colis pour échanger votre achat en magasin Barsha.</p>
+        </div>
+      </div>
+
+      <!-- Retours -->
+      <div class="policy-section mb-0">
+        <div class="policy-header">
+          <div class="policy-icon">
+            <i class="fas fa-undo"></i>
+          </div>
+          <h3>RETOURS</h3>
+        </div>
+        <div class="policy-content">
+          <p>Retour dans un magasin Barsha- <span class="highlight">GRATUIT</span></p>
+          <p>Retour en ligne - <span class="highlight">GRATUIT</span></p>
+          <p>Pour plus d'informations, nous vous conseillons de visiter la rubrique Livraison & retour.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne de droite: Informations supplémentaires -->
+    <div class="shipping-info col-md-6 col-droite">
+      <!-- Livraison en Tunisie -->
+      <div class="info-section">
+        <h3>Livraison en Tunisie uniquement</h3>
+        <p>Les commandes sont livrées uniquement en Tunisie.</p>
+        <p>Les frais de livraison varient en fonction du mode d'envoi choisi et du montant de la commande.</p>
+        <p>Avant validation du paiement, le coût exact de la livraison est affiché dans le récapitulatif de la commande.</p>
+        <p>Une notification SMS est envoyée dès que la commande quitte l'entrepôt.</p>
+      </div>
+
+      <!-- Modes de paiement -->
+      <div class="info-section">
+        <h3>Modes de paiement variés</h3>
+        <p>Paiement en ligne sécurisé via Visa, MasterCard, CIB, E-dinar et paiement mobile.</p>
+        <p>Paiement en espèces à la livraison, directement au livreur.</p>
+        <p>Paiement en magasin par especes, chèque ou terminal de paiement électronique (TPE).</p>
+        <p>Pour les paiements en ligne, la transaction est validée en temps réel via une passerelle sécurisée.</p>
+      </div>
+
+      <!-- Sécurité des paiements -->
+      <div class="info-section">
+        <h3>Sécurité des paiements renforcée</h3>
+        <p>Toutes les transactions sont protégées par un cryptage SSL.</p>
+        <p>Vérification des informations du client pour lutter contre la fraude en ligne.</p>
+        <p>Paiement sécurisé avec vérification d'authentification par la banque émettrice.</p>
+        <p>Certificat de sécurité des transactions en ligne.</p>
+      </div>
+
+      <!-- Politique d'échange et de retour -->
+      <div class="info-section">
+        <h3>Politique d'échange et de retour (10 jours)</h3>
+        <p>Les articles retournés doivent être dans les mêmes conditions que lorsque vous les avez reçus avec étiquettes tissées et cartonnées accrochées.</p>
+        <p>Pour les parfums, maillots de bain et sous-vêtements : pas de retours possibles.</p>
+        <p>Dès que nous recevrons votre paquet, nous vérifierons l'état des articles et nous réaliserons la création du bon d’achat ou le remboursement des vêtements retournés.</p>
+      </div>
+
+      <!-- Échange en magasin -->
+      <div class="info-section">
+        <h3>Échange en magasin</h3>
+        <p>Vous avez jusqu'à 10 jours à partir de la réception de votre commande, tous les articles pourront être échangés immédiatement et gratuitement dans nos boutiques* BARSHA. 
+          *ce service n'est pas disponible pour la boutique franchise KELIBIA.
+          </p>
+        <p>Etape 1 : localisez la boutique la plus proche de chez vous : Pour trouver la plus proche, il vous suffit d'accéder à la rubrique Trouver une boutique BARSHA.</p>
+        <p>Etape 2 : Remettez à la caisse l’article que vous désirez échanger</p>
+        <p>Etape 3 : Le responsable magasin vérifie que l’article de l’échange correspond aux conditions générales de l’échange.</p>
+        <p>Etape 4 : Si l’article est conforme aux conditions de l’échange, vous pouvez l’échanger immédiatement par un autre article.</p>
+      </div>
+
+      <!-- Retour en magasin ou en ligne -->
+      <div class="info-section">
+        <h3>Retour en magasin </h3>
+        <p>Vous avez jusqu'à 10 jours à partir de la réception de votre commande pour retourner un article au magasin (sauf magasin KELIBIA)</p>
+        <p>Etape 1 : localisez la boutique la plus proche de chez vous : Pour trouver la plus proche, il vous suffit d'accéder à la rubrique Trouver une boutique BARSHA.</p>
+        <p>Etape 2 : Remettez à la caisse l’article que vous désirez retourner</p>
+        <p>Etape 3 : Le responsable magasin vérifie que le retour correspond aux conditions générales de retour.</p>
+        <p>Etape 4 : Vous récupérez un bon d’achat BARSHA valable 3 mois dans les magasins BARSHA. </p>
+      </div>
+      <div class="info-section">
+        <h3>Retour en ligne </h3>
+        <p>Vous avez jusqu'à 10 jours à partir de la réception de votre commande pour retourner un article en ligne, en récupérant un bon d’achat dans votre compte sur BARSHA.com.tn ou un remboursement.</p>
+        <p>Etape 1 : Saisie du formulaire de Retour : Votre annonce de retour doit être saisie sur BARSHA.com.tn et vous devez sélectionner le type de remboursement « Avoir en ligne » ou « remboursement bancaire »</p>
+        <p>NB : En cas de choisir le type de remboursement « remboursement bancaire », il est obligatoire de saisir le RIB bancaire qui contient les 20 chiffres, le Nom de titulaire de compte bancaire et d’ajouter en pièce jointe une photo des coordonnées bancaires.</p>
+        <p>-Etape 2 : Préparez votre paquet de retour : Empaquetez vos articles de façon sûre, si possible dans l'emballage d'origine. </p>
+        <p>-Etape 3 : Donnez votre colis au livreur. Un livreur vous contactera pour collecter le colis de retour de chez vous. Par la suite, dans un délai de 10 jours ouvrés à compter de la date à laquelle nous recevrons votre paquet dans nos entrepôts, nous procéderons aux démarches en vue de traitement de votre demande.  </p>
+        <p>Dans le cas ou votre retour est accepté et selon votre demande, soit un bon d’achat sera créé automatiquement dans votre compte, soit un remboursement sera effectué en utilisant le RIB que vous l’avez indiqué
+          *N'oubliez pas que le bon d’achat n'est valable que sur BARSHA.com.tn.
+         *Si vous avez reçu un article présentant un défaut ou qui ne correspond pas avec l'achat que vous avez fait et que vous décidez de le retourner, n'oubliez pas d'inclure dans le paquet le document justifiant les frais d'envoi (facture d’achat). Dès que nous vérifierons l'état des vêtements, nous vous verserons le montant des articles retournés ainsi que des frais d'envoi.
+         </p>
+      </div>
+      <!-- Droit de rétractation -->
+      <div class="info-section">
+        <h3>Droit de rétractation (10 jours)</h3>
+        <p>Nos clients disposent de 10 jours calendaires, à compter de la date de réception de leur commande, pour annuler leur achat effectué chez BARSHA.</p>
+        <p>Si vous souhaitez exercer votre droit de rétractation, il est nécessaire de nous le notifier par l'intermédiaire d'une lettre ou de ce formulaire de rétractation que vous devrez envoyer par e-mail à notre contact.</p>
+        <p>Nous vous rappelons de ne pas transmettre les données de vos cartes par e-mail ou sur les réseaux sociaux.</p>
+        <p>Vous pourrez réaliser un échange dans une de nos boutiques BARSHA (sauf KELIBIA).</p>
+        <p>Les frais de livraison ne seront pas remboursés.</p>
+      </div>
+
+      <!-- Recommandation de sécurité -->
+
+    </div>
+  </div>
+</div>

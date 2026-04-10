@@ -1,0 +1,641 @@
+
+
+  <div >
+
+<div class="home">
+
+    <h1 class="font">Mon Compte</h1>
+    <div class="line"></div>
+
+    <div class="button-container">
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'achat'"
+            (click)="selectTab('achat')"
+        >Achat</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'favoris'"
+            (click)="selectTab('favoris')"
+        >Favoris</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'profil'"
+            (click)="selectTab('profil')"
+        >Profil</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'coupon'"
+            (click)="selectTab('coupon')"
+        >Coupons</button>
+        <button
+        class="nav-button"
+        [class.active]="selectedTab === 'retour'"
+        (click)="selectTab('retour')"
+    >Demande de retour</button>
+        <!-- <button
+            class="nav-button"
+            [class.active]="selectedTab === 'notifications'"
+            (click)="selectTab('notifications')"
+        >Notifications</button> -->
+        <!-- <button
+            class="nav-button"
+            [class.active]="selectedTab === 'parametres'"
+            (click)="selectTab('parametres')"
+        >Parametres</button> -->
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'points'"
+            (click)="selectTab('points')"
+        >Fidélité</button>
+    </div>
+
+    <div class="content">
+        <div *ngIf="selectedTab === 'achat'">
+            <!-- Indicateur de chargement -->
+            <div *ngIf="isLoadingOrders" class="text-center py-4">
+            <!-- Spinner -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+            </div>
+
+            <!-- Message d'erreur -->
+            <div *ngIf="orderError" class="alert alert-danger">
+              {{ orderError }}
+            </div>
+
+            <!-- Liste des commandes -->
+            <div *ngIf="!isLoadingOrders && !orderError">
+              <div *ngIf="orders.length === 0" class="text-center py-4">
+                <p>Vous n'avez aucune commande pour le moment</p>
+                <a routerLink="/" class="btn btn-primary">Découvrir nos produits</a>
+              </div>
+
+              <div *ngIf="!showRefundType && orders.length > 0">
+                <div class="orders-list-center">
+                  <div *ngFor="let order of orders" class="card mb-4 order-card-center">
+                    <div class="card-header bg-light d-flex justify-content-between"
+                         (click)="toggleOrderDetails(order.id)"
+                         style="cursor: pointer;">
+                      <div>
+                        <strong>Commande #{{ order.slug }}</strong>
+                        <span class="badge bg-secondary ms-2">{{ order.status }}</span>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <small class="text-muted me-2">
+                          Passée le {{ order.createdAt | date:'dd/MM/yyyy' }}
+                        </small>
+                        <i class="fas" [ngClass]="isOrderExpanded(order.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                      </div>
+                    </div>
+
+                    <div class="card-body" *ngIf="isOrderExpanded(order.id)">
+                      <div *ngFor="let product of order.products" class="d-flex mb-3">
+                        <img [src]="product.image" [alt]="product.title"
+                             [title]="product.title"
+                             class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                        <div class="ms-3">
+                          <h6 class="mb-1">{{ product.title }}</h6>
+                          <small class="text-muted d-block">
+                            {{ product.color }} - {{ product.size }}
+                          </small>
+                          <small>{{ product.unitPrice }} TND x {{ product.quantity || 1 }}</small>
+                        </div>
+                      </div>
+
+                      <div class="border-top pt-3">
+                        <div class="row">
+                          <div class="col-md-6">
+                            <p>
+                              <i class="fas fa-truck me-2"></i>
+                              {{ order.shippingMethod }}
+                            </p>
+                            <p>
+                              <i class="fas fa-credit-card me-2"></i>
+                              {{ order.paymentMethod }}
+                            </p>
+                            <p *ngIf="order.shippingAddress">
+                              <i class="fas fa-map-marker-alt me-2"></i>
+                              {{ order.shippingAddress.address }}, {{ order.shippingAddress.city }}
+                            </p>
+                          </div>
+                          <div class="col-md-6 text-end">
+                            <p>Sous-total: {{ order.subTotal }} TND</p>
+                            <!-- Affichage du coupon s'il existe -->
+                            <p *ngIf="order.coupon" class="coupon-info">
+                              <span class="coupon-label">Coupon:</span>
+                              <span class="coupon-code black1">{{ order.coupon.code }}</span>
+                              <span class="coupon-discount right">
+                                {{ order.coupon.discount_amount > 0 ? '-' + order.coupon.discount_amount + ' TND' :
+                                   order.coupon.discount_percent > 0 ? '-' + order.coupon.discount_percent + '%' : '' }}
+                              </span>
+                            </p>
+                            <p>Frais de livraison: {{ order.shippingCost }} TND</p>
+                            <p class="fw-bold">Total: {{ order.total }} TND</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card-footer text-end" *ngIf="isOrderExpanded(order.id)">
+                      <button class="btn  btn-sm"
+                              [routerLink]="['/order-details', order.id]">
+                        Voir les détails
+                      </button>
+                      <button class="btn btn-sm ms-2" *ngIf="(order.statusId === 1 || order.statusId === 2) && order.paymentStatusId !== 10" (click)="openCancelModal(order.id)">
+                        Annuler
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        <div *ngIf="selectedTab === 'favoris'" class="card-container">
+            <div *ngFor="let produit of produits" class="card">
+              <div class="wishlist-icon" (click)="toggleWishlist(produit)">
+                <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
+              </div>
+              <div class="card-image-container">
+                <a [href]="getProductDetailUrl(produit)"
+                   [routerLink]="['/produit', productService.generateProductSlug(produit)]"
+                   class="product-link">
+                  <img [src]="produit.colors[produit.selectedColorIndex].mainImage"
+                       [alt]="produit.nom"
+                       [title]="produit.nom"
+                       class="card-image img-fluid">
+                </a>
+              </div>
+              <div class="card-content">
+                <h3 class="card-title">{{ produit.nom }}</h3>
+                <p class="card-price">{{ produit.prix }}</p>
+                <div class="color-variations">
+                  <img *ngFor="let color of produit.colors; let i = index"
+                       [src]="color.textureImage"
+                       [alt]="color.name"
+                       [title]="color.name"
+                       class="color-circle"
+                       [class.selected]="produit.selectedColorIndex === i"
+                       (click)="selectColor(produit, i)">
+                </div>
+                <div class="sizes-container">
+                  <div class="sizes-title">TAILLES</div>
+                  <div class="sizes-list">
+                    <div *ngFor="let taille of produit.tailles" class="size-item-container">
+                      <span [ngClass]="{'out-of-stock': !isInStock(produit, taille.size)}">{{ taille.size }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      <!-- Replace the existing profil section with this updated version -->
+      <div *ngIf="selectedTab === 'profil'" class="profile-section">
+        <div class="profile-form container-fluid px-0">
+            <!-- <div class="form-group">
+                <label for="address" class="form-label">Adresses*</label>
+                <div class="input-container">
+                    <div class="adresses_container">
+
+                    </div>
+                    <button  class="edit-button" >
+                        <i class="fa fa-bars" aria-hidden="true"></i>
+                      </button>
+
+                </div>
+            </div> -->
+
+            <!-- <div class="form-group">
+                <label for="card" class="form-label">Porte cartes*</label>
+                <div class="input-container">
+                    <div class="card-input-wrapper">
+                        <input type="text" id="card" class="form-input card-number" value="4444 4444 4444 4444" readonly>
+                        <span class="card-date">Date: 12/25</span>
+                    </div>
+                    <button class="edit-button"><i class="fa fa-bars" aria-hidden="true"></i></button>
+                </div>
+            </div> -->
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="firstName" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Prénom*</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="text" id="firstName" class="form-input" [value]="userProfile.firstName" readonly autocomplete="off">
+                        <button class="edit-button" (click)="openEditProfileModal('firstName')">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="lastName" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Nom*</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="text" id="lastName" class="form-input" [value]="userProfile.lastName" readonly autocomplete="off">
+                        <button class="edit-button" (click)="openEditProfileModal('lastName')">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="email" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Email*</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="email" id="email" class="form-input" [value]="userProfile.email" readonly autocomplete="off">
+                        <button class="edit-button" (click)="openEditProfileModal('email')">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="phone" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Numéro*</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="tel" id="phone" class="form-input" [value]="userProfile.phone" readonly autocomplete="off">
+                        <button class="edit-button">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="birthday" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Date de naissance</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="text" id="birthday" class="form-input" [value]="userProfile.birthday | date:'dd/MM/yyyy'" readonly autocomplete="off">
+                        <button class="edit-button" (click)="openEditProfileModal('birthday')">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-4">
+                    <label for="gender" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Genre</label>
+                </div>
+                <div class="col-8">
+                    <div class="input-container">
+                        <input type="text" id="gender" class="form-input" [value]="userProfile.gender" readonly autocomplete="off">
+                        <button class="edit-button" (click)="openEditProfileModal('gender')">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="form-group">
+                <label for="password" class="form-label">Mot de passe*</label>
+                <div class="input-container">
+                    <input type="password" id="password" class="form-input" value="********" readonly>
+                    <button class="edit-button">
+                        <i class="fa fa-bars" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div> -->
+        </div>
+
+        <div class="profile-actions">
+            <a  class="action-link" (click)="logout()">se deconnecter</a>
+            <a  class="action-link delete-link" (click)="deleteAccount()">supprimer le compte</a>
+        </div>
+    </div>
+    <div *ngIf="selectedTab === 'notifications'" class="notifications-section">
+
+        <div class="notification-list">
+            <div class="notification-item" *ngFor="let notification of notif">
+                <img [src]="notification.image" alt="Notification image" class="notification-image"
+                [title]="notification.texte">
+                <span class="notification-text">{{ notification.texte }}</span>
+            </div>
+        </div>
+    </div>
+        <div *ngIf="selectedTab === 'parametres'" class="profile-section">
+            <div class="profile-form container-fluid px-0">
+                <div class="form-group row align-items-center">
+                    <div class="col-4">
+                        <label for="address" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Newsletter*</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-container">
+                            <input type="text" id="address" class="form-input" value="Foulenbenfoulen@gmail.com" readonly autocomplete="off">
+                            <button class="edit-button"><i class="fa fa-bars" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row align-items-center">
+                    <div class="col-4">
+                        <label for="card" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Paramétres de disp*</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-container">
+                            <div class="card-input-wrapper">
+                                <input type="text" id="card" class="form-input card-number" value="" readonly autocomplete="off">
+                            </div>
+                            <button class="edit-button"><i class="fa fa-bars" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row align-items-center">
+                    <div class="col-4">
+                        <label for="email" class="form-label w-100 h-100 d-flex align-items-center justify-content-center">Langue des Communications*</label>
+                    </div>
+                    <div class="col-8">
+                        <div class="input-container">
+                            <input type="email" id="email" class="form-input" value="Francais" readonly autocomplete="off">
+                            <button class="edit-button"><i class="fa fa-bars" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="selectedTab === 'coupon'" class="profile-section">
+
+            <app-coupons></app-coupons>
+
+
+        </div>
+        <div *ngIf="selectedTab === 'retour'" class="profile-section">
+
+            <app-retour></app-retour>
+
+
+        </div>
+        <div *ngIf="selectedTab === 'points'" class="profile-section">
+            <app-fidelite></app-fidelite>
+        </div>
+    </div>
+
+    <!-- Example Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              ...
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">
+                        <span *ngIf="currentEditField === 'email'">Modifier votre email</span>
+                        <span *ngIf="currentEditField === 'firstName'">Modifier votre prénom</span>
+                        <span *ngIf="currentEditField === 'lastName'">Modifier votre nom</span>
+                        <span *ngIf="currentEditField === 'birthday'">Modifier votre date de naissance</span>
+                        <span *ngIf="currentEditField === 'gender'">Modifier votre genre</span>
+                    </h5>
+                    <button type="button" class="close" (click)="closeEditProfileModal()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Success/Error Message -->
+                    <div *ngIf="updateMessage" class="alert" [ngClass]="{'alert-success': updateSuccess, 'alert-danger': !updateSuccess}">
+                        {{ updateMessage }}
+                    </div>
+
+                    <!-- Email Field -->
+                    <div *ngIf="currentEditField === 'email'" class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail" class="form-control" [(ngModel)]="editProfileForm.email" required autocomplete="off">
+                        <!-- <small class="form-text text-muted">Entrez votre nouvelle adresse email</small> -->
+                    </div>
+
+                    <!-- First Name Field -->
+                    <div *ngIf="currentEditField === 'firstName'" class="form-group">
+                        <label for="editFirstName">Prénom</label>
+                        <input type="text" id="editFirstName" class="form-control" [(ngModel)]="editProfileForm.firstName" required autocomplete="off">
+                        <!-- <small class="form-text text-muted">Entrez votre prénom</small> -->
+                    </div>
+
+                    <!-- Last Name Field -->
+                    <div *ngIf="currentEditField === 'lastName'" class="form-group">
+                        <label for="editLastName">Nom</label>
+                        <input type="text" id="editLastName" class="form-control" [(ngModel)]="editProfileForm.lastName" required autocomplete="off">
+                        <!-- <small class="form-text text-muted">Entrez votre nom</small> -->
+                    </div>
+
+                    <!-- Birthday Field -->
+                    <div *ngIf="currentEditField === 'birthday'" class="form-group">
+                        <label for="editBirthday">Date de naissance</label>
+                        <input type="date" id="editBirthday" class="form-control" [(ngModel)]="editProfileForm.birthday" autocomplete="off">
+                        <!-- <small class="form-text text-muted">Format: AAAA-MM-JJ</small> -->
+                    </div>
+
+                    <!-- Gender Field -->
+                    <div *ngIf="currentEditField === 'gender'" class="form-group">
+                        <label>Genre</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gender" id="genderFemme" value="Femme" [(ngModel)]="editProfileForm.gender">
+                            <label class="form-check-label" for="genderFemme">Femme</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gender" id="genderHomme" value="Homme" [(ngModel)]="editProfileForm.gender">
+                            <label class="form-check-label" for="genderHomme">Homme</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="closeEditProfileModal()">Annuler</button>
+                    <button type="button" class="btn btn-primary" (click)="submitProfileUpdate()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Overlay pour sélection du motif et remboursement, intégré depuis cancel.component.html -->
+    <div *ngIf="showCancelModal">
+      <!-- Modal Overlay pour sélection du motif -->
+      <div class="motif-modal" *ngIf="!showRefundType">
+        <div class="modal-content" style="background: #fff; border-radius: 10px; max-width: 600px; margin: 40px auto; box-shadow: 0 2px 16px rgba(0,0,0,0.15);">
+          <div class="modal-header" style="border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 0 24px;">
+            <h5 class="modal-title" style="font-size: 1.5rem; font-weight: 600;">Motif</h5>
+            <button type="button" class="close-button" (click)="onClose()" style="background: none; border: none; font-size: 1.5rem;">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <hr style="margin: 16px 0 0 0; border-color: #eee;">
+          <div class="modal-body" style="padding: 24px;">
+            <ng-container *ngIf="loadingMotifs">
+              <p>Chargement des motifs...</p>
+            </ng-container>
+            <ng-container *ngIf="!loadingMotifs && errorMotifs">
+              <p class="text-danger">{{ errorMotifs }}</p>
+            </ng-container>
+            <ng-container *ngIf="!loadingMotifs && !errorMotifs">
+              <div class="motif-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <button
+                  *ngFor="let motif of motifs"
+                  class="motif-option-button"
+                  [ngClass]="{'active': selectedMotifId === motif.id}"
+                  (click)="selectMotif(motif.id)"
+                  style="background: #fafbfc; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; font-size: 1rem; font-weight: 500; color: #222; transition: border 0.2s, background 0.2s; outline: none; cursor: pointer; text-align: center; min-height: 60px;"
+                  [style.borderColor]="selectedMotifId === motif.id ? '#222' : '#e0e0e0'"
+                  [style.background]="selectedMotifId === motif.id ? '#f3f3f3' : '#fafbfc'"
+                >
+                  {{ motif.name }}
+                </button>
+              </div>
+            </ng-container>
+          </div>
+          <hr style="margin:0; border-color: #eee;">
+          <div class="modal-footer" style="display: flex; justify-content: center; align-items: center; padding: 24px; border-top: none;">
+            <button type="button" class="btn" [disabled]="!selectedMotifId" (click)="applyMotif()" style="background: #222; color: #fff; font-weight: 600; border-radius: 6px; padding: 10px 32px; font-size: 1rem; letter-spacing: 1px; box-shadow: none; border: none;">APPLIQUER</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interface de sélection du type de remboursement -->
+      <div class="container my-5" *ngIf="showRefundType && showCancel1 && selectedTab != 'favoris' && selectedTab != 'profil' && selectedTab != 'coupon' && selectedTab != 'retour' ">
+        <h2 class="fw-bold mb-4 text-start titre-principal">Type De Remboursement</h2>
+        <div class="refund-type-options">
+          <div class="refund-option-container mb-4">
+            <button class="refund-option w-100"
+                    [ngClass]="{'selected': selectedRefundType === 'avoir'}"
+                    (click)="selectRefundType('avoir')">
+              Bon d'achat (avoir)
+            </button>
+            <div class="refund-info mt-2">
+              <span class="refund-icon me-2">ⓘ</span>
+              <span class="refund-text">Un bon d'achat sera créé automatiquement dans votre compte à compter de la date à laquelle nous recevrons votre retour dans nos entrepots</span>
+            </div>
+          </div>
+          <div class="refund-option-container mb-4">
+            <button class="refund-option w-100"
+                    [ngClass]="{'selected': selectedRefundType === 'bancaire'}"
+                    (click)="selectRefundType('bancaire')">
+              Remboursement bancaire
+            </button>
+            <div class="refund-info mt-2">
+              <span class="refund-icon me-2">ⓘ</span>
+              <span class="refund-text">Un remboursement bancaire sera effectué en utilisant que vous l'avez indiqué sur le formulaire de retour à compter de la date à laquelle nous recevrons votre retour dans nos entrepots</span>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="submitError" class="alert alert-danger mt-3">{{ submitError }}</div>
+        <div *ngIf="submitSuccess" class="alert alert-success mt-3">Votre demande de retour a été envoyée avec succès.</div>
+        <div class="text-center mt-4 d-flex justify-content-center" style="gap: 10px;">
+          <button class="btn btn-dark px-4 py-3"
+                  style="background-color: black; color: white;"
+                  (click)="goBack()"
+                  [disabled]="loadingSubmit">
+            PRÉCÉDENT
+          </button>
+          <button class="btn btn-dark px-4 py-3"
+                  style="background-color: black; color: white;"
+                  (click)="submitAvoirRefund()"
+                  *ngIf="selectedRefundType === 'avoir'"
+                  [disabled]="loadingSubmit">
+            <span *ngIf="loadingSubmit" class="spinner-border spinner-border-sm me-2"></span>
+            CONFIRMER
+          </button>
+        </div>
+      </div>
+
+      <!-- Interface bancaire -->
+      <div class="container my-5" *ngIf="showRefundType && showCancel2 && selectedRefundType === 'bancaire'">
+        <h2 class="fw-bold mb-4 text-start titre-principal">Type De Remboursement</h2>
+        <button class="refund-option dark selected w-100 mb-4"
+                style="max-width: 700px; display: block; margin-left: auto; margin-right: auto;">
+          Remboursement bancaire
+        </button>
+        <div class="bank-refund-form-wrapper">
+          <form class="bank-refund-form"
+                autocomplete="off"
+                (submit)="$event.preventDefault(); submitBankRefund(selectedFile)">
+            <div class="form-group mb-3">
+              <input type="text"
+                     class="form-control"
+                     placeholder="Nom et Prénom*"
+                     [(ngModel)]="holderName"
+                     name="holderName"
+                     required>
+            </div>
+            <div class="form-row d-flex align-items-center gap-2 mb-3">
+              <input type="text"
+                     class="form-control"
+                     placeholder="RIB*"
+                     [(ngModel)]="rib"
+                     name="rib"
+                     required
+                     maxlength="20"
+                     pattern="[0-9]*"
+                     inputmode="numeric"
+                     (input)="onRibInput()">
+              <input type="file"
+                     id="ribFile"
+                     style="display: none;"
+                     accept=".pdf,.jpg,.jpeg,.png"
+                     (change)="onFileSelected($event)">
+              <button type="button"
+                      class="attach-btn"
+                      (click)="triggerFileInput()">
+                {{ selectedFileName }}
+                <span class="arrow" style="vertical-align: middle; margin-left: 8px;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:inline;" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 8L10 13L15 8" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+            </div>
+            <div *ngIf="submitError" class="alert alert-danger mt-3">{{ submitError }}</div>
+            <div *ngIf="submitSuccess" class="alert alert-success mt-3">Votre demande de retour a été envoyée avec succès.</div>
+            <div class="d-flex justify-content-center mt-4 gap-2">
+              <button class="confirm-btn"
+                      type="button"
+                      (click)="goBack()"
+                      [disabled]="loadingSubmit">
+                PRÉCÉDENT
+              </button>
+              <button class="confirm-btn"
+                      type="submit"
+                      [disabled]="loadingSubmit">
+                <span *ngIf="loadingSubmit" class="spinner-border spinner-border-sm me-2"></span>
+                CONFIRMER
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+</div>
+<p-toast></p-toast>

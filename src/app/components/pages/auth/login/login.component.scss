@@ -1,0 +1,225 @@
+.home-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+
+
+}
+
+
+
+  .login-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'std55';
+    margin-top: 70px;
+  }
+  
+
+  
+  .login-content {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+    /* Réduction visuelle de l'interface sans impacter le layout */
+    transform: scale(0.9);
+    transform-origin: top center;
+  }
+  
+  .login-title {
+    font-size: 28px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 40px 0 20px;
+    color: #000;
+    text-align: left;
+  }
+  
+  .divider {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 20px 0 40px;
+    width: 100%;
+  }
+  
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* espace vertical entre les champs */
+    }
+  }
+  
+  .form-group {
+    width: 100%;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    //
+    box-sizing: border-box;
+    
+    &::placeholder {
+      color: #333;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #000;
+    }
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    
+    @media (max-width: 600px) {
+      flex-direction: column;
+    }
+  }
+  
+  .btn {
+    flex: 1;
+    padding: 10px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #000;
+    min-width: 150px;
+    
+    &-outline {
+      background-color: transparent;
+      color: #000;
+      
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+    
+    &-solid {
+      background-color: #000;
+      color: #fff;
+      
+      &:hover {
+        background-color: #333;
+      }
+    }
+  }
+  
+  .forgot-password {
+    text-align: right;
+    margin-top: 20px;
+    text-decoration: underline;
+    a {
+      color: #000;
+      text-decoration: none;
+      font-size: 14px;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 768px) {
+  
+    .home {
+      margin-top: 125px;
+      
+      .logo img {
+        width: 240px;
+        height: 100px;
+      }
+    }
+  }
+  .password-field {
+    position: relative;
+  
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+      
+      i {
+        font-size: 20px;
+      }
+    }
+  }
+  
+  /* Style pour désactiver le bouton si nécessaire */
+  .disabled-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  ::ng-deep {
+    .p-toast {
+      .p-toast-message {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        
+        &.p-toast-message-success {
+          background-color: #f0f9eb;
+          border-color: #e1f3d8;
+          color: #000000;
+          
+          .p-toast-message-icon,
+          .p-toast-summary {
+            color: #67c23a;
+          }
+        }
+        
+        &.p-toast-message-error {
+          background-color: #fef0f0;
+          border-color: #fde2e2;
+          color: #f56c6c;
+          
+          .p-toast-message-icon,
+          .p-toast-summary {
+            color: #f56c6c;
+          }
+        }
+        
+        &.p-toast-message-info {
+          background-color: #f4f4f5;
+          border-color: #e9e9eb;
+          color: #909399;
+          
+          .p-toast-message-icon,
+          .p-toast-summary {
+            color: #909399;
+          }
+        }
+      }
+      
+      .p-toast-message-content {
+        padding: 1rem;
+        
+        .p-toast-summary {
+          font-weight: 600;
+          font-size: 1rem;
+        }
+        
+        .p-toast-detail {
+          margin-top: 0.5rem;
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }

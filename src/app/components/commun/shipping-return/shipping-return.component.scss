@@ -1,0 +1,297 @@
+// Variables
+$primary-color: #000;
+$secondary-color: #fff;
+$accent-color: #ccc;
+$text-color: #333;
+$highlight-color: #000;
+$border-color: #e0e0e0;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin section-spacing {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  border: 1px solid $border-color;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+}
+
+// Container styles
+.shipping-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'std55';
+  height: 100vh;
+  overflow: hidden;
+  
+}
+
+// Header styles
+.shipping-header {
+  //text-align: center;
+  margin-bottom: 40px;
+  
+  .shipping-title {
+    font-family: 'Qebil', sans-serif;
+    font-size: 40px;
+    color: $primary-color;
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .shipping-subtitle {
+    font-size: 18px;
+    margin-left: 30px;
+    color: $text-color;
+    font-weight: bolder;
+    font-family: 'std95';
+  }
+}
+
+// Content layout
+.shipping-content {
+  display: flex;
+  height: 100vh;
+  flex-wrap: nowrap; // Empêche le passage à la ligne
+  overflow: hidden;
+}
+
+.col-gauche {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow: hidden;
+  background: #fff;
+  z-index: 2;
+}
+
+.col-droite {
+  height: 100vh;
+  overflow-y: auto;
+  background: #f5f5f5;
+  z-index: 1;
+
+  /* Scrollbar personnalisée pour Chrome, Edge, Safari */
+  &::-webkit-scrollbar {
+    width: 6px;
+    background: #e0e0e0;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #bdbdbd;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0;
+  }
+
+  /* Scrollbar personnalisée pour Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #bdbdbd #e0e0e0;
+}
+
+// Delivery option styles
+.delivery-option {
+  display: flex;
+  //border: 1px solid $border-color;
+
+  border: none;
+  align-items: center;
+  @include section-spacing;
+  position: relative;
+  
+  .delivery-icon {
+    font-size: 24px;
+    margin-right: 20px;
+    min-width: 40px;
+    text-align: center;
+  }
+  
+  .delivery-details {
+    flex: 1;
+    
+    h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    
+    p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: $text-color;
+    }
+    
+    .payment-method {
+      font-size: 12px;
+      color: $text-color;
+      margin-top: 10px;
+    }
+  }
+  
+  .delivery-price {
+    font-weight: bold;
+    font-size: 16px;
+    min-width: 80px;
+    text-align: right;
+  }
+}
+
+// Policy section styles
+.policy-section {
+  @include section-spacing;
+  
+  .policy-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    
+    .policy-icon {
+      font-size: 20px;
+      margin-right: 15px;
+    }
+    
+    h3 {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0;
+    }
+  }
+  
+  .policy-content {
+    p {
+      margin: 10px 0;
+      font-size: 14px;
+      color: $text-color;
+      line-height: 1.5;
+    }
+    
+    .highlight {
+      font-weight: bold;
+    }
+  }
+}
+
+// Info section styles
+.info-section {
+  margin-bottom: 30px;
+  
+  h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: $primary-color;
+  }
+  
+  p {
+    margin: 10px 0;
+    font-size: 14px;
+    color: $text-color;
+    line-height: 1.5;
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  :host ::ng-deep html, :host ::ng-deep body {
+    height: auto;
+    overflow: auto;
+  }
+  .shipping-container,
+  .shipping-content,
+  .col-gauche,
+  .col-droite {
+    height: auto;
+    overflow: visible;
+  }
+  .shipping-content {
+    flex-direction: column;
+  }
+  .shipping-header {
+    .shipping-title {
+      font-size: 32px;
+    }
+    
+    .shipping-subtitle {
+      font-size: 16px;
+    }
+  }
+  
+  .delivery-option {
+    flex-wrap: wrap;
+    
+    .delivery-icon {
+      margin-bottom: 10px;
+    }
+    
+    .delivery-price {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    
+    .delivery-details {
+      width: 100%;
+      margin-top: 10px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .shipping-container {
+    padding: 15px;
+  }
+  
+  .shipping-header {
+    .shipping-title {
+      font-size: 28px;
+    }
+    
+    .shipping-subtitle {
+      font-size: 14px;
+    }
+  }
+  
+  .delivery-option, .policy-section {
+    padding: 15px;
+  }
+  
+  .delivery-option {
+    .delivery-icon {
+      font-size: 20px;
+      margin-right: 15px;
+    }
+    
+    .delivery-details h3 {
+      font-size: 14px;
+    }
+    
+    .delivery-price {
+      font-size: 14px;
+    }
+  }
+  
+  .policy-section {
+    .policy-header h3 {
+      font-size: 14px;
+    }
+  }
+  
+  .info-section {
+    h3 {
+      font-size: 14px;
+    }
+    
+    p {
+      font-size: 12px;
+    }
+  }
+}

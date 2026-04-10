@@ -1,0 +1,125 @@
+
+
+<div class="main-wrapper" [ngClass]="{'blur-background': showPrivacyDialog}">
+  <div class="main-content">
+    <div class="content-container">
+      <div class="login-section">
+      <h1 class="page-title">CRÉER UN COMPTE</h1>
+
+      <div class="create-account-form">
+     
+
+        <!-- Formulaire d'inscription -->
+        <form [formGroup]="registrationForm" (ngSubmit)="register()">
+          <div class="form-group">
+            <input type="text" placeholder="Prénom*" class="form-input" formControlName="firstName">
+          </div>
+          <div class="form-group">
+            <input type="text" placeholder="Nom*" class="form-input" formControlName="lastName">
+          </div>
+          <div class="form-group">
+            <input type="tel" placeholder="Numéro de tél*" class="form-input" formControlName="phone" name="phone" [disabled]="otpSent" required>
+          </div>
+          <div class="form-group">
+            <input type="email" placeholder="Adresse mail*" class="form-input" formControlName="email">
+            <div *ngIf="registrationForm.get('email')?.invalid && registrationForm.get('email')?.touched" class="error-message">
+              Veuillez entrer une adresse email valide
+            </div>
+
+          </div>
+          <div class="form-group">
+            <div class="password-container">
+              <input [type]="showPassword ? 'text' : 'password'" placeholder="Mot de passe*" class="form-input" formControlName="password">
+              <i class="password-toggle-icon" [ngClass]="showPassword ? ' fas fa-eye ' : 'fas fa-eye-slash'" (click)="togglePasswordVisibility()"></i>
+
+
+            </div>
+            <div *ngIf="registrationForm.get('password')?.invalid && registrationForm.get('password')?.touched" class="error-message">
+              Veuillez entrer un mot de passe
+            </div>
+          </div>
+          <div class="form-group">
+
+
+
+
+            <input type="date" placeholder="Date de naissance*" class="form-input" formControlName="birthday">
+            <div *ngIf="registrationForm.get('birthday')?.invalid && registrationForm.get('birthday')?.touched" class="error-message">
+              La date de naissance ne peut pas être dans le futur
+            </div>
+          </div>
+
+          <!-- Sélection du genre -->
+          <div class="gender-selection">
+            <span>Homme</span>
+            <input type="checkbox" id="homme" name="gender" (change)="setGender('Homme')" [checked]="registrationForm.get('gender')?.value === 'Homme'">
+            <span class="gender-space"></span>
+            <span>Femme</span>
+            <input type="checkbox" id="femme" name="gender" (change)="setGender('Femme')" [checked]="registrationForm.get('gender')?.value === 'Femme'">
+          </div>
+
+          <!-- Politique de confidentialité -->
+          <div class="privacy-policy">
+            <input type="checkbox" id="privacy" name="privacy" formControlName="privacyAccepted">
+            <a href="javascript:void(0)" (click)="openPrivacyDialog()" for="privacy"> J'ai lu et compris la politique de confidentialité</a>
+          </div>
+
+
+
+          <!-- Bouton pour créer le compte -->
+          <button
+          class="continue-button"
+          type="submit"
+          [disabled]="registrationForm.invalid"
+          [ngClass]="{'disabled-button': registrationForm.invalid}">
+          Créer le compte
+        </button>
+        </form>
+        <br>
+        <div class="existing-account d-flex justify-content-center align-items-center">
+          <p class="m-0">Vous avez déjà un compte ? <a [routerLink]="['/login']">Connectez-vous ici</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div> <!-- Fermeture de main-wrapper -->
+
+<!-- Overlay semi-transparent -->
+<div class="privacy-overlay" *ngIf="showPrivacyDialog"></div>
+
+<!-- Privacy Policy Dialog -->
+<p-dialog
+  [(visible)]="showPrivacyDialog"
+  [style]="{width: '90vw', maxWidth: '800px', backgroundColor: '#ffffff', marginTop: '30vh'}"
+  [contentStyle]="{maxHeight: '60vh'}"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closeOnEscape]="true"
+  [baseZIndex]="10000"
+  [dismissableMask]="true"
+  styleClass="privacy-dialog">
+
+  <ng-template pTemplate="header">
+    <div class="privacy-header">
+      <h2>Politique de Confidentialité</h2>
+      <button class="close-button" (click)="closePrivacyDialog()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="privacy-container" *ngIf="!isPrivacyLoading && privacyData">
+    <h1 class="privacy-title">{{ privacyData.title }}</h1>
+    <div class="markdown-container">
+      <markdown [data]="privacyData.text"></markdown>
+    </div>
+  </div>
+
+  <div class="privacy-loading" *ngIf="isPrivacyLoading">
+    <p>Chargement de la politique de confidentialité...</p>
+  </div>
+</p-dialog>
+
+<p-toast></p-toast>

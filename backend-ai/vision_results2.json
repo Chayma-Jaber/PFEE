@@ -1,0 +1,75 @@
+{
+  "google/gemini-1.5-flash": {
+    "code": 400,
+    "body": "{\"error\":{\"message\":\"google/gemini-1.5-flash is not a valid model ID\",\"code\":400},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  },
+  "google/gemma-3-27b-it:free": {
+    "code": 429,
+    "body": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"google/gemma-3-27b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Google AI Studio\",\"is_byok\":false}},\"user_id\":\"user_2sm9T3ACywa9ltsEeB8cCi3Ozd4\"}"
+  },
+  "nvidia/nemotron-nano-12b-v2-vl:free": {
+    "code": 200,
+    "body": {
+      "id": "gen-1775465862-4QvTTEeiVrRl1e3VKoEl",
+      "object": "chat.completion",
+      "created": 1775465862,
+      "model": "nvidia/nemotron-nano-12b-v2-vl:free",
+      "provider": "Nvidia",
+      "system_fingerprint": null,
+      "choices": [
+        {
+          "index": 0,
+          "logprobs": null,
+          "finish_reason": "length",
+          "native_finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": null,
+            "refusal": null,
+            "reasoning": "Okay, let's see. The user provided an image that's a solid pink color. They want me to act as an expert and respond with a title guess and a family category. The example given was {'title_guess': 'TEST', 'famille': 'TEEN WOMEN'}. \n\nFirst, I need to figure out what the image might represent. Since it's just a pink square, there's no specific details. Maybe it's a placeholder or a minimalist design. The title guess should be something that fits a pink theme. Words like \"Pink\", \"Rose\", \"Blush\", or \"Cotton Candy\" come to mind. But the example used \"TEST\", so maybe they want a more creative title.\n\nFor the family category, \"TEEN WOMEN\" was the example. That might relate to a target audience. If the image is simple and modern, maybe it's for a younger demographic. Alternatively, if it's a soft pink, perhaps it's related to beauty, fashion, or lifestyle. Other possibilities could be \"Beauty\", \"Fashion\", \"Lifestyle\", or \"Art\". \n\nWait, the user might be testing if I can handle ambiguous inputs. Since there's no image, I have to make an educated guess. The example used \"TEST\" and \"TEEN WOMEN\", so maybe they expect similar generic terms. But I should think of something more specific. Maybe \"Pastel Dreams\" as a title and \"Fashion\" as the family. Or \"Soft Hues\" and \"Art\". \n\nAlternatively, considering the color pink is often associated with femininity, maybe \"Feminine Elegance\" as the title and \"Lifestyle\" as the family. But I need to stick to the format. Let me check the example again. The title was \"TEST\" and family \"TEEN WOMEN\". So maybe the user wants a similar structure but",
+            "reasoning_details": [
+              {
+                "type": "reasoning.text",
+                "text": "Okay, let's see. The user provided an image that's a solid pink color. They want me to act as an expert and respond with a title guess and a family category. The example given was {'title_guess': 'TEST', 'famille': 'TEEN WOMEN'}. \n\nFirst, I need to figure out what the image might represent. Since it's just a pink square, there's no specific details. Maybe it's a placeholder or a minimalist design. The title guess should be something that fits a pink theme. Words like \"Pink\", \"Rose\", \"Blush\", or \"Cotton Candy\" come to mind. But the example used \"TEST\", so maybe they want a more creative title.\n\nFor the family category, \"TEEN WOMEN\" was the example. That might relate to a target audience. If the image is simple and modern, maybe it's for a younger demographic. Alternatively, if it's a soft pink, perhaps it's related to beauty, fashion, or lifestyle. Other possibilities could be \"Beauty\", \"Fashion\", \"Lifestyle\", or \"Art\". \n\nWait, the user might be testing if I can handle ambiguous inputs. Since there's no image, I have to make an educated guess. The example used \"TEST\" and \"TEEN WOMEN\", so maybe they expect similar generic terms. But I should think of something more specific. Maybe \"Pastel Dreams\" as a title and \"Fashion\" as the family. Or \"Soft Hues\" and \"Art\". \n\nAlternatively, considering the color pink is often associated with femininity, maybe \"Feminine Elegance\" as the title and \"Lifestyle\" as the family. But I need to stick to the format. Let me check the example again. The title was \"TEST\" and family \"TEEN WOMEN\". So maybe the user wants a similar structure but",
+                "format": "unknown",
+                "index": 0
+              }
+            ]
+          }
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 301,
+        "completion_tokens": 400,
+        "total_tokens": 701,
+        "cost": 0,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0,
+          "upstream_inference_prompt_cost": 0,
+          "upstream_inference_completions_cost": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 404,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      }
+    }
+  },
+  "openrouter/free": {
+    "code": 200,
+    "body": {
+      "error": {
+        "message": "Upstream error from Alibaba: <400> InternalError.Algo.InvalidParameter: The image length and width do not meet the model restrictions. [height:1 or width:1 must be larger than 10]",
+        "code": 502
+      }
+    }
+  }
+}

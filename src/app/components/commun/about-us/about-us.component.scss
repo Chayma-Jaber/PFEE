@@ -1,0 +1,230 @@
+// Variables
+$primary-color: #000;
+$secondary-color: #fff;
+$accent-color: #f8f9fa;
+$text-color: #333;
+$transition-speed: 0.3s;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin hover-effect {
+  transition: all $transition-speed ease;
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+// Header styles
+.home {
+  @include flex-center;
+  margin-top: 125px;
+  padding: 2rem 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+  
+  .logo {
+    img {
+      width: 360px;
+      height: 140px;
+      object-fit: contain;
+ 
+      
+      @media (max-width: 768px) {
+        width: 280px;
+        height: 110px;
+      }
+    }
+  }
+}
+
+// Title styles
+.title-underline {
+  width: 80px;
+  height: 3px;
+  background: $primary-color;
+  margin-top: 1rem;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: $primary-color;
+    opacity: 0.5;
+  }
+}
+
+// Content section styles
+.content-section {
+  margin: 2rem 0;
+  
+  .markdown-content {
+    background: $secondary-color;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all $transition-speed ease;
+    
+    &:hover {
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+  }
+}
+
+// Markdown styles
+.markdown-style {
+  h1, h2, h3, h4, h5, h6 {
+    color: $primary-color;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  
+  p {
+    color: $text-color;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+  }
+  
+  ul, ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+    
+    li {
+      margin-bottom: 0.5rem;
+    }
+  }
+  
+  a {
+    color: $primary-color;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all $transition-speed ease;
+    
+    &:hover {
+      border-bottom-color: $primary-color;
+    }
+  }
+}
+
+// Value cards styles
+.value-card {
+  background: $secondary-color;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  @include hover-effect;
+  
+  i {
+    font-size: 2.5rem;
+    color: $primary-color;
+    margin-bottom: 1rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    color: $primary-color;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  p {
+    color: $text-color;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate__animated {
+  animation-duration: 0.8s;
+  animation-fill-mode: both;
+}
+
+.animate__fadeIn {
+  animation-name: fadeIn;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .home {
+    margin-top: 100px;
+  }
+  
+  .value-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .markdown-content {
+    padding: 1.5rem !important;
+  }
+}
+  
+.dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; // Prend toute la hauteur de l'écran
+  width: 100%;
+}
+
+.dot {
+  height: 20px;
+  width: 20px;
+  margin-right: 10px;
+  border-radius: 10px;
+  background-color: #000307;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.dot:last-child {
+  margin-right: 0;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.3s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.1s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  50% {
+    transform: scale(1.2);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  100% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+}

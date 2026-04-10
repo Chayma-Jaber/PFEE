@@ -1,0 +1,8 @@
+<div class="container">
+  <div *ngIf="cookiesPolicyData">
+    <h1 class="text">{{ cookiesPolicyData.title }}</h1>
+    <div class="markdown-container">
+    <markdown [data]="cookiesPolicyData.text"></markdown>
+  </div>
+</div>
+</div>

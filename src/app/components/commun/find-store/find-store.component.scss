@@ -1,0 +1,251 @@
+// Variables
+$primary-color: #333;
+$secondary-color: #fff;
+$accent-color: #ffeb3b; // Jaune pour les régions surlignées
+$border-color: #ccc;
+$font-family: 'std55';
+
+// Main container
+.find-store-container {
+  font-family: $font-family;
+   margin-top: 30px;
+  padding-bottom: 50px;
+}
+
+// Title styling
+.store-title {
+  font-family: $font-family;
+  color: black;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1rem;
+  margin-left: 2rem;
+
+  // Small screens (≥576px)
+  @media (min-width: 576px) {
+    margin-left: 4rem;
+    font-size: 2rem;
+  }
+
+  // Medium screens (≥768px)
+  @media (min-width: 768px) {
+    margin-left: 10rem;
+    font-size: 1.4rem;
+  }
+
+  // Large screens (≥992px)
+  @media (min-width: 992px) {
+    margin-left: 20rem;
+    font-size: 1.6rem;
+  }
+
+  // Extra large screens (≥1200px)
+  @media (min-width: 1200px) {
+    margin-left: 30rem;
+    font-size: 1.8rem;
+  }
+
+  // XXL screens (≥1400px)
+  @media (min-width: 1400px) {
+    margin-left: 50rem;
+    font-size: 2rem;
+  }
+}
+
+// Map styling
+.map-container {
+  position: relative;
+  width: 60%;
+  height: 60%;
+  height: auto;
+  overflow: hidden;
+  //centrer la map
+  margin-left: 6rem;
+  .tunisia-map {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .map-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: transparent;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.3s ease;
+
+    i {
+      color: #000;
+      font-size: 20px;
+    }
+
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
+}
+
+// Store cards styling
+.stores-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.store-card {
+  background-color: $secondary-color;
+  border: 1px solid $border-color;
+  border-radius: 0;
+  padding: 20px;
+  height: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .store-name {
+    font-family: 'Qebil', $font-family;
+    font-size: 1.5rem;
+    color: $primary-color;
+    margin-bottom: 0.5rem;
+  }
+
+  .store-divider {
+    width: 100%;
+    height: 1px;
+    background-color: $border-color;
+    margin: 10px 0 15px;
+  }
+
+  .store-info {
+    p {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #555;
+
+      &.store-location {
+        color: #777;
+      }
+
+      &.store-postal {
+        font-weight: 500;
+      }
+
+      &.store-address {
+        margin-top: 5px;
+      }
+
+      &.store-phone {
+        margin-top: 5px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Loading animation (reusing existing style from the project)
+.dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  width: 100%;
+}
+
+.dot {
+  height: 20px;
+  width: 20px;
+  margin-right: 10px;
+  border-radius: 10px;
+  background-color: #000307;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.dot:last-child {
+  margin-right: 0;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.3s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.1s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  50% {
+    transform: scale(1.2);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  100% {
+    transform: scale(0.8);
+    background-color: #000307;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 992px) {
+  .find-store-container {
+    margin-top: 100px;
+  }
+
+
+
+  .map-container {
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .find-store-container {
+    margin-top: 80px;
+  }
+
+
+
+  .store-card {
+    padding: 15px;
+
+    .store-name {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .find-store-container {
+    margin-top: 60px;
+  }
+
+
+  .store-description {
+    font-size: 0.9rem;
+  }
+
+  .map-marker {
+    width: 15px;
+    height: 15px;
+
+    i {
+      font-size: 15px;
+    }
+  }
+}
