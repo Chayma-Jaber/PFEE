@@ -1,0 +1,44 @@
+[
+  {
+    "nom": "Barsha Kelibia",
+    "ville": "Kelibia",
+    "adresse": "rue ibn kholdoun, kelibia",
+    "telephone": ""
+  },
+  {
+    "nom": "Barsha Gabes",
+    "ville": "Gabes",
+    "adresse": "7 avenue Farhat Hached, gabes",
+    "telephone": "98 747 219"
+  },
+  {
+    "nom": "Barsha Borgo Mall",
+    "ville": "Djerba",
+    "adresse": "Bourgo Mall Midoun Route Houmet Souk km2 Djerba 4162, Djerba",
+    "telephone": ""
+  },
+  {
+    "nom": "Barsha TENIOUR",
+    "ville": "Sfax",
+    "adresse": "Route Teniour km3 residence les jasmins, Sfax",
+    "telephone": "+216 98 780 808"
+  },
+  {
+    "nom": "Barsha Soukra",
+    "ville": "Ariana",
+    "adresse": "Boulevard du maghreb arabe La soukra ariana, Tunisie",
+    "telephone": "+216 98 759 862"
+  },
+  {
+    "nom": "Barsha Saltnia",
+    "ville": "Sfax",
+    "adresse": "Route Saltnia km 4.5, Sfax",
+    "telephone": "+216 98 759 863"
+  },
+  {
+    "nom": "Barsha Mourouj",
+    "ville": "Ben Arous",
+    "adresse": "Immeuble GHAITH Mag N° 3-Mourouj 4-Ben AROUS, Tunisie",
+    "telephone": "+216 98 181 132"
+  }
+]

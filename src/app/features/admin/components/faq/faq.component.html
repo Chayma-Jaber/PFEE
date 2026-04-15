@@ -1,0 +1,282 @@
+<div class="admin-faq">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion FAQ</h1>
+      <p>Gérez les catégories et questions fréquentes du centre d'aide</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="bi bi-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'categories'"
+      (click)="switchTab('categories')">
+      <i class="bi bi-folder"></i> Catégories
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab === 'faqs'"
+      (click)="switchTab('faqs')">
+      <i class="bi bi-question-circle"></i> FAQs
+    </button>
+  </div>
+
+  <!-- Categories Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'categories'">
+    <div class="toolbar">
+      <button class="btn-primary" (click)="openCategoryModal()">
+        <i class="bi bi-plus"></i> Nouvelle catégorie
+      </button>
+    </div>
+
+    <div class="loading" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <div class="data-table" *ngIf="!isLoading">
+      <table>
+        <thead>
+          <tr>
+            <th>Ordre</th>
+            <th>Icône</th>
+            <th>Nom</th>
+            <th>Description</th>
+            <th>FAQs</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories">
+            <td>{{ category.order }}</td>
+            <td><i [class]="'bi ' + (category.icon || 'bi-folder')"></i></td>
+            <td>{{ category.name }}</td>
+            <td>{{ category.description || '-' }}</td>
+            <td>{{ category.faqCount }}</td>
+            <td>
+              <span class="badge" [class.active]="category.isActive" [class.inactive]="!category.isActive">
+                {{ category.isActive ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn-icon" title="Modifier" (click)="openCategoryModal(category)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn-icon" title="Activer/Désactiver" (click)="toggleCategoryStatus(category)">
+                <i class="bi" [class.bi-eye]="category.isActive" [class.bi-eye-slash]="!category.isActive"></i>
+              </button>
+              <button class="btn-icon delete" title="Supprimer" (click)="deleteCategory(category)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="categories.length === 0">
+        <i class="bi bi-folder"></i>
+        <p>Aucune catégorie</p>
+        <button class="btn-primary" (click)="openCategoryModal()">Créer une catégorie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQs Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'faqs'">
+    <div class="toolbar">
+      <div class="filter-group">
+        <label>Catégorie:</label>
+        <select [(ngModel)]="selectedCategoryId" (change)="loadFAQs()">
+          <option [ngValue]="null">Toutes</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+        </select>
+      </div>
+      <button class="btn-primary" (click)="openFAQModal()">
+        <i class="bi bi-plus"></i> Nouvelle FAQ
+      </button>
+    </div>
+
+    <div class="loading" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <div class="data-table" *ngIf="!isLoading">
+      <table>
+        <thead>
+          <tr>
+            <th>Ordre</th>
+            <th>Question</th>
+            <th>Catégorie</th>
+            <th>Vues</th>
+            <th>Utilité</th>
+            <th>Mise en avant</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let faq of faqs">
+            <td>{{ faq.order }}</td>
+            <td class="question-cell">{{ faq.question }}</td>
+            <td>{{ getCategoryName(faq.categoryId) }}</td>
+            <td>{{ faq.viewCount }}</td>
+            <td>
+              <span class="helpfulness">
+                <i class="bi bi-hand-thumbs-up"></i> {{ faq.helpfulYes }}
+                <i class="bi bi-hand-thumbs-down"></i> {{ faq.helpfulNo }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-icon star" [class.featured]="faq.isFeatured" (click)="toggleFeatured(faq)">
+                <i class="bi" [class.bi-star-fill]="faq.isFeatured" [class.bi-star]="!faq.isFeatured"></i>
+              </button>
+            </td>
+            <td>
+              <span class="badge" [class.active]="faq.isActive" [class.inactive]="!faq.isActive">
+                {{ faq.isActive ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn-icon" title="Modifier" (click)="openFAQModal(faq)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn-icon" title="Activer/Désactiver" (click)="toggleFAQStatus(faq)">
+                <i class="bi" [class.bi-eye]="faq.isActive" [class.bi-eye-slash]="!faq.isActive"></i>
+              </button>
+              <button class="btn-icon delete" title="Supprimer" (click)="deleteFAQ(faq)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="faqs.length === 0">
+        <i class="bi bi-question-circle"></i>
+        <p>Aucune FAQ</p>
+        <button class="btn-primary" (click)="openFAQModal()">Créer une FAQ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" *ngIf="showCategoryModal" (click)="closeCategoryModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h2>
+        <button class="close-btn" (click)="closeCategoryModal()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" [(ngModel)]="categoryForm.name" placeholder="Ex: Livraison" />
+        </div>
+        <div class="form-group">
+          <label>Nom (Anglais)</label>
+          <input type="text" [(ngModel)]="categoryForm.nameEn" placeholder="Ex: Shipping" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="categoryForm.description" rows="2" placeholder="Description de la catégorie"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Icône (Bootstrap Icons)</label>
+            <input type="text" [(ngModel)]="categoryForm.icon" placeholder="bi-box" />
+            <span class="hint">Ex: bi-box, bi-truck, bi-credit-card</span>
+          </div>
+          <div class="form-group">
+            <label>Ordre</label>
+            <input type="number" [(ngModel)]="categoryForm.order" min="0" />
+          </div>
+        </div>
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="categoryForm.isActive" />
+            Catégorie active
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCategoryModal()">Annuler</button>
+        <button class="btn-primary" (click)="saveCategory()" [disabled]="isSaving">
+          <span *ngIf="isSaving"><i class="bi bi-arrow-repeat spin"></i> Enregistrement...</span>
+          <span *ngIf="!isSaving">{{ editingCategory ? 'Mettre à jour' : 'Créer' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Modal -->
+  <div class="modal-overlay" *ngIf="showFAQModal" (click)="closeFAQModal()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingFAQ ? 'Modifier la FAQ' : 'Nouvelle FAQ' }}</h2>
+        <button class="close-btn" (click)="closeFAQModal()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Catégorie *</label>
+            <select [(ngModel)]="faqForm.categoryId">
+              <option [ngValue]="null">Sélectionner...</option>
+              <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ordre</label>
+            <input type="number" [(ngModel)]="faqForm.order" min="0" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Question *</label>
+          <input type="text" [(ngModel)]="faqForm.question" placeholder="Ex: Comment suivre ma commande ?" />
+        </div>
+        <div class="form-group">
+          <label>Question (Anglais)</label>
+          <input type="text" [(ngModel)]="faqForm.questionEn" placeholder="Ex: How to track my order?" />
+        </div>
+        <div class="form-group">
+          <label>Réponse *</label>
+          <textarea [(ngModel)]="faqForm.answer" rows="4" placeholder="Réponse détaillée..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Réponse (Anglais)</label>
+          <textarea [(ngModel)]="faqForm.answerEn" rows="4" placeholder="Detailed answer..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Mots-clés (séparés par virgule)</label>
+          <input type="text" [(ngModel)]="faqForm.keywords" placeholder="commande, suivi, livraison" />
+        </div>
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="faqForm.isFeatured" />
+            Mettre en avant sur la page d'accueil du centre d'aide
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeFAQModal()">Annuler</button>
+        <button class="btn-primary" (click)="saveFAQ()" [disabled]="isSaving">
+          <span *ngIf="isSaving"><i class="bi bi-arrow-repeat spin"></i> Enregistrement...</span>
+          <span *ngIf="!isSaving">{{ editingFAQ ? 'Mettre à jour' : 'Créer' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

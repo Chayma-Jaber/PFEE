@@ -10,6 +10,16 @@
     <div class="button-container">
         <button
             class="nav-button"
+            [class.active]="selectedTab === 'pourvous'"
+            (click)="selectTab('pourvous')"
+        >Pour vous ✨</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'monstyle'"
+            (click)="selectTab('monstyle')"
+        >Mon Style</button>
+        <button
+            class="nav-button"
             [class.active]="selectedTab === 'achat'"
             (click)="selectTab('achat')"
         >Achat</button>
@@ -33,6 +43,16 @@
         [class.active]="selectedTab === 'retour'"
         (click)="selectTab('retour')"
     >Demande de retour</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'alertes'"
+            (click)="selectTab('alertes')"
+        ><i class="fa fa-bell me-1"></i>Mes alertes</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'stock-alertes'"
+            (click)="selectTab('stock-alertes')"
+        ><i class="fa fa-box me-1"></i>Alertes stock</button>
         <!-- <button
             class="nav-button"
             [class.active]="selectedTab === 'notifications'"
@@ -47,10 +67,40 @@
             class="nav-button"
             [class.active]="selectedTab === 'points'"
             (click)="selectTab('points')"
-        >Fidélité</button>
+        ><i class="fa fa-star me-1"></i>Fidélité</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'giftcards'"
+            (click)="selectTab('giftcards')"
+        ><i class="fa fa-gift me-1"></i>Cartes Cadeaux</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'referrals'"
+            (click)="selectTab('referrals')"
+        ><i class="fa fa-users me-1"></i>Parrainage</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'adresses'"
+            (click)="selectTab('adresses')"
+        ><i class="fa fa-map-marker-alt me-1"></i>Mes adresses</button>
+        <button
+            class="nav-button"
+            [class.active]="selectedTab === 'paiements'"
+            (click)="selectTab('paiements')"
+        ><i class="fa fa-credit-card me-1"></i>Mes paiements</button>
     </div>
 
     <div class="content">
+        <!-- Personalized Recommendations Tab -->
+        <div *ngIf="selectedTab === 'pourvous'" class="recommendations-section">
+          <app-account-recommendations></app-account-recommendations>
+        </div>
+
+        <!-- Style Profile Tab -->
+        <div *ngIf="selectedTab === 'monstyle'" class="style-profile-section">
+          <app-style-profile (profileSaved)="onStyleProfileSaved($event)"></app-style-profile>
+        </div>
+
         <div *ngIf="selectedTab === 'achat'">
             <!-- Indicateur de chargement -->
             <div *ngIf="isLoadingOrders" class="text-center py-4">
@@ -142,9 +192,14 @@
                     </div>
 
                     <div class="card-footer text-end" *ngIf="isOrderExpanded(order.id)">
-                      <button class="btn  btn-sm"
+                      <button class="btn btn-outline-dark btn-sm"
+                              [routerLink]="['/account/orders', order.id, 'tracking']">
+                        <i class="fa fa-truck me-1"></i>
+                        Suivre
+                      </button>
+                      <button class="btn btn-sm ms-2"
                               [routerLink]="['/order-details', order.id]">
-                        Voir les détails
+                        Voir les details
                       </button>
                       <button class="btn btn-sm ms-2" *ngIf="(order.statusId === 1 || order.statusId === 2) && order.paymentStatusId !== 10" (click)="openCancelModal(order.id)">
                         Annuler
@@ -157,44 +212,51 @@
             </div>
           </div>
 
-        <div *ngIf="selectedTab === 'favoris'" class="card-container">
-            <div *ngFor="let produit of produits" class="card">
-              <div class="wishlist-icon" (click)="toggleWishlist(produit)">
-                <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
-              </div>
-              <div class="card-image-container">
-                <a [href]="getProductDetailUrl(produit)"
-                   [routerLink]="['/produit', productService.generateProductSlug(produit)]"
-                   class="product-link">
-                  <img [src]="produit.colors[produit.selectedColorIndex].mainImage"
-                       [alt]="produit.nom"
-                       [title]="produit.nom"
-                       class="card-image img-fluid">
-                </a>
-              </div>
-              <div class="card-content">
-                <h3 class="card-title">{{ produit.nom }}</h3>
-                <p class="card-price">{{ produit.prix }}</p>
-                <div class="color-variations">
-                  <img *ngFor="let color of produit.colors; let i = index"
-                       [src]="color.textureImage"
-                       [alt]="color.name"
-                       [title]="color.name"
-                       class="color-circle"
-                       [class.selected]="produit.selectedColorIndex === i"
-                       (click)="selectColor(produit, i)">
-                </div>
-                <div class="sizes-container">
-                  <div class="sizes-title">TAILLES</div>
-                  <div class="sizes-list">
-                    <div *ngFor="let taille of produit.tailles" class="size-item-container">
-                      <span [ngClass]="{'out-of-stock': !isInStock(produit, taille.size)}">{{ taille.size }}</span>
+        <!-- Favoris with Collections View -->
+        <div *ngIf="selectedTab === 'favoris'" class="favoris-section">
+            <!-- Collections View (Pinterest-style) -->
+            <app-wishlist-collections *ngIf="useCollectionsView" [embedded]="true"></app-wishlist-collections>
+
+            <!-- Legacy Card View (fallback) -->
+            <div *ngIf="!useCollectionsView" class="card-container">
+                <div *ngFor="let produit of produits" class="card">
+                  <div class="wishlist-icon" (click)="toggleWishlist(produit)">
+                    <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
+                  </div>
+                  <div class="card-image-container">
+                    <a [href]="getProductDetailUrl(produit)"
+                       [routerLink]="['/produit', productService.generateProductSlug(produit)]"
+                       class="product-link">
+                      <img [src]="produit.colors[produit.selectedColorIndex].mainImage"
+                           [alt]="produit.nom"
+                           [title]="produit.nom"
+                           class="card-image img-fluid">
+                    </a>
+                  </div>
+                  <div class="card-content">
+                    <h3 class="card-title">{{ produit.nom }}</h3>
+                    <p class="card-price">{{ produit.prix }}</p>
+                    <div class="color-variations">
+                      <img *ngFor="let color of produit.colors; let i = index"
+                           [src]="color.textureImage"
+                           [alt]="color.name"
+                           [title]="color.name"
+                           class="color-circle"
+                           [class.selected]="produit.selectedColorIndex === i"
+                           (click)="selectColor(produit, i)">
+                    </div>
+                    <div class="sizes-container">
+                      <div class="sizes-title">TAILLES</div>
+                      <div class="sizes-list">
+                        <div *ngFor="let taille of produit.tailles" class="size-item-container">
+                          <span [ngClass]="{'out-of-stock': !isInStock(produit, taille.size)}">{{ taille.size }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
-          </div>
+        </div>
       <!-- Replace the existing profil section with this updated version -->
       <div *ngIf="selectedTab === 'profil'" class="profile-section">
         <div class="profile-form container-fluid px-0">
@@ -386,7 +448,135 @@
 
         </div>
         <div *ngIf="selectedTab === 'points'" class="profile-section">
-            <app-fidelite></app-fidelite>
+            <app-loyalty-dashboard></app-loyalty-dashboard>
+        </div>
+
+        <div *ngIf="selectedTab === 'giftcards'" class="profile-section">
+            <app-gift-cards></app-gift-cards>
+        </div>
+
+        <div *ngIf="selectedTab === 'referrals'" class="profile-section">
+            <app-referral-dashboard></app-referral-dashboard>
+        </div>
+
+        <!-- Saved Addresses Tab -->
+        <div *ngIf="selectedTab === 'adresses'" class="profile-section">
+            <app-saved-addresses></app-saved-addresses>
+        </div>
+
+        <!-- Saved Payment Methods Tab -->
+        <div *ngIf="selectedTab === 'paiements'" class="profile-section">
+            <app-saved-payments></app-saved-payments>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div *ngIf="selectedTab === 'alertes'" class="alerts-section">
+            <div class="alerts-header">
+                <h2 class="alerts-title">Mes Alertes</h2>
+                <p class="alerts-subtitle">Recevez des notifications pour les baisses de prix et les retours en stock</p>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="isLoadingAlerts" class="alerts-loading">
+                <section class="dots-container">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </section>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="alertsError && !isLoadingAlerts" class="alert alert-danger">
+                {{ alertsError }}
+                <button class="btn btn-link" (click)="loadAlerts()">Reessayer</button>
+            </div>
+
+            <!-- Alerts Stats -->
+            <div *ngIf="!isLoadingAlerts && !alertsError && alerts.length > 0" class="alerts-stats">
+                <div class="stat-card">
+                    <div class="stat-icon price-drop-icon">
+                        <i class="fa fa-tag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ getPriceDropAlertsCount() }}</span>
+                        <span class="stat-label">Baisses de prix</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stock-icon">
+                        <i class="fa fa-box"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ getBackInStockAlertsCount() }}</span>
+                        <span class="stat-label">Retours en stock</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!isLoadingAlerts && !alertsError && alerts.length === 0" class="alerts-empty">
+                <div class="empty-alerts-content">
+                    <div class="empty-bell">
+                        <i class="fa fa-bell-slash"></i>
+                    </div>
+                    <h3>Aucune alerte active</h3>
+                    <p>Vous n'avez pas encore configure d'alertes pour vos produits preferes.</p>
+                    <p class="empty-hint">Visitez les pages produits pour vous inscrire aux alertes de baisse de prix ou de retour en stock.</p>
+                    <a routerLink="/" class="btn-explore">Decouvrir nos produits</a>
+                </div>
+            </div>
+
+            <!-- Alerts List -->
+            <div *ngIf="!isLoadingAlerts && !alertsError && alerts.length > 0" class="alerts-list">
+                <div *ngFor="let alert of alerts" class="alert-card">
+                    <div class="alert-product-image" (click)="navigateToProduct(alert.product_id)">
+                        <img [src]="alert.product_image || 'assets/images/placeholder-product.jpg'"
+                             [alt]="alert.product_name"
+                             [title]="alert.product_name">
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-header-row">
+                            <h4 class="alert-product-name" (click)="navigateToProduct(alert.product_id)">
+                                {{ alert.product_name }}
+                            </h4>
+                            <span class="alert-type-badge" [ngClass]="getAlertTypeBadgeClass(alert.alert_type)">
+                                <i class="fa" [ngClass]="{'fa-tag': alert.alert_type === 'price_drop', 'fa-box': alert.alert_type === 'back_in_stock'}"></i>
+                                {{ getAlertTypeLabel(alert.alert_type) }}
+                            </span>
+                        </div>
+                        <div class="alert-details">
+                            <div class="alert-price-info">
+                                <span class="current-price-label">Prix actuel:</span>
+                                <span class="current-price">{{ alert.product_price | number:'1.3-3' }} TND</span>
+                            </div>
+                            <div *ngIf="alert.alert_type === 'price_drop' && alert.target_price" class="alert-target-price">
+                                <span class="target-price-label">Prix cible:</span>
+                                <span class="target-price">{{ alert.target_price | number:'1.3-3' }} TND</span>
+                            </div>
+                            <div class="alert-date">
+                                <i class="fa fa-calendar-alt"></i>
+                                <span>Creee le {{ formatAlertDate(alert.created_at) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert-actions">
+                        <button class="btn-view-product" (click)="navigateToProduct(alert.product_id)" title="Voir le produit">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                        <button class="btn-delete-alert" (click)="openDeleteAlertModal(alert)" title="Supprimer l'alerte">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Alerts Tab -->
+        <div *ngIf="selectedTab === 'stock-alertes'" class="stock-alerts-section">
+            <app-stock-alerts-list
+                (alertDeleted)="onStockAlertDeleted($event)">
+            </app-stock-alerts-list>
         </div>
     </div>
 
@@ -636,6 +826,40 @@
           </form>
         </div>
       </div>
+    </div>
+
+    <!-- Delete Alert Confirmation Modal -->
+    <div class="delete-alert-modal-overlay" *ngIf="showDeleteAlertModal" (click)="closeDeleteAlertModal()">
+        <div class="delete-alert-modal" (click)="$event.stopPropagation()">
+            <div class="delete-modal-header">
+                <h5>Confirmer la suppression</h5>
+                <button type="button" class="close-btn" (click)="closeDeleteAlertModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="delete-modal-body">
+                <div class="delete-warning-icon">
+                    <i class="fa fa-exclamation-triangle"></i>
+                </div>
+                <p>Etes-vous sur de vouloir supprimer cette alerte ?</p>
+                <div *ngIf="alertToDelete" class="alert-to-delete-info">
+                    <strong>{{ alertToDelete.product_name }}</strong>
+                    <span class="alert-type-mini" [ngClass]="getAlertTypeBadgeClass(alertToDelete.alert_type)">
+                        {{ getAlertTypeLabel(alertToDelete.alert_type) }}
+                    </span>
+                </div>
+                <p class="delete-notice">Cette action est irreversible.</p>
+            </div>
+            <div class="delete-modal-footer">
+                <button type="button" class="btn-cancel" (click)="closeDeleteAlertModal()" [disabled]="isDeletingAlert">
+                    Annuler
+                </button>
+                <button type="button" class="btn-confirm-delete" (click)="confirmDeleteAlert()" [disabled]="isDeletingAlert">
+                    <span *ngIf="isDeletingAlert" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ isDeletingAlert ? 'Suppression...' : 'Supprimer' }}
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 <p-toast></p-toast>

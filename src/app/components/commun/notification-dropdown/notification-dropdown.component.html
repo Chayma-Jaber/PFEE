@@ -1,0 +1,93 @@
+<div class="notification-dropdown">
+  <!-- Trigger Button -->
+  <button class="notification-trigger" (click)="toggleDropdown()">
+    <i class="bi bi-bell"></i>
+    <span *ngIf="unreadCount > 0" class="badge">
+      {{ unreadCount > 99 ? '99+' : unreadCount }}
+    </span>
+  </button>
+
+  <!-- Dropdown Panel -->
+  <div class="dropdown-panel" *ngIf="isOpen">
+    <!-- Header -->
+    <div class="dropdown-header">
+      <h3>Notifications</h3>
+      <button
+        *ngIf="unreadCount > 0"
+        class="mark-all-btn"
+        (click)="markAllAsRead()">
+        Tout marquer comme lu
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading && notifications.length === 0" class="loading-state">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && notifications.length === 0" class="empty-state">
+      <i class="bi bi-bell-slash"></i>
+      <p>Aucune notification</p>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-list" *ngIf="notifications.length > 0">
+      <div
+        *ngFor="let notification of notifications"
+        class="notification-item"
+        [class.unread]="!notification.isRead"
+        (click)="handleNotificationClick(notification)">
+
+        <!-- Icon -->
+        <div
+          class="notification-icon"
+          [style.backgroundColor]="getColor(notification.type) + '20'"
+          [style.color]="getColor(notification.type)">
+          <i [class]="'bi ' + getIcon(notification.type)"></i>
+        </div>
+
+        <!-- Content -->
+        <div class="notification-content">
+          <p class="notification-title">{{ notification.title }}</p>
+          <p class="notification-message">{{ notification.message }}</p>
+          <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="notification-actions">
+          <button
+            *ngIf="!notification.isRead"
+            class="action-btn"
+            title="Marquer comme lu"
+            (click)="markAsRead(notification, $event)">
+            <i class="bi bi-check2"></i>
+          </button>
+          <button
+            class="action-btn delete"
+            title="Supprimer"
+            (click)="deleteNotification(notification, $event)">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <button
+        *ngIf="hasMore"
+        class="load-more-btn"
+        (click)="loadMore()"
+        [disabled]="isLoading">
+        <span *ngIf="!isLoading">Charger plus</span>
+        <span *ngIf="isLoading">Chargement...</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="dropdown-footer" *ngIf="notifications.length > 0">
+      <button (click)="viewAllNotifications()">
+        Voir toutes les notifications
+      </button>
+    </div>
+  </div>
+</div>

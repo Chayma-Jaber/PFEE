@@ -1,11 +1,35 @@
-fastapi
-uvicorn
-google-genai
-pydantic
-python-dotenv
-fastapi-cors
-httpx
-numpy
-torch
-transformers
-pillow
+# Barsha Backend Dependencies
+
+# Core Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy>=2.0.25
+alembic>=1.13.1
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.1.2
+
+# HTTP Client
+httpx>=0.26.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# AI/ML (existing)
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Google AI
+google-generativeai>=0.3.0
+
+# Utilities
+python-multipart>=0.0.6
+aiofiles>=23.2.1

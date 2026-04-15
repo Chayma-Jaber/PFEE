@@ -1,0 +1,228 @@
+<div class="help-center">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <h1>Centre d'aide</h1>
+    <p>Comment pouvons-nous vous aider ?</p>
+
+    <!-- Search Bar -->
+    <form class="search-form" (submit)="onSearchSubmit($event)">
+      <div class="search-input-wrapper">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          name="search"
+          placeholder="Rechercher une question..."
+          autocomplete="off" />
+        <button
+          type="button"
+          class="clear-btn"
+          *ngIf="searchQuery"
+          (click)="clearSearch()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <button type="submit" class="search-btn">Rechercher</button>
+    </form>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- HOME VIEW -->
+  <div *ngIf="currentView === 'home' && !isLoading" class="home-view">
+    <!-- Categories Grid -->
+    <section class="categories-section">
+      <h2>Parcourir par cat\u00e9gorie</h2>
+      <div class="categories-grid">
+        <div
+          *ngFor="let category of categories"
+          class="category-card"
+          (click)="viewCategory(category)">
+          <div class="category-icon">
+            <i [class]="'bi ' + (category.icon || 'bi-folder')"></i>
+          </div>
+          <h3>{{ category.name }}</h3>
+          <p *ngIf="category.description">{{ category.description }}</p>
+          <span class="faq-count">{{ category.faqCount }} question(s)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured FAQs -->
+    <section class="featured-section" *ngIf="featuredFAQs.length > 0">
+      <h2>Questions fr\u00e9quentes</h2>
+      <div class="faq-list">
+        <div
+          *ngFor="let faq of featuredFAQs"
+          class="faq-item"
+          [class.expanded]="isFAQExpanded(faq.id)">
+          <div class="faq-question" (click)="toggleFAQ(faq.id)">
+            <span>{{ faq.question }}</span>
+            <i class="bi" [class.bi-chevron-down]="!isFAQExpanded(faq.id)" [class.bi-chevron-up]="isFAQExpanded(faq.id)"></i>
+          </div>
+          <div class="faq-answer" *ngIf="isFAQExpanded(faq.id)">
+            <p>{{ faq.answer }}</p>
+            <div class="faq-helpful" *ngIf="!hasVoted(faq.id)">
+              <span>Cette r\u00e9ponse vous a-t-elle \u00e9t\u00e9 utile ?</span>
+              <button class="helpful-btn yes" (click)="markHelpful(faq, true, $event)">
+                <i class="bi bi-hand-thumbs-up"></i> Oui
+              </button>
+              <button class="helpful-btn no" (click)="markHelpful(faq, false, $event)">
+                <i class="bi bi-hand-thumbs-down"></i> Non
+              </button>
+            </div>
+            <div class="faq-voted" *ngIf="hasVoted(faq.id)">
+              <i class="bi bi-check-circle"></i> Merci pour votre retour !
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+      <h2>Vous n'avez pas trouv\u00e9 de r\u00e9ponse ?</h2>
+      <p>Contactez notre \u00e9quipe support, nous sommes l\u00e0 pour vous aider.</p>
+      <div class="contact-options">
+        <div *ngFor="let option of contactOptions" class="contact-card">
+          <div class="contact-icon">
+            <i [class]="'bi ' + option.icon"></i>
+          </div>
+          <h3>{{ option.title }}</h3>
+          <p>{{ option.description }}</p>
+          <a
+            *ngIf="option.action.startsWith('/')"
+            [routerLink]="option.action"
+            class="contact-btn">
+            {{ option.actionLabel }}
+          </a>
+          <a
+            *ngIf="!option.action.startsWith('/')"
+            [href]="option.action"
+            class="contact-btn">
+            {{ option.actionLabel }}
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CATEGORY VIEW -->
+  <div *ngIf="currentView === 'category' && selectedCategory && !isLoading" class="category-view">
+    <button class="back-btn" (click)="backToHome()">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+
+    <div class="category-header">
+      <div class="category-icon large">
+        <i [class]="'bi ' + (selectedCategory.icon || 'bi-folder')"></i>
+      </div>
+      <h2>{{ selectedCategory.name }}</h2>
+      <p *ngIf="selectedCategory.description">{{ selectedCategory.description }}</p>
+    </div>
+
+    <div class="faq-list" *ngIf="selectedCategory.faqs && selectedCategory.faqs.length > 0">
+      <div
+        *ngFor="let faq of selectedCategory.faqs"
+        class="faq-item"
+        [class.expanded]="isFAQExpanded(faq.id)">
+        <div class="faq-question" (click)="toggleFAQ(faq.id)">
+          <span>{{ faq.question }}</span>
+          <i class="bi" [class.bi-chevron-down]="!isFAQExpanded(faq.id)" [class.bi-chevron-up]="isFAQExpanded(faq.id)"></i>
+        </div>
+        <div class="faq-answer" *ngIf="isFAQExpanded(faq.id)">
+          <p>{{ faq.answer }}</p>
+          <div class="faq-helpful" *ngIf="!hasVoted(faq.id)">
+            <span>Cette r\u00e9ponse vous a-t-elle \u00e9t\u00e9 utile ?</span>
+            <button class="helpful-btn yes" (click)="markHelpful(faq, true, $event)">
+              <i class="bi bi-hand-thumbs-up"></i> Oui
+            </button>
+            <button class="helpful-btn no" (click)="markHelpful(faq, false, $event)">
+              <i class="bi bi-hand-thumbs-down"></i> Non
+            </button>
+          </div>
+          <div class="faq-voted" *ngIf="hasVoted(faq.id)">
+            <i class="bi bi-check-circle"></i> Merci pour votre retour !
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-category" *ngIf="!selectedCategory.faqs || selectedCategory.faqs.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p>Aucune question dans cette cat\u00e9gorie pour le moment.</p>
+    </div>
+
+    <!-- Still need help -->
+    <div class="need-help-card">
+      <h3>Vous n'avez pas trouv\u00e9 ce que vous cherchiez ?</h3>
+      <p>Notre \u00e9quipe est disponible pour r\u00e9pondre \u00e0 vos questions.</p>
+      <button class="btn-primary" (click)="navigateToSupport()">
+        <i class="bi bi-headset"></i> Contacter le support
+      </button>
+    </div>
+  </div>
+
+  <!-- SEARCH VIEW -->
+  <div *ngIf="currentView === 'search' && !isLoading" class="search-view">
+    <button class="back-btn" (click)="backToHome()">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+
+    <div class="search-header">
+      <h2>R\u00e9sultats pour "{{ searchQuery }}"</h2>
+      <p>{{ searchResults.length }} r\u00e9sultat(s) trouv\u00e9(s)</p>
+    </div>
+
+    <!-- Loading search -->
+    <div *ngIf="isSearching" class="searching">
+      <div class="spinner"></div>
+      <p>Recherche en cours...</p>
+    </div>
+
+    <!-- Search results -->
+    <div class="faq-list" *ngIf="!isSearching && searchResults.length > 0">
+      <div
+        *ngFor="let faq of searchResults"
+        class="faq-item"
+        [class.expanded]="isFAQExpanded(faq.id)">
+        <div class="faq-question" (click)="toggleFAQ(faq.id)">
+          <div class="question-content">
+            <span class="category-tag">{{ faq.categoryName }}</span>
+            <span>{{ faq.question }}</span>
+          </div>
+          <i class="bi" [class.bi-chevron-down]="!isFAQExpanded(faq.id)" [class.bi-chevron-up]="isFAQExpanded(faq.id)"></i>
+        </div>
+        <div class="faq-answer" *ngIf="isFAQExpanded(faq.id)">
+          <p>{{ faq.answer }}</p>
+          <div class="faq-helpful" *ngIf="!hasVoted(faq.id)">
+            <span>Cette r\u00e9ponse vous a-t-elle \u00e9t\u00e9 utile ?</span>
+            <button class="helpful-btn yes" (click)="markHelpful(faq, true, $event)">
+              <i class="bi bi-hand-thumbs-up"></i> Oui
+            </button>
+            <button class="helpful-btn no" (click)="markHelpful(faq, false, $event)">
+              <i class="bi bi-hand-thumbs-down"></i> Non
+            </button>
+          </div>
+          <div class="faq-voted" *ngIf="hasVoted(faq.id)">
+            <i class="bi bi-check-circle"></i> Merci pour votre retour !
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No results -->
+    <div *ngIf="!isSearching && searchResults.length === 0" class="no-results">
+      <i class="bi bi-search"></i>
+      <h3>Aucun r\u00e9sultat</h3>
+      <p>Nous n'avons trouv\u00e9 aucune r\u00e9ponse correspondant \u00e0 votre recherche.</p>
+      <button class="btn-primary" (click)="navigateToSupport()">
+        <i class="bi bi-headset"></i> Contacter le support
+      </button>
+    </div>
+  </div>
+</div>

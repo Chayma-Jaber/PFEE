@@ -377,3 +377,70 @@
     background-position: -200% 0;
   }
 }
+
+// Availability filter styles (F10 - Cahier des Charges)
+.availability-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .availability-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    position: relative;
+    padding-left: 32px;
+
+    input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .checkmark {
+      position: absolute;
+      left: 0;
+      height: 20px;
+      width: 20px;
+      background-color: #fff;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &::after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    }
+
+    input:checked ~ .checkmark {
+      background-color: #1a1a2e;
+      border-color: #1a1a2e;
+
+      &::after {
+        display: block;
+      }
+    }
+
+    &:hover .checkmark {
+      border-color: #1a1a2e;
+    }
+
+    .option-label {
+      font-weight: 400;
+    }
+  }
+}

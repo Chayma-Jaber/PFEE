@@ -14,6 +14,22 @@ import { ScrollPositionService } from '../../../services/scroll-position.service
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AnalyticsService } from '../../../services/analytics.service';
+import { BreadcrumbComponent } from '../../commun/breadcrumb/breadcrumb.component';
+import { PDPRecommendationsComponent } from '../../commun/next-gen-recommendations';
+import { RecentlyViewedService } from '../../../services/recently-viewed.service';
+import { ProductAlertComponent } from '../../commun/product-alert/product-alert.component';
+import { CompleteTheLookComponent } from '../../commun/complete-the-look/complete-the-look.component';
+import { ProductReviewsComponent } from '../../commun/product-reviews/product-reviews.component';
+import { RecentlyViewedComponent } from '../../commun/recently-viewed/recently-viewed.component';
+import { SizeGuideModalComponent } from '../../commun/size-guide-modal/size-guide-modal.component';
+import { ViewersBadgeComponent } from '../../commun/viewers-badge/viewers-badge.component';
+import { ProductComparisonService } from '../../../services/product-comparison.service';
+import { VirtualTryOnComponent } from '../../commun/virtual-try-on/virtual-try-on.component';
+import { ProductQAComponent } from '../../commun/product-qa/product-qa.component';
+import { ExpressCheckoutButtonComponent } from '../../commun/express-checkout-button';
+import { ExpressCheckoutModalComponent } from '../../commun/express-checkout-modal';
+import { StockAlertButtonComponent } from '../../commun/stock-alert-button/stock-alert-button.component';
+import { AuthService } from '../../../services/auth.service';
 
 
 interface CartItemm {
@@ -37,7 +53,7 @@ interface Produit {
 @Component({
   selector: 'app-detail-produit',
   standalone: true,
-  imports: [FormsModule, CommonModule, CarouselModule, RouterModule, ToastModule],
+  imports: [FormsModule, CommonModule, CarouselModule, RouterModule, ToastModule, BreadcrumbComponent, PDPRecommendationsComponent, ProductAlertComponent, CompleteTheLookComponent, ProductReviewsComponent, RecentlyViewedComponent, SizeGuideModalComponent, ViewersBadgeComponent, VirtualTryOnComponent, ProductQAComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent, StockAlertButtonComponent],
   templateUrl: './detail-produit.component.html',
   styleUrls: ['./detail-produit.component.scss'],
   providers: [MessageService, AnalyticsService],
@@ -47,10 +63,13 @@ export class DetailProduitComponent implements OnInit {
   productMeta: any = null;
   categoryId!: number;
   isBlurred: boolean = false;
+  isUserLoggedIn: boolean = false;
   showDetails: boolean = false;
   showComposition: boolean = false;
   showRetours: boolean = false;
   showSizeTable: boolean = false;
+  showSizeGuideModal: boolean = false;
+  sizeGuideCategory: 'vetements' | 'chaussures' | 'accessoires' | 'all' = 'vetements';
   selectedSize: string | null = null;
   selectedColor: string | null = null;
   selectedColorIndex: number = 0;
@@ -113,6 +132,9 @@ export class DetailProduitComponent implements OnInit {
   private tabletBreakpoint: number = 768; // Breakpoint for tablet view (sm)
   private smallMobileBreakpoint: number = 480; // Breakpoint for small mobile
   private lastScreenWidth: number = window.innerWidth;
+
+  // Virtual Try-On
+  @ViewChild('virtualTryOn') virtualTryOnRef!: VirtualTryOnComponent;
 
   @ViewChild('totalLookItems') totalLookItemsRef!: ElementRef;
   @ViewChild('fullscreenContainer') fullscreenContainerRef!: ElementRef<HTMLDivElement>;
@@ -247,6 +269,9 @@ export class DetailProduitComponent implements OnInit {
       this.clampFullscreenTranslation();
     }
   }
+  // Express checkout modal
+  showExpressCheckoutModal: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
@@ -255,10 +280,14 @@ export class DetailProduitComponent implements OnInit {
     private messageService: MessageService,
     private seoService: SeoService,
     private titleService: TitleService,
-    private scrollPositionService: ScrollPositionService
+    private scrollPositionService: ScrollPositionService,
+    private recentlyViewedService: RecentlyViewedService,
+    private comparisonService: ProductComparisonService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
+    this.isUserLoggedIn = !!localStorage.getItem('jwt');
     this.loadProduct();
 
     // Initialize mobile zoom functionality
@@ -756,6 +785,7 @@ export class DetailProduitComponent implements OnInit {
       this.isSizeSelectionRequired = false;
       this.selectedSize = firstSize; // Auto-select TU or STD
       this.sizeLabel = ''; // Not needed
+      this.sizeGuideCategory = 'accessoires';
       return;
     }
 
@@ -771,13 +801,115 @@ export class DetailProduitComponent implements OnInit {
     const titleUpper = this.product.title ? this.product.title.toUpperCase() : '';
     const isShoe = shoeKeywords.some(keyword => titleUpper.includes(keyword));
 
+    // Keywords to identify accessories
+    const accessoryKeywords = ['CEINTURE', 'SAC', 'PORTEFEUILLE', 'ECHARPE', 'FOULARD', 'CHAPEAU', 'CASQUETTE', 'BONNET', 'GANT', 'BAGUE', 'BRACELET', 'COLLIER', 'BOUCLE'];
+    const isAccessory = accessoryKeywords.some(keyword => titleUpper.includes(keyword));
+
     if (isNumericSize && isShoe) {
       // Case 2: Shoes
       this.sizeLabel = 'LA POINTURE';
-    } else {
-      // Case 3: Clothes (Default) or Accessories (Belts)
+      this.sizeGuideCategory = 'chaussures';
+    } else if (isAccessory) {
+      // Case: Accessories
       this.sizeLabel = 'LA TAILLE';
+      this.sizeGuideCategory = 'accessoires';
+    } else {
+      // Case 3: Clothes (Default)
+      this.sizeLabel = 'LA TAILLE';
+      this.sizeGuideCategory = 'vetements';
     }
+  }
+
+  /**
+   * Open the size guide modal
+   */
+  openSizeGuide(): void {
+    this.showSizeGuideModal = true;
+  }
+
+  /**
+   * Close the size guide modal
+   */
+  closeSizeGuide(): void {
+    this.showSizeGuideModal = false;
+  }
+
+  /**
+   * Open the virtual try-on modal
+   */
+  openVirtualTryOn(): void {
+    if (this.virtualTryOnRef) {
+      this.virtualTryOnRef.open();
+    }
+  }
+
+  /**
+   * Check if virtual try-on is available for this product category
+   * Available for: glasses, tops, accessories
+   */
+  isVirtualTryOnAvailable(): boolean {
+    if (!this.product?.Famille) return false;
+
+    const famille = this.product.Famille.toLowerCase();
+    const title = this.product.title?.toLowerCase() || '';
+
+    // Check for glasses
+    if (famille.includes('lunette') || title.includes('lunette') ||
+        famille.includes('optic') || title.includes('optic')) {
+      return true;
+    }
+
+    // Check for tops (shirts, jackets, etc.)
+    if (famille.includes('haut') || famille.includes('chemise') ||
+        famille.includes('pull') || famille.includes('veste') ||
+        famille.includes('blouson') || famille.includes('sweat') ||
+        title.includes('shirt') || title.includes('top') ||
+        title.includes('veste') || title.includes('blouson') ||
+        title.includes('pull') || title.includes('sweat')) {
+      return true;
+    }
+
+    // Check for accessories
+    if (famille.includes('access') || famille.includes('sac') ||
+        famille.includes('ceinture') || famille.includes('montre') ||
+        famille.includes('bijou') || title.includes('bag') ||
+        title.includes('belt') || title.includes('watch')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get the product category for virtual try-on positioning
+   */
+  getVirtualTryOnCategory(): string {
+    if (!this.product?.Famille) return 'other';
+
+    const famille = this.product.Famille.toLowerCase();
+    const title = this.product.title?.toLowerCase() || '';
+
+    if (famille.includes('lunette') || title.includes('lunette') ||
+        famille.includes('optic') || title.includes('optic')) {
+      return 'lunettes';
+    }
+
+    if (famille.includes('haut') || famille.includes('chemise') ||
+        famille.includes('pull') || famille.includes('veste') ||
+        famille.includes('blouson') || famille.includes('sweat') ||
+        title.includes('shirt') || title.includes('top') ||
+        title.includes('veste') || title.includes('blouson') ||
+        title.includes('pull') || title.includes('sweat')) {
+      return 'haut';
+    }
+
+    if (famille.includes('access') || famille.includes('sac') ||
+        famille.includes('ceinture') || famille.includes('montre') ||
+        famille.includes('bijou')) {
+      return 'accessoires';
+    }
+
+    return 'other';
   }
 
   toggleDetails(): void {
@@ -1048,6 +1180,18 @@ export class DetailProduitComponent implements OnInit {
 
           // Add product sitelinks
           this.seoService.addProductSitelinks(this.product);
+
+          // Track product view for recently viewed history
+          this.recentlyViewedService.addProduct({
+            id: this.product.id,
+            title: this.product.title,
+            currentPrice: this.product.currentPrice,
+            price: this.product.price,
+            discount: this.product.discount,
+            discountValue: this.product.discountValue,
+            image: this.images[0] || this.product.colors?.[0]?.mainImage || '',
+            Famille: this.product.Famille
+          });
 
 
 
@@ -1460,7 +1604,7 @@ export class DetailProduitComponent implements OnInit {
   }
 
   // Helper to check if product has stock
-  private hasStock(): boolean {
+  hasStock(): boolean {
     if (!this.product || !this.product.tailles) return false;
     return this.product.tailles.some(taille => taille.qte > 0);
   }
@@ -1517,5 +1661,66 @@ export class DetailProduitComponent implements OnInit {
    */
   onProductClick(): void {
     this.scrollPositionService.savePositionBeforeProductNavigation();
+  }
+
+  /**
+   * Add current product to comparison
+   */
+  addToComparison(): void {
+    if (!this.product) return;
+
+    const added = this.comparisonService.addToComparison(this.product);
+
+    if (added) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Comparaison',
+        detail: 'Produit ajoute a la comparaison',
+        life: 3000
+      });
+    }
+  }
+
+  /**
+   * Remove current product from comparison
+   */
+  removeFromComparison(): void {
+    if (!this.product) return;
+    this.comparisonService.removeFromComparison(this.product.id);
+  }
+
+  /**
+   * Check if current product is in comparison
+   */
+  isProductInComparison(): boolean {
+    if (!this.product) return false;
+    return this.comparisonService.isInComparison(this.product.id);
+  }
+
+  /**
+   * Toggle comparison status for current product
+   */
+  toggleComparison(): void {
+    if (this.isProductInComparison()) {
+      this.removeFromComparison();
+    } else {
+      this.addToComparison();
+    }
+  }
+
+  // Express checkout methods
+  openExpressCheckoutModal(): void {
+    this.showExpressCheckoutModal = true;
+  }
+
+  closeExpressCheckoutModal(): void {
+    this.showExpressCheckoutModal = false;
+  }
+
+  /**
+   * Check if express checkout button should be visible
+   */
+  isExpressCheckoutVisible(): boolean {
+    return this.authService.isAuthenticated();
   }
 }

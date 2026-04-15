@@ -1,0 +1,513 @@
+// Admin Layout Styles - Premium Barsha Back-Office
+// Luxury Design System
+
+// Premium Color Palette
+$primary-dark: #0f0f1a;
+$primary-accent: #1a1a2e;
+$gold-accent: #d4af37;
+$gold-light: #f4e4bc;
+$purple-gradient-start: #667eea;
+$purple-gradient-end: #764ba2;
+$success: #10b981;
+$warning: #f59e0b;
+$danger: #ef4444;
+$text-primary: #ffffff;
+$text-secondary: rgba(255, 255, 255, 0.7);
+$text-muted: rgba(255, 255, 255, 0.5);
+$border-subtle: rgba(255, 255, 255, 0.08);
+$glass-bg: rgba(255, 255, 255, 0.05);
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%);
+  overflow-x: hidden;
+}
+
+// Sidebar - Premium Dark Glass Effect
+.admin-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, $primary-dark 0%, $primary-accent 100%);
+  color: $text-primary;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+
+  // Glass overlay effect
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+  }
+
+  .sidebar-collapsed & {
+    width: 80px;
+  }
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid $border-subtle;
+  min-height: 80px;
+
+  .brand-section {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-logo {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, $purple-gradient-start 0%, $purple-gradient-end 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba($purple-gradient-start, 0.3);
+
+    .logo-icon {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Georgia', serif;
+    }
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      color: $text-muted;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 2px;
+    }
+  }
+
+  .sidebar-toggle {
+    width: 32px;
+    height: 32px;
+    background: $glass-bg;
+    border: 1px solid $border-subtle;
+    color: $text-secondary;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+// User Profile Section
+.sidebar-user {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid $border-subtle;
+  background: $glass-bg;
+
+  .user-avatar {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, $gold-accent 0%, #e8c547 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .avatar-initials {
+      font-size: 16px;
+      font-weight: 700;
+      color: $primary-dark;
+    }
+
+    .online-indicator {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #6b7280;
+      border: 3px solid $primary-dark;
+      transition: background 0.3s;
+
+      &.online {
+        background: $success;
+        box-shadow: 0 0 8px rgba($success, 0.5);
+      }
+    }
+  }
+
+  .user-info {
+    flex: 1;
+    min-width: 0;
+
+    .user-name {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      display: block;
+      font-size: 12px;
+      color: $gold-accent;
+      margin-top: 2px;
+    }
+  }
+
+  .sidebar-collapsed & {
+    justify-content: center;
+    padding: 16px;
+  }
+}
+
+// Navigation
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-subtle;
+    border-radius: 2px;
+  }
+
+  .nav-section {
+    margin-bottom: 8px;
+  }
+
+  .nav-section-title {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $text-muted;
+    padding: 8px 16px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    color: $text-secondary;
+    text-decoration: none;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: linear-gradient(180deg, $purple-gradient-start, $purple-gradient-end);
+      border-radius: 0 2px 2px 0;
+      transition: height 0.2s;
+    }
+
+    i {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .nav-label {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .nav-badge {
+      position: absolute;
+      right: 14px;
+      background: linear-gradient(135deg, $danger 0%, #dc2626 100%);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 10px;
+      min-width: 22px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba($danger, 0.3);
+      animation: pulse-badge 2s infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    &:hover {
+      background: $glass-bg;
+      color: #fff;
+
+      i {
+        transform: scale(1.1);
+      }
+    }
+
+    &.active {
+      background: linear-gradient(90deg, rgba($purple-gradient-start, 0.2) 0%, rgba($purple-gradient-end, 0.1) 100%);
+      color: #fff;
+
+      &::before {
+        height: 60%;
+      }
+
+      i {
+        color: $purple-gradient-start;
+      }
+    }
+
+    .sidebar-collapsed & {
+      justify-content: center;
+      padding: 14px;
+
+      .nav-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        padding: 2px 5px;
+        font-size: 9px;
+        min-width: 16px;
+      }
+    }
+  }
+}
+
+// Sidebar Footer
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid $border-subtle;
+
+  .system-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: $glass-bg;
+    border-radius: 10px;
+    margin-bottom: 12px;
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
+
+      &.online {
+        background: $success;
+        box-shadow: 0 0 8px rgba($success, 0.5);
+      }
+    }
+
+    .status-text {
+      flex: 1;
+      font-size: 12px;
+      color: $text-secondary;
+    }
+
+    .status-time {
+      font-size: 12px;
+      font-weight: 600;
+      color: $text-muted;
+      font-family: 'SF Mono', 'Monaco', monospace;
+    }
+  }
+
+  .footer-actions {
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      color: $text-secondary;
+      text-decoration: none;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      transition: all 0.2s;
+      background: none;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+
+      i {
+        font-size: 17px;
+        width: 24px;
+        text-align: center;
+      }
+
+      &:hover {
+        background: $glass-bg;
+        color: #fff;
+      }
+
+      &.logout {
+        color: rgba($danger, 0.8);
+
+        &:hover {
+          background: rgba($danger, 0.15);
+          color: $danger;
+        }
+      }
+
+      .sidebar-collapsed & {
+        justify-content: center;
+        padding: 12px;
+      }
+    }
+  }
+}
+
+// Main Content Area
+.admin-main {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 100vh;
+
+  .sidebar-collapsed & {
+    margin-left: 80px;
+  }
+}
+
+.mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 150;
+  background: $primary-accent;
+  border: none;
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.admin-content {
+  padding: 28px;
+  min-height: calc(100vh - 56px); // Account for padding
+  box-sizing: border-box;
+
+  // Ensure child routes fill the space
+  > * {
+    width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    padding: 80px 16px 24px;
+    min-height: calc(100vh - 104px);
+  }
+}
+
+// Responsive Styles
+@media (max-width: 768px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+
+    .sidebar-collapsed & {
+      transform: translateX(0);
+      width: 280px;
+    }
+  }
+
+  .admin-main {
+    margin-left: 0 !important;
+  }
+}
+
+// Premium Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-item {
+  animation: slideIn 0.3s ease forwards;
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+}

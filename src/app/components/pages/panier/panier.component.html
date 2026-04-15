@@ -79,6 +79,10 @@
 
         <div class="cart-actions">
           <button class="continue-shopping-btn" [routerLink]="['/']">Continuer mes achats</button>
+          <app-express-checkout-button
+            context="cart"
+            (openModal)="openExpressCheckoutModal()">
+          </app-express-checkout-button>
           <button class="checkout-btn" (click)="verif(hasUserCoupons)" [disabled]="isCheckingOffers">
             <span *ngIf="!isCheckingOffers">{{ hasUserCoupons ? "Profiter d'une réduction" : "Commander" }}</span>
             <span *ngIf="isCheckingOffers" class="btn-spinner" aria-hidden="true"></span>
@@ -104,4 +108,11 @@
 
 </div>
 </div>
+
+<!-- Express Checkout Modal -->
+<app-express-checkout-modal
+  [isOpen]="showExpressCheckoutModal"
+  (closeModal)="closeExpressCheckoutModal()">
+</app-express-checkout-modal>
+
 <p-toast></p-toast>

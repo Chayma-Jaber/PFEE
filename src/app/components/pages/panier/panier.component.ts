@@ -15,10 +15,12 @@ import { finalize } from 'rxjs/operators';
 import { AnalyticsService } from '../../../services/analytics.service';
 import { CouponsComponent } from '../../pages/compte/components/coupons/coupons.component';
 import { FavorisComponent } from '../favoris/favoris.component';
+import { ExpressCheckoutButtonComponent } from '../../commun/express-checkout-button';
+import { ExpressCheckoutModalComponent } from '../../commun/express-checkout-modal';
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ToastModule, GiftCardComponent, CouponsComponent, FavorisComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ToastModule, GiftCardComponent, CouponsComponent, FavorisComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent],
   templateUrl: './panier.component.html',
   styleUrl: './panier.component.scss',
   providers: [MessageService]
@@ -37,6 +39,9 @@ export class PanierComponent implements OnInit {
   cartItemsWithPromo: any[] = [];
   hasActivePromotion: boolean = false;
   hasUserCoupons: boolean = false;
+
+  // Express checkout modal
+  showExpressCheckoutModal: boolean = false;
 
   ngOnInit(): void {
     this.titleService.setSpecificTitle('Mon Panier');
@@ -475,5 +480,14 @@ export class PanierComponent implements OnInit {
     } else {
       this.cartService.updateQuantity(src.product.id, src.selectedColor, src.selectedSize, remaining);
     }
+  }
+
+  // Express checkout methods
+  openExpressCheckoutModal(): void {
+    this.showExpressCheckoutModal = true;
+  }
+
+  closeExpressCheckoutModal(): void {
+    this.showExpressCheckoutModal = false;
   }
 }

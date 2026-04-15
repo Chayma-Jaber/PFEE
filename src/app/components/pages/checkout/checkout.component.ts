@@ -17,9 +17,12 @@ import { TitleService } from '../../../services/title.service';
 import { GiftCardService } from '../gift-card/gift-card.service';
 import { environementDev } from '../../../../environements/environementDev';
 import { AnalyticsService } from '../../../services/analytics.service';
+import { CartRecommendationsNextGenComponent } from '../../commun/next-gen-recommendations';
+import { CheckoutRewardsComponent, RewardsDiscount } from '../../commun/checkout-rewards/checkout-rewards.component';
+
 @Component({
   selector: 'app-checkout',
-  imports: [RouterModule, CommonModule, ToastModule, FormsModule, CouponToastComponent],
+  imports: [RouterModule, CommonModule, ToastModule, FormsModule, CouponToastComponent, CartRecommendationsNextGenComponent, CheckoutRewardsComponent],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
   providers: [MessageService],
@@ -64,6 +67,20 @@ export class CheckoutComponent implements OnInit {
   onClose = () => {
     this.showCouponToast = false;
   };
+
+  // Loyalty & Gift Card rewards
+  rewardsDiscount: RewardsDiscount = {
+    loyaltyPoints: 0,
+    loyaltyDiscount: 0,
+    giftCardCode: '',
+    giftCardDiscount: 0,
+    totalDiscount: 0
+  };
+
+  onRewardsDiscountChanged(discount: RewardsDiscount): void {
+    this.rewardsDiscount = discount;
+    this.calculateTotals();
+  }
 
 
 
@@ -417,6 +434,13 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
+  // Get cart product IDs for recommendations
+  get cartProductIds(): number[] {
+    return this.cartItems
+      .map((item: any) => item.product?.id)
+      .filter((id: number) => id != null);
+  }
+
   // Format cart items for the checkCartOffers API
   private formatCartItemsForOfferApi(items: any[]): any[] {
     return items.map(item => ({
@@ -608,8 +632,10 @@ export class CheckoutComponent implements OnInit {
         sessionStorage.removeItem('checkoutState');
 
         if (this.selectedPaymentMethod === 'CBE') {
-          const redirectUrl = environementDev.redirectUrlLocal;
-          const ctpResponse = await this.orderService.getCTPTransaction(orderResponse.data.id, redirectUrl).toPromise();
+          // Include orderId in redirect URL for payment verification
+          const orderId = orderResponse.data.id;
+          const redirectUrl = `${environementDev.redirectUrlLocal}/${orderId}`;
+          const ctpResponse = await this.orderService.getCTPTransaction(orderId, redirectUrl).toPromise();
 
           if (ctpResponse.status === 200) {
             window.location.href = ctpResponse.data.url;
@@ -618,12 +644,8 @@ export class CheckoutComponent implements OnInit {
             throw new Error('Échec création transaction CBE');
           }
         } else {
-          this.router.navigate(['/profile'], {
-            queryParams: {
-              orderSuccess: true,
-              orderId: orderResponse.data.id
-            }
-          });
+          // Cash on delivery - redirect to order confirmation
+          this.router.navigate(['/checkout/order-confirmation', orderResponse.data.id]);
         }
 
         // Ajout événement GA4 validation finale commande

@@ -159,6 +159,25 @@
     <!-- Divider -->
     <div class="filter-divider"></div>
 
+    <!-- Disponibilité Section (F10 - Cahier des Charges) -->
+    <div class="filter-section">
+      <h4>Disponibilité</h4>
+      <div class="availability-options">
+        <label class="availability-option">
+          <input
+            type="checkbox"
+            [checked]="selectedFilters.inStockOnly"
+            (change)="toggleAvailability($event)"
+          />
+          <span class="checkmark"></span>
+          <span class="option-label">En stock uniquement</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="filter-divider"></div>
+
     <!-- Type de produit Section -->
     <!-- <div class="filter-section">
       <h4>Type de produit</h4>

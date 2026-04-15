@@ -1,0 +1,91 @@
+<!-- Cookie Consent Banner -->
+<div class="cookie-banner" *ngIf="showBanner && !showPreferences" [@slideUp]>
+  <div class="cookie-content">
+    <div class="cookie-text">
+      <h4>Nous utilisons des cookies</h4>
+      <p>
+        Nous utilisons des cookies pour améliorer votre expérience sur notre site, analyser le trafic
+        et personnaliser le contenu. En cliquant sur "Accepter tout", vous consentez à l'utilisation
+        de tous les cookies. Vous pouvez également personnaliser vos préférences.
+        <a routerLink="/info/cookies-policy" class="cookie-link">En savoir plus</a>
+      </p>
+    </div>
+    <div class="cookie-actions">
+      <button class="btn-secondary" (click)="openPreferences()">Personnaliser</button>
+      <button class="btn-outline" (click)="rejectAll()">Refuser tout</button>
+      <button class="btn-primary" (click)="acceptAll()">Accepter tout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie Preferences Modal -->
+<div class="cookie-overlay" *ngIf="showPreferences" (click)="closePreferences()">
+  <div class="cookie-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Préférences de cookies</h3>
+      <button class="close-btn" (click)="closePreferences()">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-intro">
+        Gérez vos préférences de cookies. Les cookies nécessaires sont toujours activés car ils sont
+        essentiels au fonctionnement du site.
+      </p>
+
+      <!-- Necessary Cookies -->
+      <div class="cookie-category">
+        <div class="category-header">
+          <div class="category-info">
+            <h4>Cookies nécessaires</h4>
+            <p>Ces cookies sont essentiels au fonctionnement du site. Ils permettent la navigation
+               et l'utilisation des fonctionnalités de base.</p>
+          </div>
+          <div class="category-toggle">
+            <span class="toggle-label always-on">Toujours actif</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Cookies -->
+      <div class="cookie-category">
+        <div class="category-header">
+          <div class="category-info">
+            <h4>Cookies analytiques</h4>
+            <p>Ces cookies nous permettent de mesurer l'audience et d'analyser le comportement des
+               visiteurs pour améliorer notre site.</p>
+          </div>
+          <div class="category-toggle">
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="preferences.analytics">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marketing Cookies -->
+      <div class="cookie-category">
+        <div class="category-header">
+          <div class="category-info">
+            <h4>Cookies marketing</h4>
+            <p>Ces cookies sont utilisés pour vous proposer des publicités et du contenu
+               personnalisés en fonction de vos intérêts.</p>
+          </div>
+          <div class="category-toggle">
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="preferences.marketing">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-outline" (click)="rejectAll()">Refuser tout</button>
+      <button class="btn-primary" (click)="savePreferences()">Enregistrer mes préférences</button>
+    </div>
+  </div>
+</div>

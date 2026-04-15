@@ -9,6 +9,10 @@
 
 <div class="blur-wrapper" [ngClass]="{'blurred': isBlurred}" *ngIf="!isLoading">
 
+  <!-- Breadcrumb Navigation -->
+  <div class="container">
+    <app-breadcrumb></app-breadcrumb>
+  </div>
 
   <div class="container product-page-container" *ngIf="!isLoading">
     <div class="product-container row">
@@ -83,6 +87,16 @@
           <h1 class="product-title">{{ product.title }}</h1>
           <div class="product-ref">Réf:{{ product.sku }}</div>
 
+          <!-- Viewers Badge - Social Proof -->
+          <div class="viewers-badge-container mt-2 mb-2 d-flex justify-content-center">
+            <app-viewers-badge
+              *ngIf="product?.id"
+              [productId]="product.id"
+              [compact]="true"
+              [inline]="true">
+            </app-viewers-badge>
+          </div>
+
           <!-- Price display with discount support -->
           <div class="product-price-container" *ngIf="product.discount; else regularPrice">
             <div class="current-price">{{ (product.currentPrice || 0).toFixed(3) }} TND</div>
@@ -130,6 +144,14 @@
               </div>
             </div>
 
+            <!-- Size Guide Link -->
+            <div class="size-guide-link-wrapper d-flex justify-content-center mt-2">
+              <button class="size-guide-link" (click)="openSizeGuide()">
+                <i class="fas fa-ruler-combined"></i>
+                Guide des tailles
+              </button>
+            </div>
+
             <!-- Size table in a separate div -->
             <div class="size-table-wrapper" *ngIf="showSizeTable">
               <div class="size-table-container">
@@ -156,6 +178,56 @@
             <button class="add-to-cart-btn" (click)="addToCart()">
               AJOUTER AU PANIER
             </button>
+          </div>
+
+          <!-- Express Checkout Button -->
+          <div class="express-checkout-section mt-3 d-flex justify-content-center" *ngIf="isExpressCheckoutVisible()">
+            <app-express-checkout-button
+              context="pdp"
+              [productId]="product.id"
+              (openModal)="openExpressCheckoutModal()">
+            </app-express-checkout-button>
+          </div>
+
+          <!-- Stock Alert Button - Shows when product is out of stock -->
+          <app-stock-alert-button
+            *ngIf="!hasStock()"
+            [productId]="product.id.toString()"
+            [size]="selectedSize || undefined"
+            [color]="product.colors && product.selectedColorIndex >= 0 ? product.colors[product.selectedColorIndex].name : undefined"
+            [productName]="product.title"
+            [productImage]="images[0]"
+            [productPrice]="(product.currentPrice || 0).toFixed(3) + ' TND'"
+            [isOutOfStock]="!hasStock()">
+          </app-stock-alert-button>
+
+          <!-- Virtual Try-On Button -->
+          <div class="virtual-try-on-section mt-3 d-flex justify-content-center" *ngIf="isVirtualTryOnAvailable()">
+            <button class="virtual-try-on-btn" (click)="openVirtualTryOn()">
+              <i class="fas fa-cube"></i>
+              <span>Essayage Virtuel</span>
+              <span class="ar-badge-inline">AR</span>
+            </button>
+          </div>
+
+          <!-- Trust Signals -->
+          <div class="trust-signals mt-4">
+            <div class="trust-item">
+              <i class="fas fa-truck"></i>
+              <span>Livraison gratuite d\u00e8s 150 TND</span>
+            </div>
+            <div class="trust-item">
+              <i class="fas fa-undo-alt"></i>
+              <span>Retours gratuits sous 14 jours</span>
+            </div>
+            <div class="trust-item">
+              <i class="fas fa-shield-alt"></i>
+              <span>Paiement 100% s\u00e9curis\u00e9</span>
+            </div>
+            <div class="trust-item">
+              <i class="fas fa-headset"></i>
+              <span>Service client r\u00e9actif</span>
+            </div>
           </div>
 
           <!-- Total Look section -->
@@ -214,6 +286,53 @@
               {{ isInWishlist ? 'RETIRER DES FAVORIS' : 'AJOUTER AUX FAVORIS' }}
             </button>
           </div>
+
+          <!-- Add to Comparison -->
+          <div class="comparison-action mt-3 d-flex justify-content-center">
+            <button class="compare-btn" (click)="toggleComparison()" [class.active]="isProductInComparison()">
+              <i class="fas fa-balance-scale"></i>
+              {{ isProductInComparison() ? 'RETIRER DE LA COMPARAISON' : 'AJOUTER A LA COMPARAISON' }}
+            </button>
+          </div>
+
+          <!-- Product Alerts (Price Drop / Back in Stock) -->
+          <app-product-alert
+            *ngIf="product?.id"
+            [productId]="product.id"
+            [productName]="product.title"
+            [currentPrice]="product.currentPrice"
+            [isOutOfStock]="!hasStock()">
+          </app-product-alert>
+
+          <!-- Complete the Look - Outfits containing this product -->
+          <app-complete-the-look
+            *ngIf="product?.id"
+            [productId]="product.id"
+            [limit]="2">
+          </app-complete-the-look>
+
+          <!-- Product Reviews -->
+          <app-product-reviews
+            *ngIf="product?.id"
+            [productId]="product.id"
+            [productFamily]="product.Famille">
+          </app-product-reviews>
+
+          <!-- Product Questions & Answers -->
+          <app-product-qa
+            *ngIf="product?.id"
+            [productId]="product.id">
+          </app-product-qa>
+
+          <!-- Recently Viewed Products -->
+          <app-recently-viewed
+            [title]="'Vus recemment'"
+            [maxProducts]="8"
+            [showClearButton]="true"
+            [showRemoveButton]="true"
+            [showViewedTime]="true"
+            [showContinueShopping]="false">
+          </app-recently-viewed>
 
           <!-- Product information accordions -->
           <div class="product-info-section mt-4" *ngIf="!isLoading">
@@ -285,12 +404,6 @@
                 <div class="related-content">
                   <h3 class="related-title">{{ produit.nom }}</h3>
                   <p class="related-price">{{ produit.prix }}</p>
-                  <!-- <div class="related-colors">
-                    <span *ngFor="let color of produit.colors"
-                          class="related-color-circle"
-                          [style.backgroundColor]="color">
-                    </span>
-                  </div> -->
                 </div>
               </div>
             </div>
@@ -305,6 +418,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Next-Gen AI-Powered Recommendations -->
+  <app-pdp-recommendations
+    *ngIf="!isLoading && product?.id"
+    [productId]="product.id"
+    [productName]="product.title"
+    [productPrice]="product.currentPrice"
+    [family]="product.Famille">
+  </app-pdp-recommendations>
 
   <!-- Close blur wrapper so popup isn't affected by filter -->
 </div>
@@ -353,3 +475,25 @@
       [class.fs-dragging]="fsIsDragging">
   </div>
 </div>
+
+<!-- Size Guide Modal -->
+<app-size-guide-modal
+  [isOpen]="showSizeGuideModal"
+  [category]="sizeGuideCategory"
+  (closeModal)="closeSizeGuide()">
+</app-size-guide-modal>
+
+<!-- Virtual Try-On Modal -->
+<app-virtual-try-on
+  #virtualTryOn
+  *ngIf="product?.id"
+  [productId]="product.id"
+  [productImage]="images[activeThumbnail]"
+  [productCategory]="getVirtualTryOnCategory()">
+</app-virtual-try-on>
+
+<!-- Express Checkout Modal -->
+<app-express-checkout-modal
+  [isOpen]="showExpressCheckoutModal"
+  (closeModal)="closeExpressCheckoutModal()">
+</app-express-checkout-modal>

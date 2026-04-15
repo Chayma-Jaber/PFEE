@@ -11,11 +11,11 @@
             <div class="col-12 col-md-6 col-lg-4 text-center">
                 <div class="logo">
                     <img
-                        [src]="searchResults?.hits[0]?.slides[0]?.logo?.url"
+                        [src]="logoUrl"
                         [routerLink]="['/']"
-                        [alt]="searchResults?.hits[0]?.slides[0]?.logo?.name"
-                        alt="BARSHA Logo" appLazyLoadImage
-                        class="img-fluid">
+                        [alt]="logoAlt"
+                        class="img-fluid"
+                        (error)="onImageError($event)">
                 </div>
             </div>
         </div>

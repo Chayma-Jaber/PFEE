@@ -1,3 +1,8 @@
+<!-- Breadcrumb Navigation -->
+<div class="container px-3" *ngIf="!isLoading">
+  <app-breadcrumb></app-breadcrumb>
+</div>
+
 <!-- Skeleton Loader for Filters -->
 <app-filter-skeleton *ngIf="isLoading"></app-filter-skeleton>
 
@@ -93,6 +98,17 @@
     (mouseenter)="changeActiveImage(produit)" (mouseleave)="resetActiveImage(produit)">
     <div class="wishlist-icon" (click)="toggleWishlist(produit)">
       <i class="fa-heart" [ngClass]="{'fa-solid': produit.isInWishlist, 'fa-regular': !produit.isInWishlist}"></i>
+    </div>
+    <div class="compare-icon"
+         (click)="isInComparison(produit.id) ? removeFromComparison(produit.id, $event) : addToComparison(produit, $event)"
+         [class.active]="isInComparison(produit.id)"
+         title="Ajouter a la comparaison">
+      <i class="fas fa-balance-scale"></i>
+    </div>
+    <div class="quick-view-icon"
+         (click)="openQuickView(produit, $event)"
+         title="Apercu rapide">
+      <i class="fas fa-eye"></i>
     </div>
     <div class="card-image-container">
       <!-- Discount Badge -->

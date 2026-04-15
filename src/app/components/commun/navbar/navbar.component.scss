@@ -102,6 +102,14 @@
       font-size: 16px;
     }
   }
+
+  &.visual-search-btn {
+    margin-left: 12px;
+
+    @media (max-width: 767px) {
+      margin-left: 8px;
+    }
+  }
 }
 // Search bar
 .search-container {

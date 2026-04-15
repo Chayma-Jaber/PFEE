@@ -37,6 +37,10 @@
         <button class="search-icon-btn" (click)="openSearchMenu()" aria-label="Ouvrir la recherche">
           <i class="fas fa-search" aria-hidden="true"></i>
         </button>
+        <!-- Visual Search Icon -->
+        <button class="search-icon-btn visual-search-btn" (click)="openVisualSearch()" aria-label="Recherche visuelle" title="Recherche par image">
+          <i class="fas fa-camera" aria-hidden="true"></i>
+        </button>
       </div>
 
       <!-- Center Logo -->
@@ -52,6 +56,9 @@
             <i class="fas fa-user-circle"></i>
             <span class="nav-text d-none d-lg-inline">COMPTE</span>
           </a>
+          <span class="separator d-none d-lg-inline">|</span>
+          <!-- Notifications -->
+          <app-notification-dropdown></app-notification-dropdown>
           <span class="separator d-none d-lg-inline">|</span>
           <!-- Gift Card Icon for Logged In Users -->
             <a class="nav-link px-2 d-flex align-items-center" (click)="goToGiftCard()">
@@ -108,4 +115,5 @@
 
 <app-menu *ngIf="menuVisible" (closeMenuEvent)="closeMenu()"></app-menu>
 <app-search-modal *ngIf="searchModalVisible" (closeModalEvent)="closeSearchModal()"></app-search-modal>
+<app-visual-search *ngIf="visualSearchVisible" (closeEvent)="closeVisualSearch()"></app-visual-search>
 <p-toast></p-toast>

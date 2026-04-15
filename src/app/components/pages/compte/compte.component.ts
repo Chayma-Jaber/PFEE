@@ -8,7 +8,6 @@ import { AuthService } from '../../../services/auth.service';
 import { Modal } from 'bootstrap';
 import { OrderService } from '../../../services/order.service';
 import { CouponsComponent } from './components/coupons/coupons.component';
-import { FideliteComponent } from './components/fidelite/fidelite.component';
 import { CartService } from '../../../services/cart.service';
 import { TitleService } from '../../../services/title.service';
 import { FormsModule } from '@angular/forms';
@@ -17,12 +16,23 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { CancelService } from '../../../services/cancel.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountRecommendationsComponent } from '../../commun/next-gen-recommendations';
+import { StyleProfileComponent } from '../../commun/style-profile';
+import { ProductAlertService, ProductAlert } from '../../../services/product-alert.service';
+import { LoyaltyDashboardComponent } from '../../commun/loyalty-dashboard/loyalty-dashboard.component';
+import { GiftCardsComponent } from '../../commun/gift-cards/gift-cards.component';
+import { ReferralDashboardComponent } from '../../commun/referral-dashboard/referral-dashboard.component';
+import { WishlistCollectionsComponent } from '../../commun/wishlist-collections';
+import { StockAlertsListComponent } from '../../commun/stock-alerts-list/stock-alerts-list.component';
+import { StockAlertService, StockAlert as StockAlertModel } from '../../../services/stock-alert.service';
+import { SavedAddressesComponent } from '../../commun/saved-addresses';
+import { SavedPaymentsComponent } from '../../commun/saved-payments';
 
 @Component({
   selector: 'app-compte',
   standalone: true,
-  
-  imports: [CommonModule, RouterModule, CouponsComponent, FideliteComponent, FormsModule,RetourComponent, ToastModule],
+
+  imports: [CommonModule, RouterModule, CouponsComponent, FormsModule, RetourComponent, ToastModule, AccountRecommendationsComponent, StyleProfileComponent, LoyaltyDashboardComponent, GiftCardsComponent, ReferralDashboardComponent, WishlistCollectionsComponent, StockAlertsListComponent, SavedAddressesComponent, SavedPaymentsComponent],
   providers: [MessageService],
   templateUrl: './compte.component.html',
   styleUrls: ['./compte.component.scss']
@@ -52,6 +62,22 @@ export class CompteComponent implements OnInit, AfterViewInit  {
   showCancel2 = true;
   selectedFile: File | null = null;
 
+  // Alerts properties
+  alerts: ProductAlert[] = [];
+  isLoadingAlerts: boolean = false;
+  alertsError: string | null = null;
+  showDeleteAlertModal: boolean = false;
+  alertToDelete: ProductAlert | null = null;
+  isDeletingAlert: boolean = false;
+
+  // Wishlist Collections
+  useCollectionsView: boolean = true; // Enable Pinterest-style collections
+
+  // Stock Alerts properties
+  stockAlerts: StockAlertModel[] = [];
+  isLoadingStockAlerts: boolean = false;
+  stockAlertsError: string | null = null;
+
   constructor(
     private profileService: ProfileService,
     public productService: ProductService,
@@ -62,7 +88,9 @@ export class CompteComponent implements OnInit, AfterViewInit  {
     private titleService: TitleService,
     private cancelService: CancelService,
     private modalService: NgbModal,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private productAlertService: ProductAlertService,
+    private stockAlertService: StockAlertService
   ) { }
   private myModal!: Modal;
   private editProfileModal!: Modal;
@@ -87,6 +115,7 @@ export class CompteComponent implements OnInit, AfterViewInit  {
     this.loadOrders();
     this.fetchWishlist();
     this.loadUserProfile();
+    this.loadAlerts();
   }
 
   ngAfterViewInit() {
@@ -325,6 +354,15 @@ export class CompteComponent implements OnInit, AfterViewInit  {
    // Method to change the selected tab
   selectTab(tab: string): void {
     this.selectedTab = tab;
+  }
+
+  onStyleProfileSaved(profile: any): void {
+    // Profile saved notification
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Profil style sauvegardé',
+      detail: 'Vos préférences de style ont été mises à jour'
+    });
 
 
 
@@ -805,5 +843,182 @@ deleteAccount(): void {
       }
     }
   }
-  
+
+  // ========================================================================
+  // Alerts Management Methods
+  // ========================================================================
+
+  /**
+   * Load user's active alerts
+   */
+  loadAlerts(): void {
+    this.isLoadingAlerts = true;
+    this.alertsError = null;
+
+    this.productAlertService.getMyAlerts().subscribe({
+      next: (alerts) => {
+        this.alerts = alerts.filter(alert => alert.is_active);
+        this.isLoadingAlerts = false;
+      },
+      error: (error) => {
+        console.error('Error loading alerts:', error);
+        this.alertsError = 'Erreur lors du chargement des alertes';
+        this.isLoadingAlerts = false;
+      }
+    });
+  }
+
+  /**
+   * Get alert type label in French
+   */
+  getAlertTypeLabel(alertType: string): string {
+    switch (alertType) {
+      case 'price_drop':
+        return 'Baisse de prix';
+      case 'back_in_stock':
+        return 'Retour en stock';
+      default:
+        return alertType;
+    }
+  }
+
+  /**
+   * Get alert type badge class
+   */
+  getAlertTypeBadgeClass(alertType: string): string {
+    switch (alertType) {
+      case 'price_drop':
+        return 'badge-price-drop';
+      case 'back_in_stock':
+        return 'badge-back-in-stock';
+      default:
+        return 'badge-default';
+    }
+  }
+
+  /**
+   * Open confirmation modal for deleting an alert
+   */
+  openDeleteAlertModal(alert: ProductAlert): void {
+    this.alertToDelete = alert;
+    this.showDeleteAlertModal = true;
+  }
+
+  /**
+   * Close delete alert confirmation modal
+   */
+  closeDeleteAlertModal(): void {
+    this.showDeleteAlertModal = false;
+    this.alertToDelete = null;
+  }
+
+  /**
+   * Confirm and delete the selected alert
+   */
+  confirmDeleteAlert(): void {
+    if (!this.alertToDelete) return;
+
+    this.isDeletingAlert = true;
+
+    this.productAlertService.unsubscribeAlert(this.alertToDelete.id).subscribe({
+      next: (success) => {
+        if (success) {
+          // Remove alert from local list
+          this.alerts = this.alerts.filter(a => a.id !== this.alertToDelete?.id);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Alerte supprimee',
+            detail: 'L\'alerte a ete supprimee avec succes'
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible de supprimer l\'alerte'
+          });
+        }
+        this.isDeletingAlert = false;
+        this.closeDeleteAlertModal();
+      },
+      error: (error) => {
+        console.error('Error deleting alert:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Une erreur est survenue lors de la suppression'
+        });
+        this.isDeletingAlert = false;
+        this.closeDeleteAlertModal();
+      }
+    });
+  }
+
+  /**
+   * Navigate to product detail page
+   */
+  navigateToProduct(productId: number): void {
+    this.router.navigate(['/produit', productId]);
+  }
+
+  /**
+   * Format date for display
+   */
+  formatAlertDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  /**
+   * Get number of price drop alerts
+   */
+  getPriceDropAlertsCount(): number {
+    return this.alerts.filter(a => a.alert_type === 'price_drop').length;
+  }
+
+  /**
+   * Get number of back in stock alerts
+   */
+  getBackInStockAlertsCount(): number {
+    return this.alerts.filter(a => a.alert_type === 'back_in_stock').length;
+  }
+
+  // ========================================================================
+  // Stock Alerts Management Methods
+  // ========================================================================
+
+  /**
+   * Handle stock alert deletion event from StockAlertsListComponent
+   */
+  onStockAlertDeleted(alertId: number): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Alerte supprimee',
+      detail: 'L\'alerte de retour en stock a ete supprimee'
+    });
+  }
+
+  /**
+   * Load stock alerts (if needed for any reason)
+   */
+  loadStockAlerts(): void {
+    this.isLoadingStockAlerts = true;
+    this.stockAlertsError = null;
+
+    this.stockAlertService.getMyAlerts().subscribe({
+      next: (response) => {
+        this.stockAlerts = response.alerts;
+        this.isLoadingStockAlerts = false;
+      },
+      error: (error) => {
+        console.error('Error loading stock alerts:', error);
+        this.stockAlertsError = 'Erreur lors du chargement des alertes';
+        this.isLoadingStockAlerts = false;
+      }
+    });
+  }
+
 }

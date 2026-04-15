@@ -147,7 +147,13 @@
             </span>
           </div>
         </div>
-    
+
+        <!-- Loyalty Points & Gift Cards -->
+        <app-checkout-rewards
+          [orderTotal]="subtotal - discountAmount"
+          (discountChanged)="onRewardsDiscountChanged($event)">
+        </app-checkout-rewards>
+
       </div>
     </div>
     <div class="right-column">
@@ -159,13 +165,21 @@
             <span class="amount">{{subtotal}} TND</span>
           </div>
           <div class="price-row" *ngIf="appliedCoupon && discountAmount > 0">
-            <span class="amount">Réduction</span>
+            <span class="amount">Coupon</span>
             <span class="amount discount">-{{discountAmount.toFixed(2)}} TND</span>
+          </div>
+          <div class="price-row" *ngIf="rewardsDiscount.loyaltyDiscount > 0">
+            <span class="amount">Points fidelite</span>
+            <span class="amount discount">-{{rewardsDiscount.loyaltyDiscount.toFixed(3)}} TND</span>
+          </div>
+          <div class="price-row" *ngIf="rewardsDiscount.giftCardDiscount > 0">
+            <span class="amount">Carte cadeau</span>
+            <span class="amount discount">-{{rewardsDiscount.giftCardDiscount.toFixed(3)}} TND</span>
           </div>
           <!-- Livraison omitted from reduction-step summary -->
           <div class="price-row total">
             <span class="amount">Total TTC</span>
-            <span class="amount">{{ (subtotal - discountAmount + deliveryCost) | number:'1.2-2' }} TND</span>
+            <span class="amount">{{ (subtotal - discountAmount - rewardsDiscount.totalDiscount + deliveryCost) | number:'1.2-2' }} TND</span>
           </div>
         </div>
         <div class="form-actions">
@@ -413,5 +427,18 @@
 <p-toast  class="center"  position="top-center"></p-toast>
 <div *ngIf="orderError" class="alert alert-danger">
   {{ orderError }}
+</div>
+
+<!-- Cart Recommendations - Shown in confirmation step -->
+<div class="cart-recommendations-section" *ngIf="currentStep === (hasCoupons ? 4 : 3) && cartProductIds.length > 0">
+  <app-cart-recommendations-nextgen
+    [cartProductIds]="cartProductIds"
+    [limit]="4"
+    [showAiBadge]="true"
+    [showReason]="true"
+    [showQuickAdd]="false"
+    title="Complétez votre look"
+    subtitle="Ces articles accompagnent parfaitement votre sélection">
+  </app-cart-recommendations-nextgen>
 </div>
 

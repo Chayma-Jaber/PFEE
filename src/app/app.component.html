@@ -1,8 +1,13 @@
-<div class="app-container">
-    <app-navbar></app-navbar>
+<div class="app-container" [class.admin-mode]="isAdminPage">
+    <app-navbar *ngIf="!isAdminPage"></app-navbar>
     <div class="content-wrapper">
       <router-outlet></router-outlet>
     </div>
-    <app-footer></app-footer>
-    <app-chatbot></app-chatbot>
+    <app-footer *ngIf="!isAdminPage"></app-footer>
+    <app-chatbot *ngIf="!isAdminPage"></app-chatbot>
+    <app-comparison-widget *ngIf="!isAdminPage"></app-comparison-widget>
+    <app-social-proof-popup *ngIf="!isAdminPage"></app-social-proof-popup>
+    <app-quick-view-modal></app-quick-view-modal>
+    <app-newsletter-popup *ngIf="!isAdminPage"></app-newsletter-popup>
   </div>
+  <app-cookie-consent *ngIf="!isAdminPage"></app-cookie-consent>

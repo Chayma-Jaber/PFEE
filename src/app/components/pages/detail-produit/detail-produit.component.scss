@@ -387,19 +387,78 @@ font-weight: 400;
 // Add to Cart Button
 .add-to-cart-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: 14px 24px;
   background-color: #000;
   color: #fff;
   border: none;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+
   &:hover {
-    background-color: $primary-color;
+    background-color: #222;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
+// Trust Signals
+.trust-signals {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  border-radius: 12px;
+  margin-top: 20px;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    i {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.3;
+    }
+  }
+}
 
 .section-title {
   font-size: 20px;
@@ -678,6 +737,46 @@ font-weight: 400;
   }
   i {
     margin-right: 5px;
+  }
+}
+
+// Comparison Action Button
+.comparison-action {
+  margin-top: 0.5rem;
+}
+
+.compare-btn {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 1px solid #6c757d;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover {
+    background-color: #f8f9fa;
+    border-color: #000;
+    color: #000;
+  }
+
+  &.active {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+
+    &:hover {
+      background-color: #333;
+    }
+  }
+
+  i {
+    font-size: 1rem;
   }
 }
 
@@ -1166,6 +1265,56 @@ font-size:large;
   .size-dropdown {
     position: relative;
     width: 350px;
+  }
+
+  // Size Guide Link
+  .size-guide-link-wrapper {
+    margin-top: 8px;
+  }
+
+  .size-guide-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 13px;
+    font-family: 'std55', sans-serif;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    i {
+      font-size: 14px;
+      color: #888;
+      transition: color 0.2s ease;
+    }
+
+    &:hover {
+      color: #000;
+      background-color: #f5f5f5;
+
+      i {
+        color: #000;
+      }
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: 576px) {
+      font-size: 12px;
+      padding: 6px 10px;
+
+      i {
+        font-size: 12px;
+      }
+    }
   }
 
   .size-table-wrapper {
@@ -2371,6 +2520,123 @@ font-size:large;
           transition: transform 0.1s ease;
         }
       }
+    }
+  }
+}
+
+// Virtual Try-On Button Styles
+.virtual-try-on-section {
+  margin-top: 15px;
+}
+
+.virtual-try-on-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  border: 1px solid rgba(94, 129, 244, 0.3);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  font-family: 'std55', sans-serif;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(94, 129, 244, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+    border-color: rgba(94, 129, 244, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(94, 129, 244, 0.25);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i {
+    font-size: 16px;
+    color: #5e81f4;
+    animation: pulse-icon 2s ease-in-out infinite;
+  }
+
+  span {
+    text-transform: uppercase;
+  }
+
+  .ar-badge-inline {
+    background: linear-gradient(135deg, #5e81f4 0%, #1fcf93 100%);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 5px;
+  }
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+// Responsive adjustments for virtual try-on button
+@media (max-width: $breakpoint-sm) {
+  .virtual-try-on-btn {
+    padding: 12px 20px;
+    font-size: 13px;
+
+    i {
+      font-size: 14px;
+    }
+
+    .ar-badge-inline {
+      font-size: 9px;
+      padding: 2px 6px;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-xs) {
+  .virtual-try-on-btn {
+    padding: 10px 16px;
+    font-size: 12px;
+    gap: 8px;
+
+    i {
+      font-size: 13px;
+    }
+
+    .ar-badge-inline {
+      font-size: 8px;
+      padding: 2px 5px;
     }
   }
 }

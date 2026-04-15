@@ -1,0 +1,50 @@
+<section class="ai-recommendations" *ngIf="products.length > 0 || isLoading">
+  <!-- Header -->
+  <div class="section-header">
+    <div class="header-content">
+      <h2>
+        {{ getTitle() }}
+        <span class="ai-badge" *ngIf="showAiBadge">
+          <i class="fa fa-magic"></i>
+          Barsha IA
+        </span>
+      </h2>
+      <p class="section-subtitle">{{ getSubtitle() }}</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="skeleton-grid">
+      <div class="skeleton-card" *ngFor="let i of [1,2,3,4]">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text short"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="products-grid" *ngIf="!isLoading && products.length > 0">
+    <a class="product-card"
+       *ngFor="let product of products; let i = index; trackBy: trackByProductId"
+       [routerLink]="'/produit/' + product.id"
+       (click)="onProductClick(product, i)">
+      <div class="product-image">
+        <img [src]="product.image"
+             [alt]="product.name"
+             loading="lazy"
+             onerror="this.src='assets/images/placeholder.png'">
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">{{ product.name }}</h3>
+        <p class="product-price">{{ product.price }}</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Error/Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && products.length === 0 && errorMessage">
+    <p>{{ errorMessage }}</p>
+  </div>
+</section>

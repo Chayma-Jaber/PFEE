@@ -35,6 +35,7 @@ export interface SelectedFilters {
   prix: number;
   minPrix?: number; // Ajout du prix minimum
   type: string;
+  inStockOnly?: boolean; // F10: Filtrage par disponibilité
 }
 
 @Component({
@@ -75,7 +76,8 @@ export class FilterComponent implements OnInit, OnChanges {
     couleur: [] as string[],
     prix: 0.0,
     minPrix: 0.0, // Initialisation du prix minimum
-    type: ''
+    type: '',
+    inStockOnly: false // F10: Filtrage par disponibilité
   };
 
   constructor(private filterService: FilterService) {}
@@ -337,6 +339,17 @@ export class FilterComponent implements OnInit, OnChanges {
     // API call will only be triggered when "Voir" button is clicked
   }
 
+  /**
+   * Toggle stock availability filter (F10 - Cahier des Charges)
+   * @param event The checkbox change event
+   */
+  toggleAvailability(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.selectedFilters.inStockOnly = target.checked;
+    // Update filtered count
+    this.updateFilteredProductsCount();
+  }
+
   resetFilters(): void {
     // Reset to show all products in the full price range
     this.selectedFilters = {
@@ -345,7 +358,8 @@ export class FilterComponent implements OnInit, OnChanges {
       couleur: [],
       prix: this.filterOptions.prix.max,  // Set to max to show all products up to max price
       minPrix: this.filterOptions.prix.min,  // Keep min price at minimum
-      type: ''
+      type: '',
+      inStockOnly: false  // F10: Reset availability filter
     };
 
     // Reset the temporary price value to match the selected price

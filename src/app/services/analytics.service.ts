@@ -150,12 +150,12 @@ export class AnalyticsService {
    * Track user account creation
    * @param user Utilisateur avec id, codeErp, phone, firstName, lastName, email
    */
-  trackUserAccountCreation(user: { id: number|string, codeErp: string, phone: string, firstName: string, lastName: string, email: string }) {
+  trackUserAccountCreation(user: { id: number|string, codeErp?: string, phone?: string, firstName: string, lastName: string, email: string }) {
     this.dataLayer.push({
       event: 'user_account_creation',
       id_user: user.id,
-      code_erp: user.codeErp,
-      phone: user.phone,
+      code_erp: user.codeErp || '',
+      phone: user.phone || '',
       first_name: user.firstName,
       last_name: user.lastName,
       email: user.email

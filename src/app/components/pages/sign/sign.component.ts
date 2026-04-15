@@ -328,12 +328,13 @@ export class SignComponent {
         }
 
         // Stocker les informations d'authentification
-        localStorage.setItem('jwt', response.jwt);
+        const token = response.jwt || response.tokens?.access_token || '';
+        localStorage.setItem('jwt', token);
         localStorage.setItem('user', JSON.stringify(response.user));
 
         // Récupérer l'ID utilisateur du token
         try {
-          const payload = JSON.parse(atob(response.jwt.split('.')[1]));
+          const payload = JSON.parse(atob(token.split('.')[1]));
           const userId = payload.id;
 
           if (guestCart) {
@@ -506,11 +507,12 @@ export class SignComponent {
     this.authService.register(registrationData).subscribe({
       next: (response) => {
         // Stocker les informations d'authentification
-        localStorage.setItem('jwt', response.jwt);
+        const token = response.jwt || response.tokens?.access_token || '';
+        localStorage.setItem('jwt', token);
         localStorage.setItem('user', JSON.stringify(response.user));
 
         // Synchroniser le panier invité avec le compte utilisateur
-        this.cartService.syncGuestCart(response.jwt);
+        this.cartService.syncGuestCart(token);
 
         this.messageService.add({
           severity: 'success',
@@ -1167,13 +1169,12 @@ export class SignComponent {
         });
 
         if (this.selectedPaymentMethod === 'CBE') {
+          // Include orderId in redirect URL for payment verification
+          const orderId = orderResponse.data.id;
+          const redirectUrl = `${environementDev.redirectUrlLocal}/${orderId}`;
 
-          const redirectUrl = environementDev.redirectUrlLocal;
-
-
-          //const redirectUrl = environement.production ? redirectUrlProd : redirectUrlDev;
-          // Utiliser firstValueFrom au lieu de toPromise()
-          const ctpResponse = await firstValueFrom(this.orderService.getCTPTransaction(orderResponse.data.id, redirectUrl));
+          // Generate Click to Pay transaction
+          const ctpResponse = await firstValueFrom(this.orderService.getCTPTransaction(orderId, redirectUrl));
 
           if (ctpResponse.status === 200) {
             window.location.href = ctpResponse.data.url;
@@ -1182,12 +1183,8 @@ export class SignComponent {
             throw new Error('Échec création transaction CBE');
           }
         } else {
-          this.router.navigate(['/profile'], {
-            queryParams: {
-              orderSuccess: true,
-              orderId: orderResponse.data.id
-            }
-          });
+          // Cash on delivery - redirect to order confirmation
+          this.router.navigate(['/checkout/order-confirmation', orderResponse.data.id]);
         }
       } else {
         throw new Error(orderResponse.message || "Erreur serveur inconnue");

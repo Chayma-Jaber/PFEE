@@ -1,8 +1,15 @@
 <!-- chatbot.component.html -->
 <div class="chatbot-wrapper" [class.chat-open]="isOpen">
 
+  <!-- Toast Notification -->
+  <div class="chat-toast" [class.visible]="toast.visible" [class.success]="toast.type === 'success'" [class.error]="toast.type === 'error'">
+    <span class="toast-icon" *ngIf="toast.type === 'success'">&#10003;</span>
+    <span class="toast-icon" *ngIf="toast.type === 'error'">&#10007;</span>
+    <span>{{ toast.message }}</span>
+  </div>
+
   <!-- Hidden Image Input -->
-  <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
+  <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)" aria-label="Uploader une image pour recherche visuelle">
 
   <!-- Floating FAB (Hidden when open on mobile if preferred) -->
   <button class="chat-fab" (click)="toggleChat()" [class.open]="isOpen" aria-label="Ouvrir le chat">
@@ -23,10 +30,10 @@
     <!-- Premium Header -->
     <div class="chat-header">
       <div class="header-main">
-        <div class="ai-orb"><span></span></div>
+        <div class="ai-orb" aria-hidden="true"><span></span></div>
         <div class="header-text">
-          <h1>Barsha Assistant</h1>
-          <p>Intelligence Mode Active</p>
+          <h1>Votre Styliste Barsha</h1>
+          <p><span class="status-dot"></span> En ligne &bull; Pr\u00eat \u00e0 vous conseiller</p>
         </div>
       </div>
       <div class="header-actions">
@@ -75,20 +82,35 @@
         <!-- Results Gallery (Moment Magique) -->
         <div *ngIf="!msg.loading && msg.products && msg.products.length > 0" class="results-container">
           <div class="results-header">
-            <span>✨ Suggestions pour vous</span>
+            <span class="header-icon">&#10024;</span>
+            <span>S\u00e9lection personnalis\u00e9e pour vous</span>
           </div>
           <div class="premium-gallery">
-            <div *ngFor="let prod of msg.products" class="premium-card clickable" (click)="window.open(prod.url, '_blank')">
-              <div class="card-media">
+            <div *ngFor="let prod of msg.products" class="premium-card clickable">
+              <div class="card-media" (click)="window.open(prod.url, '_blank')">
                 <img [src]="prod.image || 'assets/logo.jpg'" [alt]="prod.nom" onerror="this.src='https://placehold.co/400x600/000/fff?text=Barsha+Mode'">
-                <div class="card-actions">
-                   <button class="action-btn">Voir</button>
-                  
-                </div>
+                <div class="card-badge" *ngIf="prod.prix && prod.prix.includes('%')">Promo</div>
               </div>
               <div class="card-body">
-                <h3>{{ prod.nom }}</h3>
+                <h3 (click)="window.open(prod.url, '_blank')">{{ prod.nom }}</h3>
                 <p class="price">{{ prod.prix }}</p>
+                <div class="card-actions-inline">
+                  <button class="action-btn-inline view" (click)="window.open(prod.url, '_blank')" title="Voir le produit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Voir
+                  </button>
+                  <button class="action-btn-inline cart primary" (click)="addToCartFromChat(prod, $event)" title="Ajouter au panier">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    Ajouter
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -97,16 +119,23 @@
         <!-- Bonus: Complete the Look -->
         <div *ngIf="!msg.loading && msg.complementProducts && msg.complementProducts.length > 0" class="bonus-section">
           <div class="bonus-header">
-             <span class="icon">🎁</span>
-             <span>Complétez votre look</span>
+             <span class="icon" aria-hidden="true">&#127873;</span>
+             <span>Compl\u00e9tez votre look</span>
+             <span class="bonus-tip">Parfaits accords</span>
           </div>
           <div class="bonus-scroll">
-             <div *ngFor="let prod of msg.complementProducts" class="bonus-item clickable" (click)="window.open(prod.url, '_blank')">
-                <img [src]="prod.image" [alt]="prod.nom">
-                <div class="bonus-info">
+             <div *ngFor="let prod of msg.complementProducts" class="bonus-item clickable">
+                <img [src]="prod.image" [alt]="prod.nom" (click)="window.open(prod.url, '_blank')">
+                <div class="bonus-info" (click)="window.open(prod.url, '_blank')">
                    <p>{{ prod.nom }}</p>
                    <span>{{ prod.prix }}</span>
                 </div>
+                <button class="bonus-add-btn" (click)="addToCartFromChat(prod, $event)" title="Ajouter au panier">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
              </div>
           </div>
         </div>
@@ -122,28 +151,28 @@
 
     <!-- Input Bar -->
     <div class="chat-footer">
-      <div class="input-shell">
-        <button class="tool-btn" (click)="triggerImageUpload()" title="Recherche visuelle">
+      <div class="input-shell" role="search">
+        <button class="tool-btn" (click)="triggerImageUpload()" title="Recherche par photo" aria-label="Rechercher par photo">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
             <circle cx="12" cy="13" r="4"></circle>
           </svg>
         </button>
-        <input type="text" 
-               placeholder="Demandez n'importe quoi..." 
+        <input type="text"
+               placeholder="D\u00e9crivez votre style id\u00e9al..."
                [(ngModel)]="userInput"
                maxlength="300"
-               (keypress)="onKeyPress($event)">
-        <button class="send-btn" [disabled]="!userInput.trim() || isLoading" (click)="sendMessage()">
+               (keypress)="onKeyPress($event)"
+               aria-label="Message pour votre styliste"
+               autocomplete="off">
+        <button class="send-btn" [disabled]="!userInput.trim() || isLoading" (click)="sendMessage()" aria-label="Envoyer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>
         </button>
       </div>
-      <div class="char-counter" [class.limit-reached]="userInput.length >= 300">
-        {{ userInput.length }}/300
-      </div>
+      <p class="input-hint">Essayez : "robe pour soir\u00e9e" ou "tenue casual chic"</p>
     </div>
 
   </div>

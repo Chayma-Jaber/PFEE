@@ -1,0 +1,427 @@
+<div class="admin-support">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <i class="fas fa-headset"></i>
+        Support Client
+      </h1>
+      <p>G\u00e9rez les demandes de support et accompagnez vos clients</p>
+    </div>
+
+    <div class="header-actions" *ngIf="currentView === 'inbox'">
+      <button
+        class="btn btn-outline"
+        (click)="loadTickets(); loadStats()"
+        [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="stats && currentView === 'inbox'">
+    <div class="stat-card urgent" (click)="statusFilter = 'open'; showUnassignedOnly = false; applyFilters()">
+      <div class="stat-icon">
+        <i class="fas fa-inbox"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ stats.open }}</span>
+        <span class="stat-label">En cours</span>
+      </div>
+    </div>
+
+    <div class="stat-card warning" (click)="showUnassignedOnly = true; statusFilter = ''; applyFilters()">
+      <div class="stat-icon">
+        <i class="fas fa-user-clock"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ stats.unassigned }}</span>
+        <span class="stat-label">Non assign\u00e9s</span>
+      </div>
+    </div>
+
+    <div class="stat-card danger" *ngIf="stats.urgent > 0">
+      <div class="stat-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ stats.urgent }}</span>
+        <span class="stat-label">Urgents</span>
+      </div>
+    </div>
+
+    <div class="stat-card success" (click)="statusFilter = 'resolved'; applyFilters()">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ stats.resolved }}</span>
+        <span class="stat-label">R\u00e9solus</span>
+      </div>
+    </div>
+
+    <div class="stat-card info" *ngIf="stats.avgSatisfactionRating">
+      <div class="stat-icon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ stats.avgSatisfactionRating }}/5</span>
+        <span class="stat-label">Satisfaction</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button (click)="errorMessage = ''">&times;</button>
+  </div>
+
+  <!-- INBOX VIEW -->
+  <div *ngIf="currentView === 'inbox'" class="inbox-view">
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="applyFilters()"
+          placeholder="Rechercher par r\u00e9f\u00e9rence, sujet, client..." />
+      </div>
+
+      <div class="filter-group">
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+        </select>
+
+        <select [(ngModel)]="priorityFilter" (change)="applyFilters()">
+          <option value="">Toutes priorit\u00e9s</option>
+          <option *ngFor="let p of priorities" [value]="p.value">{{ p.label }}</option>
+        </select>
+
+        <select [(ngModel)]="categoryFilter" (change)="applyFilters()">
+          <option value="">Toutes cat\u00e9gories</option>
+          <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+        </select>
+
+        <label class="checkbox-filter">
+          <input type="checkbox" [(ngModel)]="showUnassignedOnly" (change)="applyFilters()" />
+          Non assign\u00e9s uniquement
+        </label>
+
+        <button class="btn-reset" (click)="resetFilters()">
+          <i class="fas fa-times"></i> R\u00e9initialiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && tickets.length === 0" class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>Aucun ticket</h3>
+      <p>Aucun ticket ne correspond \u00e0 vos crit\u00e8res de recherche.</p>
+    </div>
+
+    <!-- Ticket Table -->
+    <div *ngIf="!isLoading && tickets.length > 0" class="tickets-table">
+      <table>
+        <thead>
+          <tr>
+            <th>R\u00e9f\u00e9rence</th>
+            <th>Sujet</th>
+            <th>Client</th>
+            <th>Cat\u00e9gorie</th>
+            <th>Priorit\u00e9</th>
+            <th>Statut</th>
+            <th>Assign\u00e9 \u00e0</th>
+            <th>Derni\u00e8re activit\u00e9</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of tickets" (click)="viewTicket(ticket)">
+            <td class="ref-cell">
+              <span class="ticket-ref">#{{ ticket.reference }}</span>
+            </td>
+            <td class="subject-cell">
+              <span class="subject">{{ ticket.subject }}</span>
+              <span class="message-count">
+                <i class="fas fa-comment"></i> {{ ticket.messageCount }}
+              </span>
+            </td>
+            <td>{{ ticket.customer?.name || ticket.contactName || 'Client' }}</td>
+            <td>
+              <span class="category-badge">{{ getCategoryLabel(ticket.category) }}</span>
+            </td>
+            <td>
+              <span
+                class="priority-badge"
+                [style.backgroundColor]="getPriorityInfo(ticket.priority).bgColor"
+                [style.color]="getPriorityInfo(ticket.priority).color">
+                {{ getPriorityInfo(ticket.priority).label }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="status-badge"
+                [style.backgroundColor]="getStatusInfo(ticket.status).bgColor"
+                [style.color]="getStatusInfo(ticket.status).color">
+                {{ getStatusInfo(ticket.status).label }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="ticket.assignedTo" class="agent-name">{{ ticket.assignedTo }}</span>
+              <span *ngIf="!ticket.assignedTo" class="unassigned">Non assign\u00e9</span>
+            </td>
+            <td class="time-cell">{{ getTimeAgo(ticket.updatedAt) }}</td>
+            <td class="action-cell">
+              <i class="fas fa-chevron-right"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="pagination.pages > 1" class="pagination">
+      <button [disabled]="pagination.page <= 1" (click)="goToPage(pagination.page - 1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <span>Page {{ pagination.page }} / {{ pagination.pages }}</span>
+      <button [disabled]="pagination.page >= pagination.pages" (click)="goToPage(pagination.page + 1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div *ngIf="currentView === 'detail' && selectedTicket" class="detail-view">
+    <button class="btn-back" (click)="backToInbox()">
+      <i class="fas fa-arrow-left"></i> Retour \u00e0 la liste
+    </button>
+
+    <div class="detail-layout">
+      <!-- Main Content -->
+      <div class="detail-main">
+        <!-- Ticket Header -->
+        <div class="ticket-header-card">
+          <div class="header-top">
+            <span class="ticket-ref">#{{ selectedTicket.reference }}</span>
+            <span
+              class="status-badge large"
+              [style.backgroundColor]="getStatusInfo(selectedTicket.status).bgColor"
+              [style.color]="getStatusInfo(selectedTicket.status).color">
+              <i [class]="'fas fa-' + getStatusInfo(selectedTicket.status).icon"></i>
+              {{ getStatusInfo(selectedTicket.status).label }}
+            </span>
+          </div>
+          <h2>{{ selectedTicket.subject }}</h2>
+          <div class="ticket-meta">
+            <span><i class="fas fa-clock"></i> Cr\u00e9\u00e9 {{ formatDate(selectedTicket.createdAt) }}</span>
+            <span *ngIf="selectedTicket.orderReference">
+              <i class="fas fa-shopping-bag"></i> Commande #{{ selectedTicket.orderReference }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages-card">
+          <h3>Conversation</h3>
+          <div class="messages-list">
+            <div
+              *ngFor="let message of selectedTicket.messages"
+              class="message"
+              [class.from-customer]="message.isFromCustomer"
+              [class.from-agent]="!message.isFromCustomer && !message.isSystem && !message.isInternal"
+              [class.internal-note]="message.isInternal"
+              [class.system-message]="message.isSystem">
+
+              <div class="message-header">
+                <span class="sender">
+                  <i *ngIf="message.isFromCustomer" class="fas fa-user"></i>
+                  <i *ngIf="!message.isFromCustomer && !message.isSystem && !message.isInternal" class="fas fa-headset"></i>
+                  <i *ngIf="message.isInternal" class="fas fa-lock"></i>
+                  <i *ngIf="message.isSystem" class="fas fa-info-circle"></i>
+                  {{ message.isFromCustomer ? (selectedTicket.customer?.name || 'Client') : message.senderName }}
+                  <span *ngIf="message.isInternal" class="internal-tag">Note interne</span>
+                </span>
+                <span class="time">{{ formatDate(message.createdAt) }}</span>
+              </div>
+              <div class="message-content">{{ message.message }}</div>
+            </div>
+          </div>
+
+          <!-- Reply Form -->
+          <div *ngIf="selectedTicket.isOpen" class="reply-form">
+            <div class="reply-options">
+              <label class="internal-toggle">
+                <input type="checkbox" [(ngModel)]="isInternalNote" />
+                <span>Note interne (invisible au client)</span>
+              </label>
+            </div>
+            <textarea
+              [(ngModel)]="newMessage"
+              [placeholder]="isInternalNote ? 'Ajouter une note interne...' : 'R\u00e9pondre au client...'"
+              rows="4"></textarea>
+            <div class="reply-actions">
+              <button
+                class="btn btn-primary"
+                [class.btn-secondary]="isInternalNote"
+                (click)="sendMessage()"
+                [disabled]="!newMessage.trim() || isSubmitting">
+                <i [class]="isInternalNote ? 'fas fa-lock' : 'fas fa-paper-plane'"></i>
+                {{ isInternalNote ? 'Ajouter note' : 'Envoyer' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="!selectedTicket.isOpen" class="ticket-closed-notice">
+            <i class="fas fa-lock"></i>
+            Ce ticket est ferm\u00e9.
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="detail-sidebar">
+        <!-- Customer Info -->
+        <div class="sidebar-card">
+          <h4><i class="fas fa-user"></i> Client</h4>
+          <div class="customer-info">
+            <p class="customer-name">{{ selectedTicket.customer?.name || selectedTicket.contactName || 'Client' }}</p>
+            <p *ngIf="selectedTicket.customer?.email || selectedTicket.contactEmail">
+              <i class="fas fa-envelope"></i>
+              {{ selectedTicket.customer?.email || selectedTicket.contactEmail }}
+            </p>
+            <p *ngIf="selectedTicket.contactPhone">
+              <i class="fas fa-phone"></i>
+              {{ selectedTicket.contactPhone }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Ticket Details -->
+        <div class="sidebar-card">
+          <h4><i class="fas fa-info-circle"></i> D\u00e9tails</h4>
+
+          <div class="detail-row">
+            <label>Cat\u00e9gorie</label>
+            <select
+              [(ngModel)]="selectedTicket.category"
+              (change)="updateCategory(selectedTicket.category)"
+              [disabled]="!selectedTicket.isOpen">
+              <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+            </select>
+          </div>
+
+          <div class="detail-row">
+            <label>Priorit\u00e9</label>
+            <select
+              [(ngModel)]="selectedTicket.priority"
+              (change)="updatePriority(selectedTicket.priority)"
+              [disabled]="!selectedTicket.isOpen">
+              <option *ngFor="let p of priorities" [value]="p.value">{{ p.label }}</option>
+            </select>
+          </div>
+
+          <div class="detail-row">
+            <label>Assign\u00e9 \u00e0</label>
+            <select
+              [ngModel]="selectedTicket.assignedTo"
+              #agentSelect (change)="assignToAgent(+agentSelect.value)"
+              [disabled]="!selectedTicket.isOpen">
+              <option [value]="null">Non assign\u00e9</option>
+              <option *ngFor="let agent of agents" [value]="agent.id">
+                {{ agent.name }} ({{ agent.assignedTickets }} tickets)
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="sidebar-card" *ngIf="selectedTicket.isOpen">
+          <h4><i class="fas fa-bolt"></i> Actions</h4>
+
+          <button
+            *ngIf="!selectedTicket.assignedTo"
+            class="btn btn-outline full-width"
+            (click)="assignToSelf()"
+            [disabled]="isSubmitting">
+            <i class="fas fa-hand-pointer"></i> Prendre en charge
+          </button>
+
+          <button
+            *ngIf="selectedTicket.status !== 'resolved'"
+            class="btn btn-success full-width"
+            (click)="openResolveModal()"
+            [disabled]="isSubmitting">
+            <i class="fas fa-check"></i> Marquer comme r\u00e9solu
+          </button>
+
+          <button
+            *ngIf="selectedTicket.status === 'resolved'"
+            class="btn btn-secondary full-width"
+            (click)="closeTicket()"
+            [disabled]="isSubmitting">
+            <i class="fas fa-lock"></i> Fermer le ticket
+          </button>
+        </div>
+
+        <!-- Resolution Info -->
+        <div class="sidebar-card" *ngIf="selectedTicket.resolutionNotes">
+          <h4><i class="fas fa-clipboard-check"></i> R\u00e9solution</h4>
+          <p class="resolution-notes">{{ selectedTicket.resolutionNotes }}</p>
+          <p class="resolution-date" *ngIf="selectedTicket.resolvedAt">
+            R\u00e9solu le {{ formatDate(selectedTicket.resolvedAt) }}
+          </p>
+        </div>
+
+        <!-- Satisfaction -->
+        <div class="sidebar-card" *ngIf="selectedTicket.satisfactionRating">
+          <h4><i class="fas fa-star"></i> Satisfaction client</h4>
+          <div class="rating-display">
+            <i *ngFor="let star of [1,2,3,4,5]"
+               class="fas"
+               [class.fa-star]="star <= selectedTicket.satisfactionRating"
+               [class.fa-star-o]="star > selectedTicket.satisfactionRating"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve Modal -->
+  <div *ngIf="showResolveModal" class="modal-overlay" (click)="showResolveModal = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>R\u00e9soudre le ticket</h3>
+      <p>Ajoutez une note de r\u00e9solution qui sera visible par le client.</p>
+
+      <textarea
+        [(ngModel)]="resolutionNotes"
+        placeholder="Ex: Probl\u00e8me r\u00e9solu, le remboursement a \u00e9t\u00e9 effectu\u00e9..."
+        rows="4"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showResolveModal = false">Annuler</button>
+        <button
+          class="btn btn-success"
+          (click)="resolveTicket()"
+          [disabled]="!resolutionNotes.trim() || isSubmitting">
+          <i class="fas fa-check"></i> R\u00e9soudre
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -10,11 +10,11 @@ import base64
 import sys
 import asyncio
 
-# ─── MODE HORS-LIGNE HUGGINGFACE (DOIT ÊTRE AVANT LES IMPORTS TRANSFORMERS) ───
-# Empêche transformers de contacter huggingface.co au démarrage (erreur 504)
-os.environ["HF_HUB_OFFLINE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_DATASETS_OFFLINE"] = "1"
+# ─── MODE HUGGINGFACE ───
+# Permettre le téléchargement du modèle CLIP si non présent en cache
+# os.environ["HF_HUB_OFFLINE"] = "1"  # Désactivé pour permettre le premier téléchargement
+# os.environ["TRANSFORMERS_OFFLINE"] = "1"
+# os.environ["HF_DATASETS_OFFLINE"] = "1"
 # ────────────────────────────────────────────────────────────────────────────────
 
 from dotenv import load_dotenv
@@ -61,9 +61,10 @@ VECTOR_MODEL_NAME = "openai/clip-vit-base-patch32"
 
 # Chemins absolus par rapport au script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-VECTORS_PATH = os.path.join(BASE_DIR, "product_vectors.pt")
-CATALOG_PATH = os.path.join(BASE_DIR, "barsha_products.json")
-STORES_PATH = os.path.join(BASE_DIR, "barsha_stores.json")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+VECTORS_PATH = os.path.join(DATA_DIR, "product_vectors.pt")
+CATALOG_PATH = os.path.join(DATA_DIR, "barsha_products.json")
+STORES_PATH = os.path.join(DATA_DIR, "barsha_stores.json")
 
 def clean_search_query(query: str) -> str:
     """Nettoyage poussé pour Meilisearch basé sur les intentions shopping."""
@@ -813,29 +814,70 @@ async def chat_proxy(request: ChatRequest):
         # Réseaux sociaux intégrés directement
         social_links = "Réseaux sociaux : Facebook (https://www.facebook.com/barsha.tunisie), Instagram (https://www.instagram.com/barsha.tunisie/), Youtube (https://www.youtube.com/channel/UCOlzEAEfVUcn8sTh5OXV0-Q)"
 
-        # 3. Prompt Système
+        # 3. Prompt Système - Version enrichie avec expertise mode
         system_prompt = {
-            "role": "system", 
-            "content": f"Tu es Barsha AI, un assistant shopping premium pour la marque de vêtements Barsha.\n"
-                       f"CONTEXTE UTILISATEUR : {user_info} | Commandes: {orders_info} | Nombre de Favoris: {wishlist_info}\n"
-                       f"INFOS PRATIQUES : {social_links}\n"
-                       f"CATALOGUE RÉEL BARSHA (CONTIENT LES SEULS PRODUITS AUTORISÉS) :\n{catalog_subset}\n\n"
-                       f"{wishlist_catalog}\n\n"
-                       f"{orders_details}\n\n"
-                       f"RÈGLES D'OR :\n"
-                       f"1. STRICTEMENT MODE/BARSHA : EN AUCUN CAS tu ne dois écrire du code informatique (Python, etc.), donner des recettes, ou aborder des sujets hors-mode. Si on te le demande, TU DOIS REFUSER CATÉGORIQUEMENT ET IMMÉDIATEMENT. Ne donne JAMAIS d'exemples, de contournements ou d'extraits de code. Sois bref et redirige vers la mode.\n"
-                       f"2. COMMANDES ET SUIVI — RÈGLE ABSOLUE : L'historique complet des commandes est fourni JUSTE AU-DESSUS dans la section 'HISTORIQUE DES COMMANDES'. Tu DOIS l'utiliser IMMÉDIATEMENT sans aucune question. Si le client demande 'Où est ma commande ?' ou toute question sur ses commandes, AFFICHE DIRECTEMENT les infos (référence, statut, articles, date). Ne dis ABSOLUMENT JAMAIS que tu n'as pas accès aux commandes — c'est FAUX, tu y as accès ci-dessus.\n"
-                       f"3. PERTINENCE DU GENRE : Si un utilisateur cherche un vêtement pour HOMME, ne suggère JAMAIS des robes ou des vêtements de FEMME comme alternative, même si tu ne trouves rien. Contente-toi de dire que tu n'as pas trouvé et propose d'autres articles pour HOMME (ou des accessoires mixtes comme des sacs/casquettes).\n"
-                       f"4. FAVORIS : Si le client veut ajouter/supprimer un favori, dis-lui de cliquer sur l'icône 'coeur'. S'il demande à VOIR ses favoris, AFFICHE-LES en recopiant leurs lignes brutes.\n"
-                       f"5. STOCKS ET TAILLES : Les quantités en stock sont indiquées entre parenthèses à côté de la couleur (ex: BLANC (M:2, L:1)). Utilise ces données pour TOUJOURS répondre précisément sur la disponibilité des tailles ! Si une taille n'est pas listée, elle est en rupture.\n"
-                       f"6. RÉFÉRENCES RÉELLES : Ne propose que les produits listés.\n"
-                       f"7. COPIER-COLLER STRICT : Pour chaque produit affiché, COPIE sa ligne brute (commençant par - [ID:...) EXACTEMENT.\n"
-                       f"8. FORMAT : Ta réponse doit inclure ces lignes brutes non altérées.\n"
-                       f"9. ABSENCES : Si un produit n'existe pas ou est indisponible, dis-le poliment sans rien inventer.\n\n"
-                       f"--- EXEMPLE DE RÉPONSE PARFAITE ---\n"
-                       f"Voici ce que j'ai trouvé pour vous :\n\n"
-                       f"- [ID:123] [REF456] CHEMISE SLIM | 59.9 TND | Famille:MEN | Couleurs+Images: BLEU | ImgPrincipale: https://... | https://barsha...\n\n"
-                       f"Cela vous convient-il ?"
+            "role": "system",
+            "content": f"""Tu es le styliste personnel Barsha, un conseiller mode expert et chaleureux pour la marque de vêtements tunisienne Barsha.
+
+CONTEXTE CLIENT: {user_info} | Commandes: {orders_info} | Favoris: {wishlist_info}
+INFOS PRATIQUES: {social_links}
+
+--- CATALOGUE BARSHA (PRODUITS DISPONIBLES) ---
+{catalog_subset}
+
+{wishlist_catalog}
+
+{orders_details}
+
+=== TES COMPÉTENCES DE STYLISTE ===
+
+1. CONSEIL PERSONNALISÉ PAR OCCASION:
+   - Entretien/Bureau: Suggère chemises, pantalons classiques, blazers sobres
+   - Mariage/Soirée: Robes élégantes, tenues chics, accessoires raffinés
+   - Casual/Quotidien: T-shirts, jeans, sneakers, pièces confortables
+   - Été/Plage: Robes légères, shorts, sandales, couleurs vives
+   - Hiver: Pulls, manteaux, boots, couches superposées
+
+2. CONSEIL LOOK COMPLET:
+   - Quand un client hésite, propose un ensemble cohérent (haut + bas + accessoire)
+   - Mentionne les harmonies de couleurs (ex: "Le blanc s'accorde parfaitement avec le marine")
+   - Suggère des compléments ("Pour parfaire ce look, je vous conseille...")
+
+3. GESTION DU BUDGET:
+   - Si le client mentionne un budget, respecte-le strictement
+   - Propose des alternatives si les articles sont au-dessus du budget
+   - "Pour ce budget, je vous suggère..." plutôt que "C'est trop cher"
+
+=== RÈGLES ABSOLUES ===
+
+1. MODE UNIQUEMENT: Refuse poliment tout sujet hors-mode (code, recettes, etc.)
+
+2. COMMANDES: Les infos sont CI-DESSUS. Affiche-les DIRECTEMENT si demandé. Ne dis JAMAIS que tu n'y as pas accès.
+
+3. GENRE STRICT: Homme → articles homme UNIQUEMENT. Ne suggère JAMAIS de robes à un homme.
+
+4. FAVORIS: Pour ajouter/retirer, dire de cliquer sur le coeur. Pour VOIR, affiche les lignes brutes.
+
+5. STOCKS: Utilise les infos entre parenthèses (ex: M:2, L:1). Taille absente = rupture.
+
+6. PRODUITS RÉELS: Ne propose QUE les produits listés ci-dessus.
+
+7. FORMAT STRICT: Copie EXACTEMENT les lignes produit (commençant par - [ID:...)
+
+=== STYLE DE COMMUNICATION ===
+
+- Sois chaleureux mais professionnel
+- Utilise "vous" par défaut
+- Ajoute une touche d'enthousiasme pour les belles pièces
+- Termine par une question pour guider ("Qu'en pensez-vous?" / "Souhaitez-vous voir d'autres options?")
+
+--- EXEMPLE DE RÉPONSE PARFAITE ---
+
+J'ai trouvé quelques pièces qui correspondent parfaitement à votre style :
+
+- [ID:123] [REF456] CHEMISE SLIM FIT | 59.900 TND | Famille:MEN | Couleurs+Images: BLEU | ImgPrincipale: https://... | https://barsha...
+
+Cette chemise se marierait très bien avec un pantalon chino pour un look smart casual. Souhaitez-vous que je vous suggère un bas assorti ?"""
         }
         
         final_messages = [system_prompt] + api_messages
@@ -848,10 +890,21 @@ async def chat_proxy(request: ChatRequest):
                 ollama_resp["catalog_hits"] = raw_hits
                 return ollama_resp
 
-        # ── Étape B : OPENROUTER (CLOUD) ──
+        # ── Étape B : GEMINI (CLOUD - Google) ──
+        if GEMINI_API_KEY:
+            print("DEBUG CHAT: Tentative Gemini Cloud...")
+            try:
+                gemini_resp = await call_gemini_native_chat(final_messages, max_tokens=600)
+                if gemini_resp and "choices" in gemini_resp:
+                    gemini_resp["catalog_hits"] = raw_hits
+                    return gemini_resp
+            except Exception as e:
+                print(f"DEBUG CHAT: Gemini échoué: {str(e)}")
+
+        # ── Étape C : OPENROUTER (CLOUD) ──
         print("DEBUG CHAT: Basculement OpenRouter Cloud...")
-        if not OPENROUTER_API_KEY:
-            raise Exception("Ollama échoué et clé OpenRouter manquante.")
+        if not OPENROUTER_API_KEY and not GEMINI_API_KEY:
+            raise Exception("Aucune clé API configurée (Gemini ou OpenRouter).")
 
         models_to_try = [request.model] if request.model and request.model != "openrouter/auto" else [
             "mistralai/mistral-7b-instruct:free",
@@ -908,7 +961,7 @@ async def call_gemini_native_chat(messages: List[Dict[str, str]], max_tokens: in
         role = "user" if m["role"] == "user" else "model"
         contents.append({"role": role, "parts": [{"text": m["content"]}]})
 
-    models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"]
+    models = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-pro"]
     
     async with httpx.AsyncClient() as client:
         for model in models:
@@ -997,9 +1050,14 @@ Règles :
 Réponds UNIQUEMENT avec le JSON, pas d'introduction, pas de conclusion, SOIS ULTRA-CONCIS (max 100 tokens)."""
 
 async def call_vision_ai(image_base64: str, image_url: Optional[str] = None) -> dict:
-    """Appelle un modèle vision via OpenRouter pour extraire les attributs produit."""
+    """Appelle un modèle vision via OpenRouter ou Gemini pour extraire les attributs produit."""
+    # Si pas d'OpenRouter, essayer directement Gemini
     if not OPENROUTER_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY missing")
+        if GEMINI_API_KEY:
+            print("DEBUG VISION: Pas d'OpenRouter, utilisation directe de Gemini...")
+            return await call_gemini_native_vision(image_base64)
+        else:
+            raise HTTPException(status_code=500, detail="Aucune clé API vision configurée (OpenRouter ou Gemini)")
 
     import base64
     if image_url:
@@ -1369,11 +1427,50 @@ async def like_this(request: LikeThisRequest):
                     }
                 }
             else:
-                print(f"DEBUG VISION: Score trop faible (max: {top_val[0].item():.4f}) -> Bascule LLM.")
+                # MODE CLIP-ONLY: Retourner les résultats même si le score est faible
+                print(f"DEBUG VISION: Score faible mais mode CLIP-ONLY activé (max: {top_val[0].item():.4f})")
+                # Retourner les meilleurs résultats CLIP sans filtrage strict
+                for i, (score, idx) in enumerate(zip(top_val[:12], top_idx[:12])):
+                    pid = str(PRODUCT_IDS[idx.item()])
+                    if pid in catalog_map:
+                        line = format_product_line(catalog_map[pid])
+                        final_lines.append(line)
+
+                if final_lines:
+                    return {
+                        "method": "local_vector_relaxed",
+                        "similaires": final_lines[:12],
+                        "complements": [],
+                        "detected": {
+                            "title_guess": "RECHERCHE VISUELLE",
+                            "famille": "Barsha Catalog",
+                            "colors": ["Match Visuel"],
+                            "style_keywords": ["clip-only"],
+                            "confidence": float(top_val[0].item())
+                        }
+                    }
         except Exception as ve:
             print(f"DEBUG VISION: Erreur moteur vectoriel: {str(ve)}")
+            # MODE CLIP-ONLY: Retourner une erreur claire au lieu de fallback LLM
+            return {
+                "method": "clip_error",
+                "similaires": [],
+                "complements": [],
+                "detected": {"title_guess": "ERREUR", "confidence": 0},
+                "error": f"Erreur traitement image: {str(ve)}"
+            }
 
-    # ── Étape 1 : Analyse vision LLM (Fallback) ──
+    # ── Fallback : Si CLIP n'est pas disponible, essayer LLM ──
+    # Seulement si une clé API est configurée
+    if not OPENROUTER_API_KEY and not GEMINI_API_KEY:
+        return {
+            "method": "no_model",
+            "similaires": [],
+            "complements": [],
+            "detected": {"title_guess": "AUCUN", "confidence": 0},
+            "error": "Moteur CLIP indisponible et aucune clé API vision configurée"
+        }
+
     detected = await call_vision_ai(image_base64, request.image_url)
 
     # ── Étape 2 : Construction de la requête Meilisearch ──
@@ -1459,6 +1556,335 @@ async def like_this(request: LikeThisRequest):
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# FRONTEND COMPATIBILITY ENDPOINTS
+# Endpoints required by the Angular frontend that proxy to local database
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/getDeclinaisonStock/{declinaison_id}")
+async def get_declinaison_stock(declinaison_id: int):
+    """Return stock/size data for a product variant (declinaison).
+    The frontend calls this to populate sizes when a color is selected."""
+    try:
+        from app.core.database import SessionLocal
+        from app.models.product import ProductVariant
+        db = SessionLocal()
+        try:
+            # declinaison_id maps to variant ID
+            variant = db.query(ProductVariant).filter(ProductVariant.id == declinaison_id).first()
+            if not variant:
+                return {"data": []}
+
+            # Get all variants for the same product and color to show all sizes
+            siblings = db.query(ProductVariant).filter(
+                ProductVariant.product_id == variant.product_id,
+                ProductVariant.color == variant.color,
+                ProductVariant.is_active == True
+            ).all()
+
+            data = []
+            for v in siblings:
+                data.append({
+                    "size": v.size or "TU",
+                    "qte": v.available_quantity,
+                    "ean13": v.ean13 or "",
+                    "state": "available" if v.is_in_stock else "unavailable"
+                })
+
+            return {"data": data}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error fetching stock for declinaison {declinaison_id}: {e}")
+        return {"data": []}
+
+
+@app.post("/api/checkStock")
+async def check_stock(request: Request):
+    """Check stock availability for a specific EAN13 + quantity"""
+    try:
+        body = await request.json()
+        ean13 = body.get("ean13", "")
+        quantity = body.get("quantity", 1)
+
+        from app.core.database import SessionLocal
+        from app.models.product import ProductVariant
+        db = SessionLocal()
+        try:
+            variant = db.query(ProductVariant).filter(ProductVariant.ean13 == ean13).first()
+            if variant and variant.available_quantity >= quantity:
+                return {"inStock": True, "availableQuantity": variant.available_quantity}
+            return {"inStock": False, "availableQuantity": variant.available_quantity if variant else 0}
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error checking stock: {e}")
+        return {"inStock": False, "availableQuantity": 0}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADMIN & E-COMMERCE MODULE INTEGRATION
+# Integrates the professional admin back-office with the AI backend
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ADMIN_AVAILABLE = False
+
+try:
+    from app.core.database import create_tables, SessionLocal, get_db
+    from app.core.config import settings
+    from app.core.security import hash_password
+    from app.models.user import User, UserRole
+    # Import analytics models to register with SQLAlchemy Base for table creation
+    from app.models import analytics
+    # Import wishlist_share model for table creation
+    from app.models.wishlist_share import WishlistShare
+    # Import product_alert model for table creation
+    from app.models.product_alert import ProductAlert, AlertHistory
+    # Import outfit model for table creation
+    from app.models.outfit import Outfit, OutfitItem
+    # Import product_review model for table creation
+    from app.models.product_review import ProductReview, ReviewVote, ProductRatingStats
+    # Import gift_card model for table creation
+    from app.models.gift_card import GiftCard, GiftCardTransaction, UserStoreCredit, StoreCreditTransaction
+    # Import loyalty model for table creation
+    from app.models.loyalty import LoyaltyAccount, PointsTransaction, PointsRedemption
+    from app.routers import (
+        auth_router,
+        payment_router,
+        orders_router,
+        orders_compat_router,
+        admin_dashboard_router,
+        admin_orders_router,
+        admin_products_router,
+        admin_customers_router,
+        admin_coupons_router,
+        admin_returns_router,
+        admin_content_router,
+        admin_settings_router,
+        admin_reports_router,
+        recommendations_router,
+        analytics_router,
+        support_router,
+        admin_support_router,
+        notifications_router,
+        faq_router,
+        admin_faq_router,
+        meilisearch_compat_router,
+        premium_recommendations_router,
+        next_gen_recommendations_router,
+        user_preferences_router,
+        wishlist_sharing_router,
+        alerts_router,
+        admin_alerts_router,
+        outfits_router,
+        admin_outfits_router,
+        reviews_router,
+        admin_reviews_router,
+        gift_cards_router,
+        admin_gift_cards_router,
+        loyalty_router,
+        admin_loyalty_router,
+        stock_alerts_router,
+        promotions_router,
+        admin_promotions_router,
+        bundles_router,
+        admin_bundles_router,
+        newsletter_router,
+        referrals_router,
+        product_qa_router,
+        admin_product_qa_router
+    )
+    ADMIN_AVAILABLE = True
+    logger.info("Admin module loaded successfully")
+except ImportError as e:
+    logger.warning(f"Admin module not available: {e}")
+    logger.info("Running in AI-only mode. Admin features disabled.")
+    recommendations_router = None
+    analytics_router = None
+
+
+# Register admin routers if available
+if ADMIN_AVAILABLE:
+    app.include_router(auth_router, prefix="/api", tags=["Authentication"])
+    app.include_router(payment_router, tags=["Payment"])
+    app.include_router(orders_router, tags=["Orders"])
+    app.include_router(orders_compat_router, tags=["Orders Compatibility"])
+    app.include_router(admin_dashboard_router, prefix="/api", tags=["Admin Dashboard"])
+    app.include_router(admin_orders_router, prefix="/api", tags=["Admin Orders"])
+    app.include_router(admin_products_router, prefix="/api", tags=["Admin Products"])
+    app.include_router(admin_customers_router, prefix="/api", tags=["Admin Customers"])
+    app.include_router(admin_coupons_router, prefix="/api", tags=["Admin Coupons"])
+    app.include_router(admin_returns_router, prefix="/api", tags=["Admin Returns"])
+    app.include_router(admin_content_router, prefix="/api", tags=["Admin Content"])
+    app.include_router(admin_settings_router, prefix="/api", tags=["Admin Settings"])
+    app.include_router(admin_reports_router, prefix="/api", tags=["Admin Reports"])
+    app.include_router(support_router, prefix="/api", tags=["Customer Support"])
+    app.include_router(admin_support_router, prefix="/api", tags=["Admin Support"])
+    app.include_router(notifications_router, prefix="/api", tags=["Notifications"])
+    app.include_router(faq_router, prefix="/api", tags=["Help Center"])
+    app.include_router(admin_faq_router, prefix="/api", tags=["Admin FAQ"])
+    app.include_router(meilisearch_compat_router, tags=["MeiliSearch Compatibility"])
+    app.include_router(premium_recommendations_router, tags=["Premium Recommendations"])
+    app.include_router(next_gen_recommendations_router, tags=["Next-Gen Recommendations"])
+    app.include_router(user_preferences_router, tags=["User Preferences"])
+    app.include_router(wishlist_sharing_router, prefix="/api", tags=["Wishlist Sharing"])
+    app.include_router(alerts_router, prefix="/api", tags=["Product Alerts"])
+    app.include_router(admin_alerts_router, prefix="/api", tags=["Admin Alerts"])
+    app.include_router(outfits_router, tags=["Shop the Look"])
+    app.include_router(admin_outfits_router, tags=["Admin Outfits"])
+    app.include_router(reviews_router, tags=["Product Reviews"])
+    app.include_router(admin_reviews_router, tags=["Admin Reviews"])
+    app.include_router(gift_cards_router, prefix="/api", tags=["Gift Cards"])
+    app.include_router(admin_gift_cards_router, prefix="/api", tags=["Admin Gift Cards"])
+    app.include_router(loyalty_router, tags=["Loyalty Program"])
+    app.include_router(admin_loyalty_router, tags=["Admin Loyalty"])
+    app.include_router(stock_alerts_router, prefix="/api", tags=["Stock Alerts"])
+    app.include_router(promotions_router, prefix="/api", tags=["Promotions"])
+    app.include_router(admin_promotions_router, prefix="/api", tags=["Admin Promotions"])
+    app.include_router(bundles_router, tags=["Bundles"])
+    app.include_router(admin_bundles_router, tags=["Admin Bundles"])
+    app.include_router(newsletter_router, prefix="/api", tags=["Newsletter"])
+    app.include_router(referrals_router, tags=["Referrals"])
+    app.include_router(product_qa_router, tags=["Product Q&A"])
+    app.include_router(admin_product_qa_router, tags=["Admin Q&A"])
+    if recommendations_router:
+        app.include_router(recommendations_router, tags=["AI Recommendations"])
+    if analytics_router:
+        app.include_router(analytics_router)
+    logger.info("All routers registered (including promotions, bundles, newsletter, referrals, product-qa)")
+
+
+# Initialize database on startup
+@app.on_event("startup")
+async def init_admin_database():
+    """Initialize admin database and create default admin user"""
+    if not ADMIN_AVAILABLE:
+        return
+
+    try:
+        create_tables()
+        logger.info("Database tables created/verified")
+
+        db = SessionLocal()
+        try:
+            # Create default admin user
+            admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+            if not admin:
+                admin = User(
+                    email=settings.ADMIN_EMAIL,
+                    password_hash=hash_password(settings.ADMIN_PASSWORD),
+                    first_name="Admin",
+                    last_name="Barsha",
+                    role=UserRole.SUPER_ADMIN,
+                    is_active=True,
+                    is_verified=True
+                )
+                db.add(admin)
+                db.commit()
+                logger.info(f"Default admin user created: {settings.ADMIN_EMAIL}")
+
+            # Seed FAQ data if not exists
+            try:
+                from app.routers.faq import seed_default_faqs
+                seed_default_faqs(db)
+                logger.info("FAQ data seeded successfully")
+            except Exception as faq_error:
+                logger.warning(f"FAQ seeding skipped: {faq_error}")
+
+            # Seed storefront data (categories, products, banners, content)
+            try:
+                from app.seed_data import run_all_seeds
+                # Check if we already have products
+                from app.models.product import Product
+                product_count = db.query(Product).count()
+                if product_count < 10:
+                    logger.info("Seeding storefront data...")
+                    run_all_seeds(db, products_limit=200)
+                else:
+                    logger.info(f"Storefront data already exists ({product_count} products)")
+            except Exception as seed_error:
+                logger.warning(f"Storefront seeding skipped: {seed_error}")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+
+
+# Health check endpoint (enhanced)
+@app.get("/health", tags=["System"])
+async def health_check():
+    """System health check - returns status of all modules"""
+    # Check recommendation engine
+    rec_status = "unavailable"
+    rec_products = 0
+    try:
+        from app.services.recommendation_engine import get_recommendation_engine
+        engine = get_recommendation_engine()
+        rec_status = "available"
+        rec_products = len(engine.catalog)
+    except:
+        pass
+
+    return {
+        "status": "healthy",
+        "ai": {
+            "chat": "available",
+            "visual_search": "available" if CLIP_MODEL is not None else "unavailable",
+            "recommendations": rec_status,
+            "products_indexed": len(PRODUCT_IDS) if PRODUCT_IDS else 0,
+            "recommendations_catalog": rec_products
+        },
+        "admin": "available" if ADMIN_AVAILABLE else "unavailable",
+        "database": "connected" if ADMIN_AVAILABLE else "not configured",
+        "version": "2.1.0"
+    }
+
+
+# API info endpoint
+@app.get("/api", tags=["System"])
+async def api_info():
+    """API information and available endpoints"""
+    endpoints = {
+        "ai": {
+            "chat": "/api/chat",
+            "visual_search": "/api/like-this"
+        }
+    }
+    if ADMIN_AVAILABLE:
+        endpoints["auth"] = "/api/auth"
+        endpoints["payment"] = "/api/payment"
+        endpoints["orders"] = "/api/orders"
+        endpoints["admin"] = {
+            "dashboard": "/api/admin/dashboard",
+            "orders": "/api/admin/orders",
+            "products": "/api/admin/products",
+            "customers": "/api/admin/customers",
+            "coupons": "/api/admin/coupons",
+            "returns": "/api/admin/returns",
+            "content": "/api/admin/content",
+            "support": "/api/admin/support",
+            "alerts": "/api/admin/alerts"
+        }
+        endpoints["support"] = "/api/support"
+        endpoints["alerts"] = "/api/alerts"
+        endpoints["gift_cards"] = "/api/gift-cards"
+    return {
+        "name": "Barsha E-Commerce Platform API",
+        "version": "2.0.0",
+        "description": "Unified AI + Admin Backend",
+        "endpoints": endpoints,
+        "documentation": "/docs"
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
+    print("\n" + "="*60)
+    print("  BARSHA E-COMMERCE PLATFORM - UNIFIED BACKEND")
+    print("="*60)
+    print(f"  AI Chat:        http://localhost:8000/api/chat")
+    print(f"  Visual Search:  http://localhost:8000/api/like-this")
+    print(f"  Admin API:      http://localhost:8000/api/admin")
+    print(f"  Documentation:  http://localhost:8000/docs")
+    print("="*60 + "\n")
     uvicorn.run(app, host="0.0.0.0", port=8000)

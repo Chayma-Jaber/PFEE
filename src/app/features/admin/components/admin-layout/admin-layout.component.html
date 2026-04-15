@@ -1,0 +1,82 @@
+<div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <span class="logo-icon">B</span>
+        </div>
+        <div class="brand-text" *ngIf="!sidebarCollapsed">
+          <span class="brand-name">Barsha</span>
+          <span class="brand-tag">Back-Office</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Ouvrir' : 'Fermer'">
+        <i class="fas" [class.fa-chevron-left]="!sidebarCollapsed" [class.fa-chevron-right]="sidebarCollapsed"></i>
+      </button>
+    </div>
+
+    <!-- User Profile Section -->
+    <div class="sidebar-user" *ngIf="currentUser">
+      <div class="user-avatar" [title]="userFullName">
+        <span class="avatar-initials">{{ userInitials }}</span>
+        <span class="online-indicator" [class.online]="isOnline"></span>
+      </div>
+      <div class="user-info" *ngIf="!sidebarCollapsed">
+        <span class="user-name">{{ userFullName }}</span>
+        <span class="user-role">{{ userRole }}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-title" *ngIf="!sidebarCollapsed">Menu principal</span>
+        <a *ngFor="let item of menuItems"
+           [routerLink]="item.route"
+           routerLinkActive="active"
+           class="nav-item"
+           [title]="item.label">
+          <i [class]="item.icon"></i>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+          <span class="nav-badge" *ngIf="item.badge && getBadgeCount(item.badge)">
+            {{ getBadgeCount(item.badge) }}
+          </span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="system-status" *ngIf="!sidebarCollapsed">
+        <span class="status-indicator" [class.online]="isOnline"></span>
+        <span class="status-text">{{ isOnline ? 'Système connecté' : 'Hors ligne' }}</span>
+        <span class="status-time">{{ currentTime }}</span>
+      </div>
+      <div class="footer-actions">
+        <a href="/" target="_blank" class="nav-item" title="Voir le site">
+          <i class="fas fa-external-link-alt"></i>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Voir le site</span>
+        </a>
+        <a routerLink="/admin/settings" class="nav-item" title="Paramètres">
+          <i class="fas fa-cog"></i>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Paramètres</span>
+        </a>
+        <button class="nav-item logout" (click)="logout()" title="Déconnexion">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <!-- Mobile toggle only -->
+    <button class="mobile-toggle" (click)="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="admin-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

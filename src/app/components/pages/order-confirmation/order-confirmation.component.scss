@@ -1,0 +1,253 @@
+.confirmation-container {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 40px 24px;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+}
+
+.status-section {
+  text-align: center;
+
+  h2 {
+    font-family: 'std95', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+}
+
+// Status Icons
+.status-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+
+  i {
+    font-size: 40px;
+  }
+}
+
+.success-icon {
+  background-color: #f0fff4;
+
+  i {
+    color: #22c55e;
+  }
+}
+
+.failed-icon {
+  background-color: #fef2f2;
+
+  i {
+    color: #ef4444;
+  }
+}
+
+.pending-icon {
+  background-color: #fffbeb;
+
+  i {
+    color: #f59e0b;
+  }
+}
+
+.error-icon {
+  background-color: #fef2f2;
+
+  i {
+    color: #dc2626;
+  }
+}
+
+// Loading Spinner
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #000;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Order Details
+.order-details {
+  background-color: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e5e5;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+
+    &.price {
+      font-family: 'std95', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+      font-size: 16px;
+    }
+  }
+}
+
+// Status Badges
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.confirmed {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+
+  &.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+}
+
+// Messages
+.success-message {
+  color: #166534 !important;
+}
+
+.error-message {
+  color: #dc2626 !important;
+}
+
+.pending-message {
+  color: #92400e !important;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #888 !important;
+  margin-top: 16px;
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 32px;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.btn-primary {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 14px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &:hover {
+    background-color: #333;
+  }
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #000;
+  padding: 14px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .confirmation-container {
+    margin: 40px auto;
+    padding: 24px 16px;
+  }
+
+  .status-section h2 {
+    font-size: 20px;
+  }
+
+  .status-icon {
+    width: 64px;
+    height: 64px;
+
+    i {
+      font-size: 32px;
+    }
+  }
+
+  .order-details {
+    padding: 16px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 16px 24px;
+  }
+}

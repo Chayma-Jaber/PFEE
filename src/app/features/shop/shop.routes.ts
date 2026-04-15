@@ -7,7 +7,6 @@ export const SHOP_ROUTES: Routes = [
   { path: 'tn/:categoryId', component: ShopComponent },
   { path: 'shop/:categoryId', component: ShopComponent }, // For backward compatibility
   { path: 'categorie/:id', component: CategorieComponent },
-  { path: 'categorie/:name', component: CategorieComponent },
   { path: 'produit/:id', component: DetailProduitComponent },
   { path: 'produit/:slug', component: DetailProduitComponent },
 ];

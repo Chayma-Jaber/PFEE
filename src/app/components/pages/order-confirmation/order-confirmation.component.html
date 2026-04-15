@@ -1,9 +1,139 @@
 <div class="confirmation-container">
+  <!-- Loading State -->
+  <div *ngIf="paymentStatus === 'loading'" class="status-section loading">
+    <div class="spinner"></div>
+    <h2>Vérification de votre paiement...</h2>
+    <p>Veuillez patienter, nous vérifions le statut de votre transaction.</p>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="paymentStatus === 'success'" class="status-section success">
+    <div class="status-icon success-icon">
+      <i class="fa fa-check-circle"></i>
+    </div>
     <h2>Merci pour votre commande !</h2>
-    <div *ngIf="orderDetails">
-      <p>id de commande: {{ orderDetails.id }}</p>
-      <p>Numéro de commande: {{ orderDetails.slug }}</p>
-      <p>Total: {{ orderDetails.total }} TND</p>
-      <p>Statut: {{ orderDetails.status }}</p>
+    <p class="success-message">Votre paiement a été effectué avec succès.</p>
+
+    <div *ngIf="orderDetails" class="order-details">
+      <div class="detail-row">
+        <span class="label">Numéro de commande</span>
+        <span class="value">{{ orderDetails.slug }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Total payé</span>
+        <span class="value price">{{ orderDetails.total | number:'1.3-3' }} TND</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Statut</span>
+        <span class="value status-badge confirmed">Confirmée</span>
+      </div>
+    </div>
+
+    <p class="info-text">
+      Un email de confirmation vous a été envoyé avec les détails de votre commande.
+    </p>
+
+    <div class="action-buttons">
+      <button class="btn-primary" (click)="goToTracking()">
+        <i class="fa fa-truck me-2"></i>
+        Suivre ma commande
+      </button>
+      <button class="btn-secondary" (click)="continueShopping()">
+        Continuer mes achats
+      </button>
     </div>
   </div>
+
+  <!-- Failed State -->
+  <div *ngIf="paymentStatus === 'failed'" class="status-section failed">
+    <div class="status-icon failed-icon">
+      <i class="fa fa-times-circle"></i>
+    </div>
+    <h2>Paiement non abouti</h2>
+    <p class="error-message">
+      Votre paiement n'a pas pu être traité. Aucun montant n'a été débité de votre compte.
+    </p>
+
+    <div *ngIf="orderDetails" class="order-details">
+      <div class="detail-row">
+        <span class="label">Numéro de commande</span>
+        <span class="value">{{ orderDetails.slug }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Montant</span>
+        <span class="value price">{{ orderDetails.total | number:'1.3-3' }} TND</span>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-primary" (click)="retryPayment()">
+        Réessayer le paiement
+      </button>
+      <button class="btn-secondary" (click)="goToHome()">
+        Retour à l'accueil
+      </button>
+    </div>
+  </div>
+
+  <!-- Pending State -->
+  <div *ngIf="paymentStatus === 'pending'" class="status-section pending">
+    <div class="status-icon pending-icon">
+      <i class="fa fa-clock"></i>
+    </div>
+    <h2>Paiement en cours de traitement</h2>
+    <p class="pending-message">
+      Votre paiement est en cours de vérification. Vous recevrez une confirmation par email dès que le traitement sera terminé.
+    </p>
+
+    <div *ngIf="orderDetails" class="order-details">
+      <div class="detail-row">
+        <span class="label">Numéro de commande</span>
+        <span class="value">{{ orderDetails.slug }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Montant</span>
+        <span class="value price">{{ orderDetails.total | number:'1.3-3' }} TND</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Statut</span>
+        <span class="value status-badge pending">En attente</span>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-primary" (click)="goToProfile()">
+        Voir mes commandes
+      </button>
+      <button class="btn-secondary" (click)="goToHome()">
+        Retour à l'accueil
+      </button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="paymentStatus === 'error'" class="status-section error">
+    <div class="status-icon error-icon">
+      <i class="fa fa-exclamation-triangle"></i>
+    </div>
+    <h2>Une erreur est survenue</h2>
+    <p class="error-message">{{ errorMessage }}</p>
+
+    <div class="action-buttons">
+      <button class="btn-primary" (click)="goToProfile()">
+        Voir mes commandes
+      </button>
+      <button class="btn-secondary" (click)="goToHome()">
+        Retour à l'accueil
+      </button>
+    </div>
+  </div>
+
+  <!-- Post-Purchase Recommendations (Success State Only) -->
+  <app-post-purchase-recommendations
+    *ngIf="paymentStatus === 'success'"
+    [purchasedProductIds]="purchasedProductIds"
+    [limit]="4"
+    title="Vous pourriez aussi aimer"
+    subtitle="Des pièces sélectionnées pour compléter votre garde-robe">
+  </app-post-purchase-recommendations>
+</div>

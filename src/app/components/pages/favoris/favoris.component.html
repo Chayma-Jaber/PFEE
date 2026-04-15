@@ -9,12 +9,24 @@
 
 
 <div class="container favoris-scale">
+  <!-- Header with Share Button -->
+  <div class="wishlist-header-section" *ngIf="!isLoading && produits && produits.length > 0">
+    <div class="header-left">
+      <h1 class="wishlist-main-title">Ma Wishlist</h1>
+      <span class="wishlist-count">{{ produits.length }} article{{ produits.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <button class="btn-share-wishlist" (click)="openShareModal()">
+      <i class="fa-solid fa-share-nodes"></i>
+      <span>Partager ma wishlist</span>
+    </button>
+  </div>
+
   <!-- Message pour wishlist vide -->
   <div class="empty-wishlist" *ngIf="!isLoading && (!produits || produits.length === 0)">
     <div class="empty-wishlist-content">
       <i class="fa-regular fa-heart empty-heart"></i>
       <h2>TA WISHLIST EST VIDE</h2>
-      <p>Découvre notre collection et ajoute tes articles préférés</p>
+      <p>Decouvre notre collection et ajoute tes articles preferes</p>
       <button class="btn-explore" routerLink="/">Explorer la collection</button>
     </div>
   </div>
@@ -69,6 +81,149 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Wishlist Modal -->
+<div class="share-modal-overlay" *ngIf="showShareModal" (click)="closeShareModal()">
+  <div class="share-modal" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="modal-icon">
+        <i class="fa-solid fa-share-nodes"></i>
+      </div>
+      <h2>Partager ma wishlist</h2>
+      <button class="btn-close-modal" (click)="closeShareModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Modal Content: Create Share Form -->
+    <div class="modal-body" *ngIf="!shareCreated">
+      <p class="modal-description">
+        Creez un lien unique pour partager votre selection avec vos proches.
+      </p>
+
+      <div class="share-form">
+        <div class="form-group">
+          <label for="shareTitle">Titre de la wishlist</label>
+          <input
+            type="text"
+            id="shareTitle"
+            [(ngModel)]="shareTitle"
+            placeholder="Ma wishlist Barsha"
+            maxlength="100">
+        </div>
+
+        <div class="form-group">
+          <label for="shareDescription">Description (optionnel)</label>
+          <textarea
+            id="shareDescription"
+            [(ngModel)]="shareDescription"
+            placeholder="Decouvrez ma selection de produits..."
+            rows="3"
+            maxlength="300"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="shareExpiry">Validite du lien</label>
+          <select id="shareExpiry" [(ngModel)]="shareExpiresInDays">
+            <option [value]="7">7 jours</option>
+            <option [value]="30">30 jours</option>
+            <option [value]="90">90 jours</option>
+            <option [value]="365">1 an</option>
+          </select>
+        </div>
+
+        <div class="share-error" *ngIf="shareError">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          {{ shareError }}
+        </div>
+
+        <button
+          class="btn-create-share"
+          (click)="createShareLink()"
+          [disabled]="isCreatingShare">
+          <span *ngIf="!isCreatingShare">
+            <i class="fa-solid fa-link"></i>
+            Creer le lien de partage
+          </span>
+          <span *ngIf="isCreatingShare" class="creating-spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Creation en cours...
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Content: Share Success -->
+    <div class="modal-body share-success" *ngIf="shareCreated && currentShare">
+      <div class="success-icon">
+        <i class="fa-solid fa-check-circle"></i>
+      </div>
+      <h3>Lien cree avec succes !</h3>
+      <p>Votre wishlist est maintenant partageable.</p>
+
+      <div class="share-link-container">
+        <input
+          type="text"
+          readonly
+          [value]="getShareUrl()"
+          class="share-link-input"
+          #shareLinkInput>
+        <button
+          class="btn-copy-link"
+          (click)="copyShareLink()"
+          [class.copied]="linkCopied">
+          <i class="fa-solid" [ngClass]="linkCopied ? 'fa-check' : 'fa-copy'"></i>
+          {{ linkCopied ? 'Copie !' : 'Copier' }}
+        </button>
+      </div>
+
+      <div class="share-actions">
+        <button
+          class="btn-native-share"
+          *ngIf="canNativeShare()"
+          (click)="nativeShare()">
+          <i class="fa-solid fa-share"></i>
+          Partager
+        </button>
+
+        <a
+          class="btn-social-share whatsapp"
+          [href]="'https://wa.me/?text=' + encodeURIComponent(shareTitle + ' - ' + getShareUrl())"
+          target="_blank"
+          rel="noopener">
+          <i class="fa-brands fa-whatsapp"></i>
+        </a>
+
+        <a
+          class="btn-social-share facebook"
+          [href]="'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(getShareUrl())"
+          target="_blank"
+          rel="noopener">
+          <i class="fa-brands fa-facebook-f"></i>
+        </a>
+
+        <a
+          class="btn-social-share twitter"
+          [href]="'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareTitle) + '&url=' + encodeURIComponent(getShareUrl())"
+          target="_blank"
+          rel="noopener">
+          <i class="fa-brands fa-x-twitter"></i>
+        </a>
+      </div>
+
+      <div class="share-info">
+        <i class="fa-solid fa-clock"></i>
+        <span>Ce lien expire dans {{ shareExpiresInDays }} jours</span>
+      </div>
+
+      <button class="btn-done" (click)="closeShareModal()">
+        <i class="fa-solid fa-check"></i>
+        Termine
+      </button>
     </div>
   </div>
 </div>

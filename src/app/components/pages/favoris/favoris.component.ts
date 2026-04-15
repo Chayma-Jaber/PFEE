@@ -1,25 +1,44 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../services/product.service';
 import { TitleService } from '../../../services/title.service';
+import { WishlistSharingService, SharedWishlist } from '../../../services/wishlist-sharing.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-favoris',
   standalone: true,
-  imports: [CommonModule, RouterModule,],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './favoris.component.html',
   styleUrls: ['./favoris.component.scss'],
 })
-export class FavorisComponent implements OnInit {
+export class FavorisComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   selectedColor: string | null = null;
   produits: any[] = []; // Liste des produits dans la wishlist
   isLoading: boolean = true; // Indicateur de chargement
 
-  constructor(
+  // Share modal state
+  showShareModal: boolean = false;
+  isCreatingShare: boolean = false;
+  shareCreated: boolean = false;
+  currentShare: SharedWishlist | null = null;
+  shareError: string | null = null;
+  linkCopied: boolean = false;
 
+  // Share form options
+  shareTitle: string = 'Ma wishlist Barsha';
+  shareDescription: string = '';
+  shareExpiresInDays: number = 30;
+
+  constructor(
     public productService: ProductService,
-    private titleService: TitleService
+    private titleService: TitleService,
+    private wishlistSharingService: WishlistSharingService
   ) { }
 
   ngOnInit(): void {
@@ -192,6 +211,117 @@ export class FavorisComponent implements OnInit {
     // Use the ProductService to generate the correct slug format (ID-name)
     const slug = this.productService.generateProductSlug(produit);
     return `/produit/${slug}`;
+  }
+
+  // ==========================================
+  // SHARE WISHLIST FUNCTIONALITY
+  // ==========================================
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Open the share modal
+   */
+  openShareModal(): void {
+    this.showShareModal = true;
+    this.shareCreated = false;
+    this.currentShare = null;
+    this.shareError = null;
+    this.linkCopied = false;
+    this.shareTitle = 'Ma wishlist Barsha';
+    this.shareDescription = '';
+    this.shareExpiresInDays = 30;
+  }
+
+  /**
+   * Close the share modal
+   */
+  closeShareModal(): void {
+    this.showShareModal = false;
+    this.shareCreated = false;
+    this.currentShare = null;
+    this.shareError = null;
+    this.linkCopied = false;
+  }
+
+  /**
+   * Create a shareable link
+   */
+  createShareLink(): void {
+    if (this.isCreatingShare) return;
+
+    this.isCreatingShare = true;
+    this.shareError = null;
+
+    this.wishlistSharingService.createShareLink({
+      title: this.shareTitle,
+      description: this.shareDescription,
+      expiresInDays: this.shareExpiresInDays,
+      isPublic: true
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (share) => {
+        this.isCreatingShare = false;
+        if (share) {
+          this.currentShare = share;
+          this.shareCreated = true;
+        } else {
+          this.shareError = 'Impossible de creer le lien. Veuillez reessayer.';
+        }
+      },
+      error: (err) => {
+        console.error('Error creating share link:', err);
+        this.isCreatingShare = false;
+        this.shareError = 'Une erreur est survenue. Veuillez reessayer.';
+      }
+    });
+  }
+
+  /**
+   * Copy share link to clipboard
+   */
+  async copyShareLink(): Promise<void> {
+    if (!this.currentShare) return;
+
+    const success = await this.wishlistSharingService.copyShareUrl(this.currentShare.shareToken);
+    if (success) {
+      this.linkCopied = true;
+      setTimeout(() => {
+        this.linkCopied = false;
+      }, 3000);
+    }
+  }
+
+  /**
+   * Share using native share API
+   */
+  async nativeShare(): Promise<void> {
+    if (!this.currentShare) return;
+    await this.wishlistSharingService.nativeShare(this.currentShare);
+  }
+
+  /**
+   * Check if native share is available
+   */
+  canNativeShare(): boolean {
+    return this.wishlistSharingService.canNativeShare();
+  }
+
+  /**
+   * Get the shareable URL
+   */
+  getShareUrl(): string {
+    if (!this.currentShare) return '';
+    return this.wishlistSharingService.getShareUrl(this.currentShare.shareToken);
+  }
+
+  /**
+   * Encode URI component for template usage
+   */
+  encodeURIComponent(str: string): string {
+    return encodeURIComponent(str);
   }
 
 }

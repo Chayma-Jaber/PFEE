@@ -133,9 +133,10 @@ export class VerifyOtpComponent implements OnInit {
         // console.log('Registration response:', response); // Log the response
 
         // Vérifier si la réponse contient un JWT et des informations utilisateur
-        if (response && response.jwt && response.user) {
+        const token = response?.jwt || response?.tokens?.access_token;
+        if (response && token && response.user) {
           // Stocker directement les informations d'authentification
-          localStorage.setItem('jwt', response.jwt);
+          localStorage.setItem('jwt', token);
           localStorage.setItem('user', JSON.stringify(response.user));
 
           this.messageService.add({
@@ -208,7 +209,8 @@ export class VerifyOtpComponent implements OnInit {
     this.authService.login(identifier, password).subscribe({
       next: (response) => {
         // Stocker les informations d'authentification
-        localStorage.setItem('jwt', response.jwt);
+        const token = response.jwt || response.tokens?.access_token || '';
+        localStorage.setItem('jwt', token);
         localStorage.setItem('user', JSON.stringify(response.user));
 
         this.messageService.add({

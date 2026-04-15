@@ -26,7 +26,7 @@ export class CategorieService {
       'Authorization': `Bearer ${environementDev.tokenSearchDev}`
     });
 
-    return this.http.get(`${environementDev.apiSearchDev}/indexes/categories/${id}`, { headers });
+    return this.http.get(`${environementDev.apiSearchDev}/indexes/categories/documents/${id}`, { headers });
   }
 
   getCategoryByName(name: string): Observable<any> {

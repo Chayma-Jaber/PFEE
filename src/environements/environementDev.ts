@@ -34,20 +34,29 @@
 
 // ## environement Prod :
 
-export const environementDev = {
+// Set to true to use local backend (for development/testing)
+const USE_LOCAL_BACKEND = true;
 
+export const environementDev = USE_LOCAL_BACKEND ? {
+    // LOCAL DEVELOPMENT MODE
+    apiSearchDev: 'http://localhost:8000',
+    api: 'http://localhost:8000',
+    tokenSearchDev: '',
+    redirectUrlLocal: 'http://localhost:4200/checkout/order-confirmation',
+    googleAnalyticsId: '',
+    apiChatbot: 'http://localhost:8000/api/chat',
+    backendAiUrl: 'http://localhost:8000',
+    useLocalAuth: true
+} : {
+    // PRODUCTION MODE
     apiSearchDev: 'https://cache-data.barsha.com.tn',
-
     api: 'https://main.barsha.com.tn',
-
     tokenSearchDev: '660ac272a4c62f4138f96bc52d33f1d6de8a182712321c667f516312f2db200c',
-
-    redirectUrlLocal: 'https://barsha.com.tn/fr/profile',
-
-
+    redirectUrlLocal: 'https://barsha.com.tn/fr/checkout/order-confirmation',
     googleAnalyticsId: 'G-2P3LY9HVJ0',
-    apiChatbot: 'http://localhost:8000/api/chat'
-
+    apiChatbot: 'http://localhost:8000/api/chat',
+    backendAiUrl: 'https://ai.barsha.com.tn',
+    useLocalAuth: false
 }
 
 // pour Builder popur sunevit:

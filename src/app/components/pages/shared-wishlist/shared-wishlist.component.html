@@ -1,0 +1,141 @@
+<!-- Loading State -->
+<section class="dots-container" *ngIf="isLoading">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+
+<!-- Error State: Not Found or Expired -->
+<div class="error-container" *ngIf="!isLoading && error">
+  <div class="error-content">
+    <div class="error-icon">
+      <i class="fa-solid fa-link-slash"></i>
+    </div>
+    <h1 *ngIf="error === 'expired'">Wishlist non trouvee</h1>
+    <h1 *ngIf="error === 'load_error'">Erreur de chargement</h1>
+    <h1 *ngIf="error !== 'expired' && error !== 'load_error'">{{ error }}</h1>
+
+    <p *ngIf="error === 'expired'">
+      Ce lien de wishlist est invalide ou a expire.<br>
+      Le proprietaire a peut-etre revoque le partage.
+    </p>
+    <p *ngIf="error === 'load_error'">
+      Une erreur est survenue lors du chargement de la wishlist.<br>
+      Veuillez reessayer plus tard.
+    </p>
+
+    <div class="error-actions">
+      <button class="btn-retry" *ngIf="error === 'load_error'" (click)="retryLoad()">
+        <i class="fa-solid fa-rotate-right"></i>
+        Reessayer
+      </button>
+      <a routerLink="/" class="btn-home">
+        <i class="fa-solid fa-house"></i>
+        Retour a l'accueil
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Shared Wishlist Content -->
+<div class="shared-wishlist-container" *ngIf="!isLoading && !error && wishlist">
+  <!-- Header Section -->
+  <div class="wishlist-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fa-solid fa-heart"></i>
+      </div>
+      <h1 class="wishlist-title">{{ wishlist.title || 'Wishlist Partagee' }}</h1>
+      <p class="wishlist-description" *ngIf="wishlist.description">
+        {{ wishlist.description }}
+      </p>
+      <div class="wishlist-meta">
+        <span class="meta-item" *ngIf="wishlist.ownerName">
+          <i class="fa-regular fa-user"></i>
+          Partagee par {{ wishlist.ownerName }}
+        </span>
+        <span class="meta-item">
+          <i class="fa-regular fa-eye"></i>
+          {{ wishlist.viewCount }} vue{{ wishlist.viewCount !== 1 ? 's' : '' }}
+        </span>
+        <span class="meta-item">
+          <i class="fa-regular fa-heart"></i>
+          {{ wishlist.products.length }} article{{ wishlist.products.length !== 1 ? 's' : '' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-wishlist" *ngIf="wishlist.products.length === 0">
+    <div class="empty-content">
+      <i class="fa-regular fa-heart-crack"></i>
+      <h2>Cette wishlist est vide</h2>
+      <p>Le proprietaire n'a pas encore ajoute d'articles</p>
+      <a routerLink="/" class="btn-explore">Decouvrir notre collection</a>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <div class="container" *ngIf="wishlist.products.length > 0">
+    <div class="products-grid">
+      <div *ngFor="let product of wishlist.products" class="product-card">
+        <!-- Discount Badge -->
+        <div class="discount-badge" *ngIf="product.discount && calculateDiscount(product) > 0">
+          -{{ calculateDiscount(product) }}%
+        </div>
+
+        <!-- Out of Stock Badge -->
+        <div class="unavailable-badge" *ngIf="!product.isAvailable">
+          Rupture de stock
+        </div>
+
+        <!-- Product Image -->
+        <a [routerLink]="['/produit', getProductSlug(product)]" class="product-image-link">
+          <div class="product-image-container">
+            <img [src]="product.image"
+                 [alt]="product.title"
+                 class="product-image"
+                 loading="lazy">
+          </div>
+        </a>
+
+        <!-- Product Info -->
+        <div class="product-info">
+          <span class="product-category">{{ product.famille }}</span>
+          <h3 class="product-title">
+            <a [routerLink]="['/produit', getProductSlug(product)]">{{ product.title }}</a>
+          </h3>
+
+          <div class="product-pricing">
+            <span class="current-price">{{ formatPrice(product.currentPrice) }}</span>
+            <span class="original-price" *ngIf="product.discount && product.price > product.currentPrice">
+              {{ formatPrice(product.price) }}
+            </span>
+          </div>
+
+          <!-- View in Shop Button -->
+          <a [routerLink]="['/produit', getProductSlug(product)]"
+             class="btn-view-product"
+             [class.disabled]="!product.isAvailable">
+            <i class="fa-solid fa-bag-shopping"></i>
+            Voir en boutique
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer CTA -->
+  <div class="wishlist-footer" *ngIf="wishlist.products.length > 0">
+    <div class="footer-content">
+      <p>Envie de creer votre propre wishlist ?</p>
+      <a routerLink="/sign-in" class="btn-create-wishlist">
+        <i class="fa-solid fa-heart"></i>
+        Creer ma wishlist
+      </a>
+    </div>
+  </div>
+</div>

@@ -15,6 +15,7 @@ export class ProductService {
   constructor(private http: HttpClient) {}
 
   getProductsByCategory(categoryId: number, limit: number = 12, offset: number = 0): Observable<{ hits: Product[], estimatedTotalHits?: number }> {
+    limit = limit || 12;
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${environementDev.tokenSearchDev}`,
       'Content-Type': 'application/json'

@@ -1,0 +1,301 @@
+// Cookie Consent Banner - Barsha Design System
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  padding: 20px 24px;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+}
+
+.cookie-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.cookie-text {
+  flex: 1;
+
+  h4 {
+    font-family: 'std95', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .cookie-link {
+    color: #000;
+    text-decoration: underline;
+    font-weight: 500;
+
+    &:hover {
+      color: #333;
+    }
+  }
+}
+
+.cookie-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+// Buttons
+.btn-primary {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #333;
+  }
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #e5e5e5;
+  }
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #000;
+  border: 1px solid #000;
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #000;
+    color: #fff;
+  }
+}
+
+// Modal Overlay
+.cookie-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.cookie-modal {
+  background-color: #fff;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  font-family: 'std55', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+
+  h3 {
+    font-family: 'std95', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000;
+    margin: 0;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #666;
+    font-size: 18px;
+
+    &:hover {
+      color: #000;
+    }
+  }
+}
+
+.modal-body {
+  padding: 24px;
+
+  .modal-intro {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+  }
+}
+
+.cookie-category {
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.category-info {
+  flex: 1;
+
+  h4 {
+    font-family: 'std95', 'Avenir LT Std', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    margin: 0 0 6px 0;
+  }
+
+  p {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.category-toggle {
+  flex-shrink: 0;
+}
+
+.toggle-label {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.always-on {
+    color: #22c55e;
+  }
+}
+
+// Toggle Switch
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e5e5;
+    transition: 0.3s;
+    border-radius: 24px;
+
+    &::before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+  }
+
+  input:checked + .slider {
+    background-color: #000;
+  }
+
+  input:checked + .slider::before {
+    transform: translateX(24px);
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e5e5;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}

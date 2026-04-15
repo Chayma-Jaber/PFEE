@@ -8,6 +8,7 @@ import { ContactUsComponent } from '../../components/commun/contact-us/contact-u
 import { FindStoreComponent } from '../../components/commun/find-store/find-store.component';
 import { ShippingReturnComponent } from '../../components/commun/shipping-return/shipping-return.component';
 import { GiftCardComponent } from '../../components/pages/gift-card/gift-card.component';
+import { HelpCenterComponent } from '../../components/pages/help-center/help-center.component';
 
 export const INFO_ROUTES: Routes = [
   { path: 'size-guide', component: SizeGuideComponent },
@@ -20,4 +21,6 @@ export const INFO_ROUTES: Routes = [
   { path: 'stores', component: FindStoreComponent },
   { path: 'delivery-return', component: ShippingReturnComponent },
   { path: 'gift-card', component: GiftCardComponent },
+  { path: 'aide', component: HelpCenterComponent },
+  { path: 'aide/:slug', component: HelpCenterComponent },
 ];

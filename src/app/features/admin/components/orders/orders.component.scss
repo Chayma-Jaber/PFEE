@@ -1,0 +1,232 @@
+// Admin Orders Styles
+.admin-orders {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 0;
+    }
+
+    .btn-export {
+      padding: 10px 20px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &:hover {
+        background: #2d2d4a;
+      }
+    }
+  }
+
+  .filters-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+
+      i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px 12px 10px 38px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+
+        &:focus {
+          outline: none;
+          border-color: #667eea;
+        }
+      }
+    }
+
+    select {
+      padding: 10px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      min-width: 160px;
+      cursor: pointer;
+
+      &:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+    }
+  }
+
+  .orders-table-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #f8f9fa;
+      }
+    }
+
+    td {
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .ref {
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .customer-info {
+      .name {
+        display: block;
+        font-weight: 500;
+      }
+      .phone {
+        font-size: 12px;
+        color: #888;
+      }
+    }
+
+    .price {
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .date {
+      color: #888;
+    }
+
+    .actions {
+      .btn-icon {
+        padding: 8px;
+        background: none;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #666;
+
+        &:hover {
+          background: #f0f0f0;
+          color: #1a1a2e;
+        }
+      }
+    }
+  }
+
+  .status-badge, .payment-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &.warning { background: #fef3cd; color: #856404; }
+    &.info { background: #d1ecf1; color: #0c5460; }
+    &.primary { background: #e8e4f7; color: #5a4ba2; }
+    &.success { background: #d4edda; color: #155724; }
+    &.danger { background: #f8d7da; color: #721c24; }
+  }
+
+  .empty-state, .loading {
+    padding: 60px 20px;
+    text-align: center;
+    color: #888;
+
+    i {
+      font-size: 40px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f0f0f0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+
+    button {
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &:hover:not(:disabled) {
+        background: #f0f0f0;
+      }
+    }
+
+    span {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

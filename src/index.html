@@ -47,6 +47,10 @@
         media="print"
         onload="this.media='all'"
         crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        media="print"
+        onload="this.media='all'"
+        crossorigin="anonymous">
 
 
   <!-- Préconnexion aux CDNs externes -->
@@ -130,11 +134,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
   </script>
 
-  <!-- Google Analytics 4 avec chargement différé -->
-  <script defer async src="https://www.googletagmanager.com/gtag/js?id=G-2P3LY9HVJ0"></script>
+  <!-- Google Consent Mode - Default to denied for RGPD compliance -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+
+    // Set default consent to denied (RGPD compliance)
+    gtag('consent', 'default', {
+      'analytics_storage': 'denied',
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'wait_for_update': 500
+    });
+  </script>
+
+  <!-- Google Analytics 4 avec chargement différé -->
+  <script defer async src="https://www.googletagmanager.com/gtag/js?id=G-2P3LY9HVJ0"></script>
+  <script>
     gtag('js', new Date());
     gtag('config', 'G-2P3LY9HVJ0');
   </script>

@@ -20,6 +20,9 @@ import { SkeletonLoaderComponent } from '../../shared/skeleton-loader/skeleton-l
 import { ProductSkeletonComponent } from '../../shared/product-skeleton/product-skeleton.component';
 import { FilterSkeletonComponent } from '../../shared/filter-skeleton/filter-skeleton.component';
 import { ControlsSkeletonComponent } from '../../shared/controls-skeleton/controls-skeleton.component';
+import { BreadcrumbComponent } from '../../commun/breadcrumb/breadcrumb.component';
+import { ProductComparisonService } from '../../../services/product-comparison.service';
+import { QuickViewService } from '../../../services/quick-view.service';
 
 @Component({
   selector: 'app-shop',
@@ -33,7 +36,8 @@ import { ControlsSkeletonComponent } from '../../shared/controls-skeleton/contro
     SkeletonLoaderComponent,
     ProductSkeletonComponent,
     FilterSkeletonComponent,
-    ControlsSkeletonComponent
+    ControlsSkeletonComponent,
+    BreadcrumbComponent
   ],
   templateUrl: './shop.component.html',
   styleUrls: ['./shop.component.scss'],
@@ -134,7 +138,9 @@ export class ShopComponent implements OnInit, AfterViewInit, OnDestroy {
     private menuService: MenuService,
     private seoService: SeoService,
     private filterService: FilterService,
-    private scrollPositionService: ScrollPositionService
+    private scrollPositionService: ScrollPositionService,
+    private comparisonService: ProductComparisonService,
+    private quickViewService: QuickViewService
   ) {
     // Suivre les changements de route, y compris après actualisation
     this.router.events
@@ -1085,5 +1091,68 @@ export class ShopComponent implements OnInit, AfterViewInit, OnDestroy {
         this.filteredProductsCount = this.produits.length;
       }
     });
+  }
+
+  /**
+   * Add product to comparison
+   */
+  addToComparison(produit: Product, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const productData = {
+      id: produit.id,
+      title: produit.title,
+      price: produit.price,
+      currentPrice: produit.currentPrice,
+      discount: produit.discount,
+      discountValue: produit.discountValue,
+      image: produit.selectedColorIndex >= 0 && produit.colors[produit.selectedColorIndex]?.mainImage
+        ? produit.colors[produit.selectedColorIndex].mainImage
+        : (produit.firstImg?.url || produit.declinaisons?.[0]?.images?.[0]?.url || ''),
+      Famille: produit.Famille,
+      sizes: produit.tailles?.map(t => t.size) || [],
+      colors: produit.colors?.map(c => c.name) || [],
+      inStock: produit.tailles?.some(t => t.qte > 0) ?? true,
+      sku: produit.sku
+    };
+
+    const added = this.comparisonService.addToComparisonFromCard(productData);
+
+    if (added) {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Comparaison',
+        detail: 'Produit ajoute a la comparaison',
+        life: 3000
+      });
+    }
+  }
+
+  /**
+   * Check if product is in comparison
+   */
+  isInComparison(productId: number): boolean {
+    return this.comparisonService.isInComparison(productId);
+  }
+
+  /**
+   * Remove product from comparison
+   */
+  removeFromComparison(productId: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.comparisonService.removeFromComparison(productId);
+  }
+
+  /**
+   * Opens the quick view modal for a product
+   * @param produit The product to preview
+   * @param event The click event
+   */
+  openQuickView(produit: Product, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.quickViewService.openQuickViewWithProduct(produit);
   }
 }

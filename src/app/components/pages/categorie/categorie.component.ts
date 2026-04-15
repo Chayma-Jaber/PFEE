@@ -8,6 +8,7 @@ import { SeoService } from '../../../services/seo.service';
 import { filter, switchMap } from 'rxjs/operators';
 import { TitleService } from '../../../services/title.service';
 import { AnalyticsService } from '../../../services/analytics.service';
+import { BreadcrumbComponent } from '../../commun/breadcrumb/breadcrumb.component';
 
 interface Category {
   image: string;
@@ -18,7 +19,7 @@ interface Category {
 @Component({
   selector: 'app-categorie',
   standalone: true,
-  imports: [CommonModule, CarouselModule, RouterModule],
+  imports: [CommonModule, CarouselModule, RouterModule, BreadcrumbComponent],
   templateUrl: './categorie.component.html',
   styleUrls: ['./categorie.component.scss']
 })
@@ -54,10 +55,14 @@ export class CategorieComponent implements OnInit {
 
       // Check if the parameter is a numeric ID or a name
       if (this.categorieService.isNumericId(idOrName)) {
-        // It's a numeric ID
+        // It's a numeric ID (e.g., "1")
         this.loadCategoryById(idOrName);
+      } else if (/^\d+-/.test(idOrName)) {
+        // It's an {id}-{slug} format (e.g., "1-femme") — extract the numeric ID
+        const numericId = idOrName.split('-')[0];
+        this.loadCategoryById(numericId);
       } else {
-        // It's a category name
+        // It's a category name/slug (e.g., "femme")
         this.loadCategoryByName(idOrName);
       }
     });
@@ -65,31 +70,121 @@ export class CategorieComponent implements OnInit {
 
   private loadCategoryById(id: string): void {
     this.categoryId = id;
-    // Load homepage data
+
+    // First try to get category details directly
+    this.categorieService.getCategoryById(id).subscribe(
+      (categoryData) => {
+        if (categoryData && !categoryData.error) {
+          // Use direct category data
+          this.selectedPage = {
+            title: categoryData.name,
+            relatedTo: id,
+            bannerUrl: categoryData.bannerUrl,
+            imageUrl: categoryData.imageUrl,
+            description: categoryData.description
+          };
+
+          this.titleService.setSpecificTitle(categoryData.name);
+          this.isLoading = false;
+
+          // Apply SEO optimizations
+          this.applySeoOptimizations();
+
+          // Tracking
+          this.analytics.viewCategory({
+            id: this.categoryId!,
+            name: categoryData.name
+          });
+
+          // Now load subcategories from homepage data for the category grid
+          this.loadSubcategories();
+        } else {
+          // Fallback to homepage data approach
+          this.loadCategoryFromHomepage();
+        }
+      },
+      (error) => {
+        console.error('Error loading category by ID, falling back to homepage data', error);
+        this.loadCategoryFromHomepage();
+      }
+    );
+  }
+
+  private loadSubcategories(): void {
+    // Load homepage data for subcategories
+    this.categorieService.getHomePageData().subscribe(
+      (data) => {
+        this.homePageData = data;
+
+        // Try to extract subcategories from featuredCategories
+        if (data?.hits?.[0]?.featuredCategories) {
+          this.categories = data.hits[0].featuredCategories
+            .filter((cat: any) => cat.parent_id?.toString() === this.categoryId || !cat.parent_id)
+            .map((cat: any) => ({
+              image: cat.imageUrl || cat.image_url || '/assets/images/placeholder.jpg',
+              nom: cat.name || cat.title,
+              linkTo: cat.link || `/shop?category=${cat.id}`
+            }));
+        }
+      },
+      (error) => {
+        console.error('Error loading subcategories', error);
+        // Continue without subcategories
+      }
+    );
+  }
+
+  private loadCategoryFromHomepage(): void {
+    // Fallback: Load homepage data
     this.categorieService.getHomePageData().subscribe(
       (data) => {
         this.homePageData = data;
         this.isLoading = false;
-        this.selectedPage = this.homePageData.hits[0].pages.find(
-          (p: any) => p.relatedTo === this.categoryId
-        );
+
+        // Safe access with defensive checks
+        const hits = data?.hits;
+        if (!hits || !hits.length) {
+          this.router.navigate(['/404']);
+          return;
+        }
+
+        const firstHit = hits[0];
+
+        // Try different data structures
+        // Format 1: pages array (old format)
+        if (firstHit?.pages) {
+          this.selectedPage = firstHit.pages.find(
+            (p: any) => p.relatedTo === this.categoryId
+          );
+        }
+
+        // Format 2: Use featuredCategories to find the category
+        if (!this.selectedPage && firstHit?.featuredCategories) {
+          const cat = firstHit.featuredCategories.find(
+            (c: any) => c.id?.toString() === this.categoryId
+          );
+          if (cat) {
+            this.selectedPage = {
+              title: cat.name,
+              relatedTo: this.categoryId,
+              categories: []
+            };
+          }
+        }
 
         if (this.selectedPage) {
           // Populate categories dynamically from the API
-          this.categories = this.selectedPage.categories.map((cat: any) => ({
-            image: cat.media.url,
-            nom: cat.title,
-            linkTo: cat.linkTo
-          }));
+          if (this.selectedPage.categories) {
+            this.categories = this.selectedPage.categories.map((cat: any) => ({
+              image: cat.media?.url || cat.imageUrl || '/assets/images/placeholder.jpg',
+              nom: cat.title || cat.name,
+              linkTo: cat.linkTo || cat.link
+            }));
+          }
 
           // Update the page title with the category name
           if (this.selectedPage.title) {
             this.titleService.setSpecificTitle(this.selectedPage.title);
-            // Update the URL to use the SEO-friendly name without refreshing the page
-            this.router.navigate(['/categorie', this.selectedPage.title], {
-              replaceUrl: true,
-              skipLocationChange: false
-            });
           }
 
           // Apply SEO optimizations
@@ -101,14 +196,14 @@ export class CategorieComponent implements OnInit {
             name: this.selectedPage.title
           });
         } else {
-          // Category not found
-          this.router.navigate(['/404']);
+          // Category not found - redirect to shop instead of 404
+          this.router.navigate(['/shop'], { queryParams: { category: this.categoryId } });
         }
       },
       (error) => {
         console.error('Erreur lors de la récupération des données', error);
         this.isLoading = false;
-        this.router.navigate(['/404']);
+        this.router.navigate(['/shop']);
       }
     );
   }
@@ -116,63 +211,45 @@ export class CategorieComponent implements OnInit {
   private loadCategoryByName(name: string): void {
     this.categoryName = name;
 
-    // First, get the category ID from the name
+    // First, get the category info from the name
     this.categorieService.getCategoryByName(name).subscribe(
       (category) => {
         if (category && category.id) {
           this.categoryId = category.id.toString();
 
-          // Now load the homepage data with the found ID
-          this.categorieService.getHomePageData().subscribe(
-            (data) => {
-              this.homePageData = data;
-              this.isLoading = false;
-              this.selectedPage = this.homePageData.hits[0].pages.find(
-                (p: any) => p.relatedTo === this.categoryId
-              );
+          // Set selected page from the category data directly
+          this.selectedPage = {
+            title: category.name || category.publicName || name,
+            relatedTo: this.categoryId,
+            bannerUrl: category.bannerUrl,
+            imageUrl: category.imageUrl,
+            description: category.htmlDescription || category.metaDescription
+          };
 
-              if (this.selectedPage) {
-                // Populate categories dynamically from the API
-                this.categories = this.selectedPage.categories.map((cat: any) => ({
-                  image: cat.media.url,
-                  nom: cat.title,
-                  linkTo: cat.linkTo
-                }));
-
-                // Update the page title with the category name
-                if (this.selectedPage.title) {
-                  this.titleService.setSpecificTitle(this.selectedPage.title);
-                }
-
-                // Apply SEO optimizations
-                this.applySeoOptimizations();
-
-                // Tracking consultation catégorie
-                this.analytics.viewCategory({
-                  id: this.categoryId!,
-                  name: this.selectedPage.title
-                });
-              } else {
-                // Category not found
-                this.router.navigate(['/404']);
-              }
-            },
-            (error) => {
-              console.error('Erreur lors de la récupération des données', error);
-              this.isLoading = false;
-              this.router.navigate(['/404']);
-            }
-          );
-        } else {
-          // Category not found
+          this.titleService.setSpecificTitle(this.selectedPage.title);
           this.isLoading = false;
-          this.router.navigate(['/404']);
+
+          // Apply SEO optimizations
+          this.applySeoOptimizations();
+
+          // Tracking consultation catégorie
+          this.analytics.viewCategory({
+            id: this.categoryId!,
+            name: this.selectedPage.title
+          });
+
+          // Load subcategories for the grid
+          this.loadSubcategories();
+        } else {
+          // Category not found - redirect to shop
+          this.isLoading = false;
+          this.router.navigate(['/shop']);
         }
       },
       (error) => {
         console.error('Erreur lors de la recherche de la catégorie par nom', error);
         this.isLoading = false;
-        this.router.navigate(['/404']);
+        this.router.navigate(['/shop']);
       }
     );
   }
@@ -315,7 +392,9 @@ export class CategorieComponent implements OnInit {
 
   onCategoryClick(category: Category, event: MouseEvent) {
     if (category.linkTo) {
-      this.router.navigate(['/tn', category.linkTo]);
+      // Navigate directly to the link - use navigateByUrl to avoid encoding issues
+      const cleanLink = category.linkTo.startsWith('/') ? category.linkTo : `/${category.linkTo}`;
+      this.router.navigateByUrl(cleanLink);
     }
   }
 }

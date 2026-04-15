@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatService, ChatMessage, LikeThisDetected } from '../../../services/chatbot.service';
+import { ChatService, ChatMessage, LikeThisDetected, ProductCard } from '../../../services/chatbot.service';
+import { CartService, CartItem } from '../../../services/cart.service';
+import { BehaviorAnalyticsService } from '../../../services/behavior-analytics.service';
 import { forkJoin, catchError, of, Subscription } from 'rxjs';
 
 interface Message {
@@ -14,6 +16,12 @@ interface Message {
   imagePreview?: string;
   detected?: LikeThisDetected;
   isLikeThis?: boolean;
+}
+
+interface ToastNotification {
+  message: string;
+  type: 'success' | 'error' | 'info';
+  visible: boolean;
 }
 
 @Component({
@@ -49,10 +57,26 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
     wishlist: [] as any[]
   };
 
+  // Toast notification for add to cart feedback
+  toast: ToastNotification = { message: '', type: 'success', visible: false };
+  private toastTimeout: any;
+
   private conversationHistory: ChatMessage[] = [];
   private subscriptions: Subscription = new Subscription();
 
-  constructor(private chatService: ChatService) { }
+  // Premium greeting based on time of day
+  private get timeGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon apr\u00e8s-midi';
+    return 'Bonsoir';
+  }
+
+  constructor(
+    private chatService: ChatService,
+    private cartService: CartService,
+    private analytics: BehaviorAnalyticsService
+  ) { }
 
   ngOnInit(): void {
     // ── Subs ──
@@ -81,14 +105,51 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
     if (jwt) {
       this.loadUserData();
     } else {
-      this.addAssistantMessage('✨ Bonjour ! Je suis votre assistant mode Barsha. Envie d\'un nouveau look ou besoin d\'aide avec une commande ?');
+      this.addAssistantMessage(`${this.timeGreeting} et bienvenue chez **Barsha**. Je suis votre styliste personnel, pr\u00eat \u00e0 vous guider vers le look parfait. Que recherchez-vous aujourd'hui ?`);
     }
-    this.quickReplies = ['Look pour mariage 💍', 'Sneakers tendances 👟', 'Où est ma commande ? 📦', 'Voir les nouveautés ✨'];
+    this.quickReplies = this.getPremiumQuickReplies();
+  }
+
+  private getPremiumQuickReplies(): string[] {
+    const hour = new Date().getHours();
+    const season = this.getCurrentSeason();
+
+    // Contextual premium suggestions
+    const baseReplies = [
+      'Tendances du moment \u2728',
+      'Trouver mon style id\u00e9al \ud83d\udc8e'
+    ];
+
+    if (this.userContext.isLoggedIn && this.userContext.orders.length > 0) {
+      baseReplies.push('Suivi de ma commande \ud83d\udce6');
+    }
+
+    if (this.userContext.coupons && this.userContext.coupons.length > 0) {
+      baseReplies.push(`Mes ${this.userContext.coupons.length} offres exclusives \ud83c\udf81`);
+    } else {
+      baseReplies.push('Offres exclusives \ud83c\udf81');
+    }
+
+    // Season-specific suggestion
+    if (season === 'summer') {
+      baseReplies.push('Collection \u00e9t\u00e9 \u2600\ufe0f');
+    } else if (season === 'winter') {
+      baseReplies.push('Looks hiver cozy \u2744\ufe0f');
+    }
+
+    return baseReplies.slice(0, 4);
+  }
+
+  private getCurrentSeason(): string {
+    const month = new Date().getMonth();
+    if (month >= 5 && month <= 8) return 'summer';
+    if (month >= 11 || month <= 2) return 'winter';
+    return 'spring';
   }
 
   private loadUserData(): void {
     this.isLoading = true;
-    this.loadingText = 'Chargement de votre profil...';
+    this.loadingText = 'Pr\u00e9paration de votre exp\u00e9rience personnalis\u00e9e...';
     forkJoin({
       profile: this.chatService.getUserProfile().pipe(catchError(() => of(null))),
       orders: this.chatService.getOrders().pipe(catchError(() => of([]))),
@@ -99,16 +160,42 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
       next: (res) => {
         this.userContext.isLoggedIn = !!res.profile;
         this.userContext.profile = res.profile;
-        this.userContext.orders = res.orders;
-        this.userContext.coupons = res.coupons;
+        this.userContext.orders = res.orders || [];
+        this.userContext.coupons = res.coupons || [];
         this.userContext.motifs = res.motifs?.hits || [];
         this.userContext.wishlist = res.wishlist || [];
-        const name = res.profile?.firstName || 'ami';
-        this.addAssistantMessage(`👋 Bonjour ${name} ! Ravi de vous revoir. Prêt pour une séance de shopping intelligente ?`);
+
+        const name = res.profile?.firstName || 'cher client';
+        let greeting = `${this.timeGreeting} **${name}** ! Ravie de vous retrouver.`;
+
+        // Personalized context-aware greeting
+        const pendingOrders = this.userContext.orders.filter((o: any) =>
+          ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED'].includes(o.status)
+        );
+        const couponsCount = this.userContext.coupons.length;
+        const wishlistCount = this.userContext.wishlist.length;
+
+        if (pendingOrders.length > 0) {
+          greeting += ` Vous avez **${pendingOrders.length} commande${pendingOrders.length > 1 ? 's' : ''}** en cours.`;
+        }
+
+        if (couponsCount > 0) {
+          greeting += ` \ud83c\udf81 **${couponsCount} offre${couponsCount > 1 ? 's' : ''} exclusive${couponsCount > 1 ? 's' : ''}** vous attend${couponsCount > 1 ? 'ent' : ''} !`;
+        }
+
+        if (wishlistCount > 0 && couponsCount === 0) {
+          greeting += ` Je vois que vous avez **${wishlistCount} article${wishlistCount > 1 ? 's' : ''}** dans vos favoris.`;
+        }
+
+        greeting += ' Comment puis-je vous accompagner ?';
+
+        this.addAssistantMessage(greeting);
+        this.quickReplies = this.getPremiumQuickReplies();
         this.isLoading = false;
       },
       error: () => {
-        this.addAssistantMessage('✨ Bonjour ! Comment puis-je vous assister dans votre shopping aujourd\'hui ?');
+        this.addAssistantMessage(`${this.timeGreeting} ! Je suis votre conseill\u00e8re style Barsha. Comment puis-je vous aider \u00e0 trouver le look parfait ?`);
+        this.quickReplies = this.getPremiumQuickReplies();
         this.isLoading = false;
       }
     });
@@ -123,8 +210,13 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   toggleChat(): void {
+    const wasOpen = this.isOpen;
     this.chatService.toggleChat(!this.isOpen);
     if (!this.isOpen) this.isFullScreen = false; // Reset if closed
+    // Track assistant open
+    if (!wasOpen) {
+      this.analytics.trackAssistantOpen();
+    }
   }
 
   toggleFullScreen(): void {
@@ -142,6 +234,9 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     this.messages.push({ role: 'user', content, timestamp: new Date() });
     this.conversationHistory.push({ role: 'user', content });
+
+    // Track assistant message
+    this.analytics.trackAssistantMessage(content.substring(0, 50));
 
     const loadingMsg: Message = { role: 'assistant', content: '', timestamp: new Date(), loading: true };
     this.messages.push(loadingMsg);
@@ -181,8 +276,9 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     } catch {
       const idx = this.messages.indexOf(loadingMsg);
-      this.messages[idx].content = 'Désolé, une erreur est survenue lors de la communication avec Barsha AI.';
+      this.messages[idx].content = 'Je rencontre un petit souci technique. Puis-je r\u00e9essayer ? En attendant, n\'h\u00e9sitez pas \u00e0 explorer nos **nouveaut\u00e9s** ou \u00e0 me poser une autre question.';
       this.messages[idx].loading = false;
+      this.quickReplies = ['R\u00e9essayer \ud83d\udd04', 'Voir les nouveaut\u00e9s \u2728', 'Aide \ud83d\udc4b'];
     } finally {
       this.isLoading = false;
     }
@@ -246,6 +342,12 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
       const idx = this.messages.indexOf(loadingMsg);
 
       const d = result.detected;
+
+      // Track visual search upload
+      this.analytics.trackVisualSearchUpload(
+        result.similaires?.length || 0,
+        d.confidence
+      );
       const summaryText = `Voici un look **${d.title_guess || 'tendance'}** basé sur votre image. 💎`;
 
       this.messages[idx] = {
@@ -262,11 +364,83 @@ export class ChatbotComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     } catch {
       const idx = this.messages.indexOf(loadingMsg);
-      this.messages[idx].content = 'Désolé, je n\'ai pas pu analyser cette image. Réessayez avec une autre photo.';
+      this.messages[idx].content = 'Je n\'ai pas pu analyser cette image. Pour de meilleurs r\u00e9sultats, essayez avec une photo bien \u00e9clair\u00e9e montrant clairement le v\u00eatement ou l\'accessoire.';
       this.messages[idx].loading = false;
+      this.quickReplies = ['R\u00e9essayer avec une autre photo \ud83d\udcf7', 'D\u00e9crire ce que je cherche \u270d\ufe0f'];
     } finally {
       this.isLoading = false;
     }
+  }
+
+  // ─── ADD TO CART FROM CHAT ───
+  addToCartFromChat(product: any, event: Event): void {
+    event.stopPropagation(); // Prevent card click navigation
+
+    // Extract product ID from URL or reference
+    let productId = '';
+    if (product.url) {
+      const match = product.url.match(/produit\/(\d+)/);
+      if (match) productId = match[1];
+    }
+
+    if (!productId && product.reference) {
+      const idMatch = product.reference.match(/ID:(\d+)/);
+      if (idMatch) productId = idMatch[1];
+    }
+
+    if (!productId) {
+      this.showToast('Impossible d\'ajouter ce produit. Veuillez le consulter directement.', 'error');
+      return;
+    }
+
+    // Create a simplified cart item for quick add
+    // Note: This adds with default options - user can adjust in cart
+    const cartItem: CartItem = {
+      product: {
+        id: parseInt(productId),
+        title: product.nom || 'Produit Barsha',
+        currentPrice: this.extractPrice(product.prix),
+        sku: product.reference || '',
+        // Minimal product data - the cart will handle the rest
+      } as any,
+      image: product.image || 'assets/logo.jpg',
+      quantity: 1,
+      selectedColor: product.color || '',
+      selectedSize: product.size || '',
+      ean13: ''
+    };
+
+    this.cartService.addToCartDirectly(cartItem);
+    this.showToast(`\u2713 ${product.nom || 'Article'} ajout\u00e9 au panier`, 'success');
+
+    // Track add to cart from assistant
+    this.analytics.trackAssistantAddToCart(parseInt(productId));
+
+    // Update quick replies to suggest next action
+    this.quickReplies = [
+      'Voir mon panier \ud83d\udecd\ufe0f',
+      'Continuer mes achats \u2728',
+      'Articles similaires \ud83d\udc57'
+    ];
+  }
+
+  private extractPrice(priceStr: string): number {
+    if (!priceStr) return 0;
+    const match = priceStr.match(/([\d.,]+)/);
+    if (match) {
+      return parseFloat(match[1].replace(',', '.'));
+    }
+    return 0;
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info'): void {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+
+    this.toast = { message, type, visible: true };
+
+    this.toastTimeout = setTimeout(() => {
+      this.toast.visible = false;
+    }, 3000);
   }
 
   onKeyPress(event: KeyboardEvent): void {

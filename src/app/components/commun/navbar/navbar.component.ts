@@ -9,10 +9,13 @@ import { CartService } from '../../../services/cart.service';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { LogoComponent } from "../logo/logo.component";
+import { VisualSearchComponent } from "../visual-search/visual-search.component";
+import { NotificationDropdownComponent } from "../notification-dropdown/notification-dropdown.component";
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterModule, CommonModule, MenuComponent, SearchModalComponent, ToastModule, LogoComponent],
+  imports: [RouterModule, CommonModule, MenuComponent, SearchModalComponent, ToastModule, LogoComponent, VisualSearchComponent, NotificationDropdownComponent],
   templateUrl: './navbar.component.html',
   providers:[MessageService],
   styleUrl: './navbar.component.scss'
@@ -20,7 +23,8 @@ import { LogoComponent } from "../logo/logo.component";
 export class NavbarComponent implements OnInit {
   menuVisible: boolean = false;
   searchModalVisible: boolean = false; // Control search modal visibility
-  homePageData: any;
+  visualSearchVisible: boolean = false; // Control visual search modal visibility
+  homePageData: any = { hits: [{ ticker: { text: '', color: '#000' } }] };
   cartItemCount: number = 0;
 
   constructor(
@@ -34,13 +38,18 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     this.categorieService.getHomePageData().subscribe(
       (data) => {
-        this.homePageData = data;
+        if (data?.hits?.length > 0) {
+          this.homePageData = data;
+        }
+      },
+      (error) => {
+        console.error('Error fetching home page data:', error);
       }
     );
 
     // S'abonner aux changements du panier
     this.cartService.cartItems$.subscribe(items => {
-      this.cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
+      this.cartItemCount = (items || []).reduce((total, item) => total + (item?.quantity || 0), 0);
     });
   }
 
@@ -78,6 +87,16 @@ export class NavbarComponent implements OnInit {
   // Method to close search modal
   closeSearchModal() {
     this.searchModalVisible = false;
+  }
+
+  // Method to open visual search modal
+  openVisualSearch() {
+    this.visualSearchVisible = true;
+  }
+
+  // Method to close visual search modal
+  closeVisualSearch() {
+    this.visualSearchVisible = false;
   }
 
   // si je click sur le  gift card verifier si je suis connecter ou non

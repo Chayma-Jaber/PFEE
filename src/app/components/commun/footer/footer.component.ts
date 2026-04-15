@@ -1,30 +1,39 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FooterService } from '../../../services/footer.service'; // Assurez-vous que le chemin est correct
+import { NewsletterService } from '../../../services/newsletter.service';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { ToastModule } from 'primeng/toast';
+import { NewsletterFooterComponent } from '../newsletter-footer/newsletter-footer.component';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, ToastModule],
+  imports: [RouterLink, CommonModule, FormsModule, ToastModule, NewsletterFooterComponent],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
   providers: [MessageService]
 })
 export class FooterComponent implements OnInit {
-  footerData: any;
-  socialLinks: any;
+  footerData: any = { widgets: [], brand: 'Barsha' };
+  socialLinks: any[] = [];
   email: string = ''; // Pour stocker l'adresse e-mail saisie
   errorMessage: string = ''; // Pour afficher les messages d'erreur
   successMessage: string = ''; // Pour afficher les messages de succès
   currentYear: number;
+  isNewsletterLoading: boolean = false;
+  isNewsletterSuccess: boolean = false;
 
-  constructor(private footerService: FooterService, private messageService: MessageService, private router: Router) {
+  constructor(
+    private footerService: FooterService,
+    private newsletterService: NewsletterService,
+    private messageService: MessageService,
+    private router: Router
+  ) {
     this.currentYear = new Date().getFullYear();
   }
 
@@ -33,21 +42,32 @@ export class FooterComponent implements OnInit {
     // Récupérer les données du footer
     this.footerService.getFooterData().subscribe(
       data => {
-        this.footerData = data.hits[0]; // Récupérer le premier élément de la réponse
+        const hit = data?.hits?.[0];
+        if (hit) {
+          // Ensure widgets is always an array
+          if (!hit.widgets) {
+            hit.widgets = [];
+          }
+          this.footerData = hit;
+        } else {
+          // Fallback: provide a minimal valid structure so the template never crashes
+          this.footerData = { widgets: [], brand: 'Barsha' };
+        }
       },
       error => {
-
         console.error('Erreur lors de la récupération des données du footer :', error);
+        this.footerData = { widgets: [], brand: 'Barsha' };
       }
     );
 
     // Récupérer les liens des réseaux sociaux
     this.footerService.getSocialLinks().subscribe(
       data => {
-        this.socialLinks = data.hits[0].links; // Récupérer les liens des réseaux sociaux
+        this.socialLinks = data?.hits?.[0]?.links || [];
       },
       error => {
         console.error('Erreur lors de la récupération des liens des réseaux sociaux :', error);
+        this.socialLinks = [];
       }
     );
   }
@@ -64,19 +84,32 @@ export class FooterComponent implements OnInit {
       return;
     }
 
-    // Appel à l'API pour s'abonner à la newsletter
-    this.footerService.subscribeToNewsletter(this.email).subscribe(
-      response => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Vous êtes maintenant abonné à notre newsletter !' });
+    this.isNewsletterLoading = true;
+    this.errorMessage = '';
 
-        this.email = ''; // Réinitialiser le champ e-mail
+    // Appel au nouveau service newsletter
+    this.newsletterService.subscribe(this.email, undefined, undefined, 'footer').subscribe({
+      next: (response) => {
+        this.isNewsletterLoading = false;
+        this.isNewsletterSuccess = true;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succes',
+          detail: response.message || 'Vous etes maintenant abonne a notre newsletter !'
+        });
+        this.newsletterService.markUserAsSubscribed();
+        this.email = ''; // Reinitialiser le champ e-mail
       },
-      error => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de l\'inscription à la newsletter.' });
+      error: (error) => {
+        this.isNewsletterLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: error.error?.detail || 'Une erreur est survenue lors de l\'inscription a la newsletter.'
+        });
         this.successMessage = '';
-
       }
-    );
+    });
   }
 
   validateEmail(email: string): boolean {

@@ -3,6 +3,14 @@
   display: flex;
   flex-direction: column;
   font-family: 'std55';
+
+  // Admin mode - remove navbar/footer spacing
+  &.admin-mode {
+    .content-wrapper {
+      margin-top: 0;
+      padding: 0;
+    }
+  }
 }
 
 .content-wrapper {
@@ -29,5 +37,9 @@ body.menu-open {
   .content-wrapper {
     margin-top: 95px;
     /* Ajusté pour les mobiles */
+  }
+
+  .app-container.admin-mode .content-wrapper {
+    margin-top: 0;
   }
 }

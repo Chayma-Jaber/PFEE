@@ -184,8 +184,9 @@ export class MenuComponent implements OnInit, AfterViewInit, OnDestroy {
   private redirectCategoryByIdOrigin(idOrigin: number): void {
     this.categoryService.getCategoryByIdOrigin(idOrigin).subscribe(category => {
       if (category) {
-        // Redirect to the new URL format with current ID using the 'tn' segment
-        this.router.navigate(['/tn', category.link], { replaceUrl: true });
+        // Navigate directly to the link - remove leading slash if present to avoid double encoding
+        const cleanLink = category.link?.startsWith('/') ? category.link : `/${category.link}`;
+        this.router.navigateByUrl(cleanLink, { replaceUrl: true });
       }
     });
   }
@@ -271,8 +272,10 @@ export class MenuComponent implements OnInit, AfterViewInit, OnDestroy {
     // Re-enable body scroll before navigation
     this.enableBodyScroll();
 
-    // Navigate to the new URL format with 'tn' segment
-    this.router.navigate(['/tn', category.link]);
+    // Navigate to shop page with category link
+    // Routes are defined as 'tn/:categoryId' in shop.routes.ts
+    const categoryLink = category.link || `${category.id}`;
+    this.router.navigateByUrl(`/tn/${categoryLink}`);
     this.closeMenu(); // Close the menu after navigation
   }
 

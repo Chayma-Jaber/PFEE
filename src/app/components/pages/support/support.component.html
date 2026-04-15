@@ -1,0 +1,363 @@
+<div class="support-container">
+  <!-- Header -->
+  <div class="support-header">
+    <h1>Service Client</h1>
+    <p>Besoin d'aide ? Notre \u00e9quipe est l\u00e0 pour vous accompagner.</p>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="bi bi-exclamation-circle"></i> {{ errorMessage }}
+    <button class="close-btn" (click)="errorMessage = ''">&times;</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- TICKET LIST VIEW -->
+  <div *ngIf="currentView === 'list' && !isLoading" class="ticket-list-view">
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <button class="btn-create" (click)="openCreateForm()">
+        <i class="bi bi-plus-lg"></i> Nouvelle demande
+      </button>
+
+      <div class="filters">
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter === ''"
+          (click)="filterByStatus('')">
+          Toutes
+        </button>
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter === 'open'"
+          (click)="filterByStatus('open')">
+          En cours
+        </button>
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter === 'closed'"
+          (click)="filterByStatus('closed')">
+          R\u00e9solues
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="tickets.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h3>Aucune demande</h3>
+      <p>Vous n'avez pas encore de demande de support. Cr\u00e9ez-en une si vous avez besoin d'aide.</p>
+      <button class="btn-primary" (click)="openCreateForm()">
+        <i class="bi bi-plus-lg"></i> Cr\u00e9er une demande
+      </button>
+    </div>
+
+    <!-- Ticket Cards -->
+    <div *ngIf="tickets.length > 0" class="ticket-cards">
+      <div
+        *ngFor="let ticket of tickets"
+        class="ticket-card"
+        (click)="viewTicket(ticket)">
+        <div class="ticket-header">
+          <span class="ticket-reference">#{{ ticket.reference }}</span>
+          <span
+            class="status-badge"
+            [style.backgroundColor]="getStatusInfo(ticket.status).bgColor"
+            [style.color]="getStatusInfo(ticket.status).color">
+            {{ getStatusInfo(ticket.status).label }}
+          </span>
+        </div>
+
+        <h3 class="ticket-subject">{{ ticket.subject }}</h3>
+
+        <div class="ticket-meta">
+          <span class="category">
+            <i class="bi bi-tag"></i> {{ getCategoryLabel(ticket.category) }}
+          </span>
+          <span
+            class="priority"
+            [style.color]="getPriorityInfo(ticket.priority).color">
+            <i class="bi bi-flag"></i> {{ getPriorityInfo(ticket.priority).label }}
+          </span>
+          <span class="date">
+            <i class="bi bi-clock"></i> {{ formatDate(ticket.createdAt) }}
+          </span>
+        </div>
+
+        <div class="ticket-footer">
+          <span class="message-count">
+            <i class="bi bi-chat-dots"></i> {{ ticket.messageCount }} message(s)
+          </span>
+          <i class="bi bi-chevron-right arrow"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="pagination.pages > 1" class="pagination">
+      <button
+        [disabled]="pagination.page <= 1"
+        (click)="goToPage(pagination.page - 1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <span>Page {{ pagination.page }} / {{ pagination.pages }}</span>
+      <button
+        [disabled]="pagination.page >= pagination.pages"
+        (click)="goToPage(pagination.page + 1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- CREATE TICKET VIEW -->
+  <div *ngIf="currentView === 'create' && !isLoading" class="create-ticket-view">
+    <button class="btn-back" (click)="backToList()">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+
+    <div class="create-form-container">
+      <h2>Nouvelle demande</h2>
+
+      <form (ngSubmit)="submitTicket()">
+        <!-- Category -->
+        <div class="form-group">
+          <label for="category">Cat\u00e9gorie *</label>
+          <select
+            id="category"
+            [(ngModel)]="createForm.category"
+            name="category"
+            class="form-control">
+            <option *ngFor="let cat of categories" [value]="cat.value">
+              {{ cat.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Linked Order (if order category) -->
+        <div class="form-group" *ngIf="createForm.category === 'order' && userOrders.length > 0">
+          <label for="orderId">Commande concern\u00e9e</label>
+          <select
+            id="orderId"
+            [(ngModel)]="createForm.orderId"
+            name="orderId"
+            class="form-control">
+            <option [value]="undefined">-- S\u00e9lectionnez une commande --</option>
+            <option *ngFor="let order of userOrders" [value]="order.id">
+              #{{ order.reference || order.id }} - {{ order.createdAt | date:'dd/MM/yyyy' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Subject -->
+        <div class="form-group">
+          <label for="subject">Sujet *</label>
+          <input
+            type="text"
+            id="subject"
+            [(ngModel)]="createForm.subject"
+            name="subject"
+            class="form-control"
+            [class.error]="formErrors['subject']"
+            placeholder="Ex: Probl\u00e8me avec ma commande #123" />
+          <span *ngIf="formErrors['subject']" class="error-text">
+            {{ formErrors['subject'] }}
+          </span>
+        </div>
+
+        <!-- Message -->
+        <div class="form-group">
+          <label for="message">Message *</label>
+          <textarea
+            id="message"
+            [(ngModel)]="createForm.message"
+            name="message"
+            class="form-control"
+            [class.error]="formErrors['message']"
+            rows="6"
+            placeholder="D\u00e9crivez votre probl\u00e8me en d\u00e9tail..."></textarea>
+          <span *ngIf="formErrors['message']" class="error-text">
+            {{ formErrors['message'] }}
+          </span>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isSubmitting">
+          <span *ngIf="!isSubmitting">
+            <i class="bi bi-send"></i> Envoyer ma demande
+          </span>
+          <span *ngIf="isSubmitting">
+            <div class="spinner-small"></div> Envoi en cours...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TICKET DETAIL VIEW -->
+  <div *ngIf="currentView === 'detail' && selectedTicket && !isLoading" class="ticket-detail-view">
+    <button class="btn-back" (click)="backToList()">
+      <i class="bi bi-arrow-left"></i> Retour aux demandes
+    </button>
+
+    <div class="ticket-detail-container">
+      <!-- Ticket Info -->
+      <div class="ticket-info-card">
+        <div class="info-header">
+          <span class="reference">#{{ selectedTicket.reference }}</span>
+          <span
+            class="status-badge large"
+            [style.backgroundColor]="getStatusInfo(selectedTicket.status).bgColor"
+            [style.color]="getStatusInfo(selectedTicket.status).color">
+            <i [class]="'bi bi-' + getStatusInfo(selectedTicket.status).icon"></i>
+            {{ getStatusInfo(selectedTicket.status).label }}
+          </span>
+        </div>
+
+        <h2 class="ticket-title">{{ selectedTicket.subject }}</h2>
+
+        <div class="info-details">
+          <div class="info-item">
+            <span class="label">Cat\u00e9gorie</span>
+            <span class="value">{{ getCategoryLabel(selectedTicket.category) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Priorit\u00e9</span>
+            <span
+              class="value priority"
+              [style.color]="getPriorityInfo(selectedTicket.priority).color">
+              {{ getPriorityInfo(selectedTicket.priority).label }}
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">Cr\u00e9\u00e9 le</span>
+            <span class="value">{{ formatDate(selectedTicket.createdAt) }}</span>
+          </div>
+          <div class="info-item" *ngIf="selectedTicket.orderReference">
+            <span class="label">Commande</span>
+            <span class="value">#{{ selectedTicket.orderReference }}</span>
+          </div>
+        </div>
+
+        <!-- Rating Section (for resolved tickets) -->
+        <div
+          *ngIf="selectedTicket.status === 'resolved' && !selectedTicket.satisfactionRating"
+          class="rating-prompt">
+          <p>Votre probl\u00e8me a-t-il \u00e9t\u00e9 r\u00e9solu ?</p>
+          <button class="btn-rate" (click)="openRatingModal()">
+            <i class="bi bi-star"></i> Donnez votre avis
+          </button>
+        </div>
+
+        <div *ngIf="selectedTicket.satisfactionRating" class="rating-display">
+          <span>Votre note : </span>
+          <span class="stars">
+            <i *ngFor="let star of [1,2,3,4,5]"
+               class="bi"
+               [class.bi-star-fill]="star <= (selectedTicket.satisfactionRating || 0)"
+               [class.bi-star]="star > (selectedTicket.satisfactionRating || 0)">
+            </i>
+          </span>
+        </div>
+
+        <!-- Reopen Button -->
+        <button
+          *ngIf="selectedTicket.status === 'resolved' || selectedTicket.status === 'closed'"
+          class="btn-reopen"
+          (click)="reopenTicket()"
+          [disabled]="isSubmitting">
+          <i class="bi bi-arrow-repeat"></i> R\u00e9ouvrir ce ticket
+        </button>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-section">
+        <h3>Conversation</h3>
+
+        <div class="messages-list">
+          <div
+            *ngFor="let message of selectedTicket.messages"
+            class="message"
+            [class.from-customer]="message.isFromCustomer"
+            [class.from-agent]="!message.isFromCustomer && !message.isSystem"
+            [class.system-message]="message.isSystem">
+
+            <div class="message-header">
+              <span class="sender">
+                <i *ngIf="message.isFromCustomer" class="bi bi-person"></i>
+                <i *ngIf="!message.isFromCustomer && !message.isSystem" class="bi bi-headset"></i>
+                <i *ngIf="message.isSystem" class="bi bi-info-circle"></i>
+                {{ message.isFromCustomer ? 'Vous' : (message.isSystem ? 'Syst\u00e8me' : message.senderName) }}
+              </span>
+              <span class="time">{{ formatDate(message.createdAt) }}</span>
+            </div>
+
+            <div class="message-content">{{ message.message }}</div>
+          </div>
+        </div>
+
+        <!-- Reply Form (if ticket is open) -->
+        <div *ngIf="selectedTicket.isOpen" class="reply-form">
+          <textarea
+            [(ngModel)]="newMessage"
+            placeholder="Tapez votre r\u00e9ponse..."
+            rows="3"></textarea>
+          <button
+            class="btn-send"
+            (click)="sendMessage()"
+            [disabled]="!newMessage.trim() || isSubmitting">
+            <i class="bi bi-send"></i> Envoyer
+          </button>
+        </div>
+
+        <div *ngIf="!selectedTicket.isOpen" class="ticket-closed-notice">
+          <i class="bi bi-lock"></i>
+          <span>Ce ticket est ferm\u00e9. Vous pouvez le r\u00e9ouvrir si vous avez encore besoin d'aide.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Modal -->
+  <div *ngIf="showRatingModal" class="modal-overlay" (click)="showRatingModal = false">
+    <div class="rating-modal" (click)="$event.stopPropagation()">
+      <h3>Notez notre service</h3>
+
+      <div class="star-rating">
+        <i *ngFor="let star of [1,2,3,4,5]"
+           class="bi"
+           [class.bi-star-fill]="star <= ratingValue"
+           [class.bi-star]="star > ratingValue"
+           (click)="ratingValue = star">
+        </i>
+      </div>
+
+      <textarea
+        [(ngModel)]="ratingComment"
+        placeholder="Un commentaire ? (optionnel)"
+        rows="3"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="showRatingModal = false">Annuler</button>
+        <button
+          class="btn-submit"
+          [disabled]="ratingValue === 0"
+          (click)="submitRating()">
+          Envoyer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

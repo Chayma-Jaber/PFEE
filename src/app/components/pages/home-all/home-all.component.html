@@ -7,51 +7,43 @@
   <div class="dot"></div>
 </section>
 
-<!-- Contenu principal -->
-<!-- <header class="home" *ngIf="!isLoading">
-  <div class="logo">
-    <img
-         [src]="searchResults?.hits[0]?.slides[0]?.logo?.url"
-         [alt]="searchResults?.hits[0]?.slides[0]?.logo?.name"
-         [routerLink]="['/']"
-         appLazyLoadImage
-
-
-         [title]="searchResults?.hits[0]?.slides[0]?.logo?.name">
-  </div>
-</header> -->
-
 <div class="main-content" *ngIf="!isLoading">
   <!-- Hero Banner Section -->
-  <picture class="hero-banner">
+  <picture class="hero-banner" *ngIf="searchResults?.hits?.[0]?.slides?.[0]">
     <!-- Mobile Source -->
-    <source media="(max-width: 991px)" [srcset]="searchResults?.hits[0]?.slides[0]?.mob_media?.medium?.url 
+    <source media="(max-width: 991px)" [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.medium?.url
         ? (searchResults.hits[0].slides[0].mob_media.medium.url + ' 501w, ' + searchResults.hits[0].slides[0].mob_media.url + ' 1200w')
-        : searchResults?.hits[0]?.slides[0]?.mob_media?.url" sizes="100vw">
+        : searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.url" sizes="100vw">
 
     <!-- Desktop Source -->
-    <source media="(min-width: 992px)" [srcset]="searchResults?.hits[0]?.slides[0]?.media?.medium?.url
+    <source media="(min-width: 992px)" [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.media?.medium?.url
         ? (searchResults.hits[0].slides[0].media.medium.url + ' 750w, ' + searchResults.hits[0].slides[0].media.url + ' 1905w')
-        : searchResults?.hits[0]?.slides[0]?.media?.url" sizes="100vw">
+        : searchResults?.hits?.[0]?.slides?.[0]?.media?.url" sizes="100vw">
 
     <!-- Fallback Image -->
-    <img [src]="searchResults?.hits[0]?.slides[0]?.media?.url"
-      [alt]="searchResults?.hits[0]?.slides[0]?.media?.name || 'BARSHA Fashion Models'" class="img-fluid w-100"
+    <img [src]="searchResults?.hits?.[0]?.slides?.[0]?.media?.url"
+      [alt]="searchResults?.hits?.[0]?.slides?.[0]?.media?.name || 'BARSHA Fashion Models'" class="img-fluid w-100"
       fetchpriority="high" loading="eager">
   </picture>
 
-  <div class="buttons" *ngIf="searchResults?.hits[0]?.navBtns">
-    <button *ngFor="let button of searchResults.hits[0].navBtns"
+  <div class="buttons" *ngIf="searchResults?.hits?.[0]?.navBtns">
+    <button *ngFor="let button of searchResults?.hits?.[0]?.navBtns"
       [ngClass]="{'btn-outline': button.bgColor === '#000000', 'btn-outline1': button.bgColor === '#ffffff'}"
       [routerLink]="['/categorie', button.linkTo]" [title]="button.text || 'Catégorie ' + button.linkTo"
       (click)="onGenderButtonClick(button)">
       {{button.text}}
     </button>
-
   </div>
-
 </div>
 
+<!-- FLASH SALES SECTION -->
+<app-flash-sales-section
+  *ngIf="!isLoading"
+  [maxProductsDisplay]="4"
+  [showBanner]="true">
+</app-flash-sales-section>
+
+<!-- Promo Section -->
 <div class="container-fluid py-3 my-2 my-md-3 bg-light" *ngIf="!isLoading && promoSection">
   <div class="row justify-content-center">
     <div class="col-12 col-md-10 col-lg-9">
@@ -73,8 +65,225 @@
   </div>
 </div>
 
-<!-- s-extra
-================================================== -->
+<!-- NEW ARRIVALS SECTION -->
+<section class="featured-section new-arrivals" *ngIf="!isLoading && newArrivals.length > 0">
+  <div class="section-container">
+    <div class="section-header">
+      <h2>Nouveautés</h2>
+      <a routerLink="/tn/1-nouveautes" class="view-all">Voir tout</a>
+    </div>
+
+    <div class="products-grid">
+      <article class="product-card"
+               *ngFor="let product of newArrivals; trackBy: trackByProductId"
+               (click)="navigateToProduct(product.id, product.title)">
+        <div class="product-image-wrapper">
+          <span class="badge-new" *ngIf="product.isNew">Nouveau</span>
+          <span class="badge-promo" *ngIf="product.discount">-{{ product.discountValue }}%</span>
+          <img [src]="product.image"
+               [alt]="product.title"
+               class="product-image"
+               loading="lazy"
+               onerror="this.src='assets/images/placeholder.png'">
+          <img *ngIf="product.secondImage"
+               [src]="product.secondImage"
+               [alt]="product.title"
+               class="product-image-hover"
+               loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3 class="product-title">{{ product.title }}</h3>
+          <div class="product-price">
+            <span class="current-price">{{ (product.currentPrice || 0).toFixed(3) }} TND</span>
+            <span class="original-price" *ngIf="product.discount">{{ (product.price || 0).toFixed(3) }} TND</span>
+          </div>
+          <div class="product-colors" *ngIf="product.colors && product.colors.length > 1">
+            <span class="color-dot"
+                  *ngFor="let color of product.colors.slice(0, 4)"
+                  [title]="color.name"
+                  [style.backgroundImage]="color.textureImage ? 'url(' + color.textureImage + ')' : 'none'">
+            </span>
+            <span class="color-more" *ngIf="product.colors.length > 4">+{{ product.colors.length - 4 }}</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED CATEGORIES SECTION -->
+<section class="featured-section categories-section" *ngIf="!isLoading && featuredCategories.length > 0">
+  <div class="section-container">
+    <div class="section-header">
+      <h2>Explorez nos collections</h2>
+    </div>
+
+    <div class="categories-grid">
+      <article class="category-card"
+               *ngFor="let category of featuredCategories; trackBy: trackByCategoryId"
+               (click)="navigateToCategory(category)">
+        <div class="category-image-wrapper">
+          <img [src]="category.image"
+               [alt]="category.name"
+               class="category-image"
+               loading="lazy"
+               *ngIf="category.image"
+               onerror="this.style.display='none'">
+          <div class="category-overlay">
+            <h3 class="category-name">{{ category.name }}</h3>
+            <span class="category-cta">Découvrir</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- TRENDING / PROMOTIONS SECTION -->
+<section class="featured-section trending-section" *ngIf="!isLoading && trendingProducts.length > 0">
+  <div class="section-container">
+    <div class="section-header">
+      <h2>Promotions</h2>
+      <a routerLink="/tn/2-promotions" class="view-all">Voir tout</a>
+    </div>
+
+    <div class="products-grid">
+      <article class="product-card"
+               *ngFor="let product of trendingProducts; trackBy: trackByProductId"
+               (click)="navigateToProduct(product.id, product.title)">
+        <div class="product-image-wrapper">
+          <span class="badge-promo" *ngIf="product.discount">-{{ product.discountValue }}%</span>
+          <img [src]="product.image"
+               [alt]="product.title"
+               class="product-image"
+               loading="lazy"
+               onerror="this.src='assets/images/placeholder.png'">
+          <img *ngIf="product.secondImage"
+               [src]="product.secondImage"
+               [alt]="product.title"
+               class="product-image-hover"
+               loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3 class="product-title">{{ product.title }}</h3>
+          <div class="product-price">
+            <span class="current-price sale">{{ (product.currentPrice || 0).toFixed(3) }} TND</span>
+            <span class="original-price" *ngIf="product.discount">{{ (product.price || 0).toFixed(3) }} TND</span>
+          </div>
+          <div class="product-colors" *ngIf="product.colors && product.colors.length > 1">
+            <span class="color-dot"
+                  *ngFor="let color of product.colors.slice(0, 4)"
+                  [title]="color.name"
+                  [style.backgroundImage]="color.textureImage ? 'url(' + color.textureImage + ')' : 'none'">
+            </span>
+            <span class="color-more" *ngIf="product.colors.length > 4">+{{ product.colors.length - 4 }}</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- BUNDLE DEALS SECTION -->
+<app-bundles-section
+  *ngIf="!isLoading"
+  title="Nos Offres Groupees"
+  subtitle="Economisez en achetant nos lots soigneusement selectionnes"
+  [limit]="4"
+  [showViewAll]="true">
+</app-bundles-section>
+
+<!-- SHOP THE LOOK - FEATURED OUTFITS -->
+<app-featured-outfits
+  *ngIf="!isLoading"
+  title="Shop the Look"
+  subtitle="Looks complets selectionnes par nos stylistes"
+  [limit]="6">
+</app-featured-outfits>
+
+<!-- RECENTLY VIEWED PRODUCTS -->
+<section class="recently-viewed-wrapper" *ngIf="!isLoading">
+  <div class="section-container">
+    <app-recently-viewed
+      title="Vus récemment"
+      [maxProducts]="8"
+      [showNavigation]="true"
+      [showRemoveButton]="false"
+      [showContinueShopping]="true">
+    </app-recently-viewed>
+  </div>
+</section>
+
+<!-- NEXT-GEN AI RECOMMENDATIONS -->
+<app-homepage-recommendations
+  *ngIf="!isLoading"
+  [isAuthenticated]="isUserLoggedIn"
+  [selectedFamily]="selectedGender"
+  [viewedProductIds]="viewedProductIds"
+  [showStyleDiscovery]="false">
+</app-homepage-recommendations>
+
+<!-- EDITORIAL / LIFESTYLE SECTION -->
+<section class="editorial-section" *ngIf="!isLoading">
+  <div class="section-container">
+    <div class="editorial-grid">
+      <div class="editorial-card large" routerLink="/tn/3-femme">
+        <div class="editorial-content">
+          <span class="editorial-tag">Collection</span>
+          <h3>Pour Elle</h3>
+          <p>Découvrez notre sélection féminine</p>
+          <span class="editorial-cta">Explorer</span>
+        </div>
+      </div>
+      <div class="editorial-card" routerLink="/tn/4-homme">
+        <div class="editorial-content">
+          <span class="editorial-tag">Collection</span>
+          <h3>Pour Lui</h3>
+          <p>Le style masculin</p>
+          <span class="editorial-cta">Explorer</span>
+        </div>
+      </div>
+      <div class="editorial-card" routerLink="/tn/5-accessoires">
+        <div class="editorial-content">
+          <span class="editorial-tag">Accessoires</span>
+          <h3>Finitions</h3>
+          <p>Les détails qui comptent</p>
+          <span class="editorial-cta">Explorer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES SECTION -->
+<section class="services-section" *ngIf="!isLoading">
+  <div class="section-container">
+    <div class="services-grid">
+      <div class="service-item">
+        <i class="fas fa-truck"></i>
+        <h4>Livraison rapide</h4>
+        <p>Partout en Tunisie</p>
+      </div>
+      <div class="service-item">
+        <i class="fas fa-undo"></i>
+        <h4>Retours faciles</h4>
+        <p>Sous 14 jours</p>
+      </div>
+      <div class="service-item">
+        <i class="fas fa-shield-alt"></i>
+        <h4>Paiement sécurisé</h4>
+        <p>Click to Pay</p>
+      </div>
+      <div class="service-item">
+        <i class="fas fa-headset"></i>
+        <h4>Service client</h4>
+        <p>À votre écoute</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Welcome Popup -->
 <section class="s-extra">
   <div class="row top">
     <div class="col-eight md-six tab-full popular">
@@ -83,4 +292,3 @@
     </div>
   </div>
 </section>
-<!-- end s-extra -->

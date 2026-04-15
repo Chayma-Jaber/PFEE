@@ -3,6 +3,11 @@ import { RouterOutlet, Router, NavigationEnd, NavigationStart } from '@angular/r
 import { NavbarComponent } from './components/commun/navbar/navbar.component';
 import { FooterComponent } from './components/commun/footer/footer.component';
 import { ChatbotComponent } from './components/commun/chatbot/chatbot.component';
+import { CookieConsentComponent } from './components/commun/cookie-consent/cookie-consent.component';
+import { ComparisonWidgetComponent } from './components/commun/comparison-widget/comparison-widget.component';
+import { SocialProofPopupComponent } from './components/commun/social-proof-popup/social-proof-popup.component';
+import { QuickViewModalComponent } from './components/commun/quick-view-modal/quick-view-modal.component';
+import { NewsletterPopupComponent } from './components/commun/newsletter-popup/newsletter-popup.component';
 
 
 import { CommonModule } from '@angular/common';
@@ -16,13 +21,14 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent, CommonModule, ChatbotComponent],
+  imports: [RouterOutlet, NavbarComponent, FooterComponent, CommonModule, ChatbotComponent, CookieConsentComponent, ComparisonWidgetComponent, SocialProofPopupComponent, QuickViewModalComponent, NewsletterPopupComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'Barsha';
   isHomePage = false;
+  isAdminPage = false;
   private routerSubscription: Subscription;
   private currentUrl = '';
   showWelcomePopup = true;
@@ -48,6 +54,11 @@ export class AppComponent implements OnInit, OnDestroy {
             event.url === '/home' ||
             event.urlAfterRedirects === '/' ||
             event.urlAfterRedirects === '/home';
+
+          // Check if on admin page
+          this.isAdminPage =
+            event.url.startsWith('/admin') ||
+            event.urlAfterRedirects?.startsWith('/admin') || false;
 
           // Update current URL
           this.currentUrl = event.urlAfterRedirects || event.url;

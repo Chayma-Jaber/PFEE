@@ -1,37 +1,300 @@
-/* You can add global styles to this file, and also import other style files */
+// =============================================================================
+// BARSHA GLOBAL STYLES
+// =============================================================================
 
-html, body { height: 100%; }
-body { margin: 0; font-family: 'Tafel Sans Pro'}
+// Import Design System
+@use 'styles/barsha-design-system' as *;
 
-/* Remove outline from buttons when focused */
-button {
-  &:focus {
-    outline: none;
-    box-shadow: none;
+// =============================================================================
+// RESET & BASE
+// =============================================================================
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-primary;
+  font-size: $font-size-base;
+  line-height: $line-height-normal;
+  color: $color-black;
+  background-color: $color-white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// =============================================================================
+// FONTS
+// =============================================================================
+
+@font-face {
+  font-family: 'Qebil';
+  src: url('./assets/fonts/QEBIL.otf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'std55';
+  src: url('./assets/fonts/avenir-lt-std-55-roman.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'std95';
+  src: url('./assets/fonts/avenir-lt-std-95-black.otf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'franklin';
+  src: url('./assets/fonts/Franklin_Gothic_Demi_Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+// =============================================================================
+// TYPOGRAPHY
+// =============================================================================
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-primary-bold;
+  margin: 0;
+  line-height: $line-height-tight;
+}
+
+h1 {
+  font-size: $font-size-3xl;
+
+  @include mobile {
+    font-size: $font-size-2xl;
   }
 }
-@font-face {
-    font-family: 'Qebil';
-    src: url('./assets/fonts/QEBIL.otf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: 'std55';
-    src: url('./assets/fonts/avenir-lt-std-55-roman.otf') format('truetype');
 
-    font-style: normal;
+h2 {
+  font-size: $font-size-2xl;
+
+  @include mobile {
+    font-size: $font-size-xl;
+  }
+}
+
+h3 {
+  font-size: $font-size-xl;
+
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color $transition-normal;
+
+  &:hover {
+    color: $color-gray-700;
+  }
+}
+
+// =============================================================================
+// BUTTONS
+// =============================================================================
+
+button {
+  @include button-reset;
+}
+
+.btn-primary {
+  @include btn-primary;
+}
+
+.btn-secondary {
+  @include btn-secondary;
+}
+
+// =============================================================================
+// FORMS
+// =============================================================================
+
+input,
+textarea,
+select {
+  @include input-base;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  padding: 0;
+  border: none;
+}
+
+// =============================================================================
+// LAYOUT UTILITIES
+// =============================================================================
+
+.container {
+  width: 100%;
+  max-width: $breakpoint-2xl;
+  margin: 0 auto;
+  padding: 0 $spacing-lg;
+
+  @include mobile {
+    padding: 0 $spacing-md;
+  }
+}
+
+// =============================================================================
+// ACCESSIBILITY
+// =============================================================================
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Focus visible for keyboard navigation
+:focus-visible {
+  outline: 2px solid $color-black;
+  outline-offset: 2px;
+}
+
+// =============================================================================
+// SCROLLBAR
+// =============================================================================
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $color-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $color-gray-400;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: $color-gray-500;
+  }
+}
+
+// =============================================================================
+// SELECTION
+// =============================================================================
+
+::selection {
+  background-color: $color-black;
+  color: $color-white;
+}
+
+// =============================================================================
+// MODAL HELPERS
+// =============================================================================
+
+.search-modal-open {
+  overflow: hidden;
+}
+
+// =============================================================================
+// ANIMATIONS
+// =============================================================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// =============================================================================
+// PRINT STYLES
+// =============================================================================
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: $color-black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
-  @font-face {
-    font-family: 'std95';
-    src: url('./assets/fonts/avenir-lt-std-95-black.otf') format('truetype');
-
-    font-style: normal;
+  a,
+  a:visited {
+    text-decoration: underline;
   }
-    @font-face {
-    font-family: 'franklin';
-    src: url('./assets/fonts/Franklin_Gothic_Demi_Regular.ttf') format('truetype');
 
-    font-style: normal;
+  img {
+    max-width: 100% !important;
   }
+
+  @page {
+    margin: 2cm;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}
