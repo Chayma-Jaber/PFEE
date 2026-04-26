@@ -247,6 +247,12 @@
         </div>
       </div>
 
+      <!-- Wave 4: premium options (gift wrap + delivery slot + click & collect) -->
+      <app-premium-checkout-options
+        [city]="premiumCity"
+        (changed)="onPremiumOptionsChanged($event)">
+      </app-premium-checkout-options>
+
       <div class="form-actions">
         <button class="btn-prev" *ngIf="hasCoupons" (click)="prevStep()">Retour</button>
         <button class="btn-continue-delivery btn btn-dark" [disabled]="!isDeliveryMethodValid()" (click)="nextStep()">

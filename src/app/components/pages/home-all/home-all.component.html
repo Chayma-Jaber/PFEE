@@ -43,6 +43,12 @@
   [showBanner]="true">
 </app-flash-sales-section>
 
+<!-- Wave 4: Daily deal banner (auto-hides if no active deal) -->
+<div *ngIf="!isLoading" class="container-fluid px-3"><app-daily-deal-banner></app-daily-deal-banner></div>
+
+<!-- Wave 3: Admin-configured dynamic homepage blocks -->
+<app-dynamic-homepage-blocks *ngIf="!isLoading"></app-dynamic-homepage-blocks>
+
 <!-- Promo Section -->
 <div class="container-fluid py-3 my-2 my-md-3 bg-light" *ngIf="!isLoading && promoSection">
   <div class="row justify-content-center">

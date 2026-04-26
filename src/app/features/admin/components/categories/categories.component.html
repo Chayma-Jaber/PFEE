@@ -1,0 +1,214 @@
+<div class="admin-categories">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des catégories</h1>
+      <p>Organisez les catégories et sous-catégories de votre catalogue</p>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="bi bi-check-circle"></i> {{ successMessage }}
+  </div>
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="filter-group">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Rechercher par nom, slug, description..." />
+      </div>
+      <label>Filtrer:</label>
+      <select [(ngModel)]="parentFilter">
+        <option [ngValue]="null">Toutes</option>
+        <option [ngValue]="-1">Catégories racines</option>
+        <option *ngFor="let cat of parentCandidates" [ngValue]="cat.id">
+          Sous-catégories de {{ cat.name }}
+        </option>
+      </select>
+    </div>
+    <button class="btn-primary" (click)="openModal()">
+      <i class="bi bi-plus"></i> Nouvelle catégorie
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Table -->
+  <div class="data-table" *ngIf="!isLoading">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 70px">Image</th>
+          <th>Nom</th>
+          <th>Slug</th>
+          <th>Parent</th>
+          <th>Produits</th>
+          <th>Position</th>
+          <th>Mise en avant</th>
+          <th>Statut</th>
+          <th style="width: 120px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let category of filteredCategories">
+          <td>
+            <div class="category-thumb">
+              <img *ngIf="category.imageUrl" [src]="category.imageUrl" [alt]="category.name" />
+              <i *ngIf="!category.imageUrl" class="bi bi-folder"></i>
+            </div>
+          </td>
+          <td class="name-cell">
+            <strong>{{ category.name }}</strong>
+            <span class="muted" *ngIf="category.description">{{ category.description }}</span>
+          </td>
+          <td><code>{{ category.slug }}</code></td>
+          <td>
+            <span *ngIf="category.parentName" class="parent-badge">
+              <i class="bi bi-diagram-3"></i> {{ category.parentName }}
+            </span>
+            <span *ngIf="!category.parentName" class="muted">—</span>
+          </td>
+          <td>{{ category.productCount || 0 }}</td>
+          <td>{{ category.position }}</td>
+          <td>
+            <button
+              class="btn-icon star"
+              [class.featured]="category.isFeatured"
+              (click)="toggleFeatured(category)"
+              title="Mettre en avant">
+              <i class="bi" [class.bi-star-fill]="category.isFeatured" [class.bi-star]="!category.isFeatured"></i>
+            </button>
+          </td>
+          <td>
+            <span class="badge" [class.active]="category.isActive" [class.inactive]="!category.isActive">
+              {{ category.isActive ? 'Actif' : 'Inactif' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" title="Modifier" (click)="openModal(category)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn-icon" title="Activer/Désactiver" (click)="toggleStatus(category)">
+              <i class="bi" [class.bi-eye]="category.isActive" [class.bi-eye-slash]="!category.isActive"></i>
+            </button>
+            <button class="btn-icon delete" title="Supprimer" (click)="remove(category)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="empty-state" *ngIf="filteredCategories.length === 0">
+      <i class="bi bi-folder"></i>
+      <p *ngIf="categories.length === 0">Aucune catégorie</p>
+      <p *ngIf="categories.length > 0">Aucune catégorie ne correspond aux filtres</p>
+      <button class="btn-primary" *ngIf="categories.length === 0" (click)="openModal()">
+        Créer une catégorie
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editing ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h2>
+        <button class="close-btn" (click)="closeModal()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" [(ngModel)]="form.name" placeholder="Ex: Robes" />
+          </div>
+          <div class="form-group">
+            <label>Slug</label>
+            <input type="text" [(ngModel)]="form.slug" placeholder="ex: robes (auto si vide)" />
+            <span class="hint">URL conviviale de la catégorie</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="form.description" rows="2" placeholder="Description courte de la catégorie"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Catégorie parente</label>
+            <select [(ngModel)]="form.parentId">
+              <option [ngValue]="null">Aucune (catégorie racine)</option>
+              <option *ngFor="let cat of parentCandidates" [ngValue]="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Position</label>
+            <input type="number" [(ngModel)]="form.position" min="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Image (URL)</label>
+            <input type="text" [(ngModel)]="form.imageUrl" placeholder="https://..." />
+          </div>
+          <div class="form-group">
+            <label>Bannière (URL)</label>
+            <input type="text" [(ngModel)]="form.bannerUrl" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mots-clés (SEO)</label>
+          <input type="text" [(ngModel)]="form.keywords" placeholder="mode, robe, soirée" />
+        </div>
+
+        <div class="form-group">
+          <label>Meta title</label>
+          <input type="text" [(ngModel)]="form.metaTitle" placeholder="Titre SEO" />
+        </div>
+
+        <div class="form-group">
+          <label>Meta description</label>
+          <textarea [(ngModel)]="form.metaDescription" rows="2" placeholder="Description SEO"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="form.isActive" />
+              Catégorie active
+            </label>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="form.isFeatured" />
+              Mettre en avant
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()" [disabled]="isSaving">Annuler</button>
+        <button class="btn-primary" (click)="save()" [disabled]="isSaving">
+          <span *ngIf="isSaving"><i class="bi bi-arrow-repeat spin"></i> Enregistrement...</span>
+          <span *ngIf="!isSaving">{{ editing ? 'Mettre à jour' : 'Créer' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

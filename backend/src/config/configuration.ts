@@ -67,6 +67,18 @@ export default () => ({
     enabled: process.env.EMAIL_ENABLED !== 'false',
   },
 
+  sms: {
+    // console = dev-default, logs only. twilio = real Twilio REST API. infobip = generic HTTP Basic provider.
+    provider: process.env.SMS_PROVIDER || 'console',
+    enabled: process.env.SMS_ENABLED === 'true',
+    fromNumber: process.env.SMS_FROM || 'Barsha',
+    defaultCountryCode: process.env.SMS_DEFAULT_COUNTRY_CODE || '+216', // Tunisia
+    twilioAccountSid: process.env.SMS_TWILIO_ACCOUNT_SID || '',
+    twilioAuthToken: process.env.SMS_TWILIO_AUTH_TOKEN || '',
+    infobipBaseUrl: process.env.SMS_INFOBIP_BASE_URL || '',
+    infobipApiKey: process.env.SMS_INFOBIP_API_KEY || '',
+  },
+
   app: {
     url: process.env.APP_URL || 'http://localhost:8000',
     frontendUrl:
@@ -89,8 +101,28 @@ export default () => ({
       parseInt(process.env.ALERTS_STOCK_CHECK_INTERVAL, 10) || 300,
   },
 
+  shipping: {
+    firstDelivery: {
+      apiKey: process.env.FIRST_DELIVERY_API_KEY || '',
+      apiUrl: process.env.FIRST_DELIVERY_API_URL || 'https://api.firstdelivery.tn/v1',
+    },
+    aramex: {
+      accountNumber: process.env.ARAMEX_ACCOUNT_NUMBER || '',
+      username: process.env.ARAMEX_USERNAME || '',
+      password: process.env.ARAMEX_PASSWORD || '',
+      apiUrl: process.env.ARAMEX_API_URL || 'https://ws.aramex.net/ShippingAPI.V2',
+    },
+  },
+
   admin: {
     email: process.env.ADMIN_EMAIL || 'admin@barsha.com.tn',
     password: process.env.ADMIN_PASSWORD || 'admin123',
+  },
+
+  fiscal: {
+    issuerMatricule: process.env.FISCAL_ISSUER_MATRICULE || '0000000A/A/M/000',
+    ttnEnabled: process.env.FISCAL_TTN_ENABLED === 'true',
+    ttnEndpoint: process.env.FISCAL_TTN_ENDPOINT || '',
+    ttnApiKey: process.env.FISCAL_TTN_API_KEY || '',
   },
 });

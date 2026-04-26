@@ -17,6 +17,12 @@ import { AnalyticsService } from '../../../services/analytics.service';
 import { BreadcrumbComponent } from '../../commun/breadcrumb/breadcrumb.component';
 import { PDPRecommendationsComponent } from '../../commun/next-gen-recommendations';
 import { RecentlyViewedService } from '../../../services/recently-viewed.service';
+import { FunnelService } from '../../../services/funnel.service';
+import { CompleteOutfitComponent } from '../../commun/complete-outfit/complete-outfit.component';
+import { UgcStripComponent } from '../../commun/ugc-strip/ugc-strip.component';
+import { ReferralShareComponent } from '../../commun/referral-share/referral-share.component';
+import { SizeRecommenderComponent } from '../../commun/size-recommender/size-recommender.component';
+import { PreorderCtaComponent } from '../../commun/preorder-cta/preorder-cta.component';
 import { ProductAlertComponent } from '../../commun/product-alert/product-alert.component';
 import { CompleteTheLookComponent } from '../../commun/complete-the-look/complete-the-look.component';
 import { ProductReviewsComponent } from '../../commun/product-reviews/product-reviews.component';
@@ -53,7 +59,7 @@ interface Produit {
 @Component({
   selector: 'app-detail-produit',
   standalone: true,
-  imports: [FormsModule, CommonModule, CarouselModule, RouterModule, ToastModule, BreadcrumbComponent, PDPRecommendationsComponent, ProductAlertComponent, CompleteTheLookComponent, ProductReviewsComponent, RecentlyViewedComponent, SizeGuideModalComponent, ViewersBadgeComponent, VirtualTryOnComponent, ProductQAComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent, StockAlertButtonComponent],
+  imports: [FormsModule, CommonModule, CarouselModule, RouterModule, ToastModule, BreadcrumbComponent, PDPRecommendationsComponent, ProductAlertComponent, CompleteTheLookComponent, ProductReviewsComponent, RecentlyViewedComponent, SizeGuideModalComponent, ViewersBadgeComponent, VirtualTryOnComponent, ProductQAComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent, StockAlertButtonComponent, CompleteOutfitComponent, UgcStripComponent, ReferralShareComponent, SizeRecommenderComponent, PreorderCtaComponent],
   templateUrl: './detail-produit.component.html',
   styleUrls: ['./detail-produit.component.scss'],
   providers: [MessageService, AnalyticsService],
@@ -283,12 +289,16 @@ export class DetailProduitComponent implements OnInit {
     private scrollPositionService: ScrollPositionService,
     private recentlyViewedService: RecentlyViewedService,
     private comparisonService: ProductComparisonService,
-    private authService: AuthService
+    private authService: AuthService,
+    private funnel: FunnelService
   ) { }
 
   ngOnInit(): void {
     this.isUserLoggedIn = !!localStorage.getItem('jwt');
     this.loadProduct();
+    // Wave 2: funnel tracking — VIEW_PRODUCT (with productId once resolved)
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) this.funnel.track('VIEW_PRODUCT', id);
 
     // Initialize mobile zoom functionality
     this.initMobileZoom();
@@ -1313,6 +1323,19 @@ export class DetailProduitComponent implements OnInit {
             : 'Vêtement';
 
           this.titleService.setSpecificTitle(`${product.title}-${titlePrefix}`);
+
+          // Apply backend SEO fields (metaTitle, metaDescription, keywords) when present
+          const p: any = product;
+          const img = p.firstImageUrl || (this.product as any)?.visuelUrl || undefined;
+          this.titleService.setSeo({
+            metaTitle: p.metaTitle || null,
+            metaDescription: p.metaDescription || null,
+            keywords: p.keywords || null,
+            fallbackTitle: `${product.title} - ${titlePrefix}`,
+            fallbackDescription: p.description || `${product.title} disponible sur Barsha. Livraison en Tunisie.`,
+            imageUrl: img,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+          });
 
           this.isLoading = false;
         } else {

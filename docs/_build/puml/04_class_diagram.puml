@@ -1,0 +1,214 @@
+@startuml class_diagram
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ClassFontSize 11
+skinparam Padding 4
+skinparam ClassBackgroundColor #FAFCFE
+skinparam ClassBorderColor #4F6D8C
+skinparam ArrowColor #4F6D8C
+hide circle
+title Diagramme de classes (extrait — domaine commerce, IA, marketplace)
+
+class User {
+  +id: number
+  +email: string
+  +password_hash: string
+  +role: UserRole
+  +first_name: string
+  +last_name: string
+  +phone: string
+  +is_email_verified: bool
+  +is_phone_verified: bool
+  +created_at: datetime
+}
+
+class Address {
+  +id: number
+  +line1: string
+  +city: string
+  +postal_code: string
+  +country: string
+  +is_default: bool
+}
+
+class StyleProfile {
+  +preferred_sizes: json
+  +preferred_colors: json
+  +occasions: json
+}
+
+class Product {
+  +id: number
+  +name: string
+  +slug: string
+  +description: text
+  +price: decimal
+  +sale_price: decimal
+  +total_stock: int
+  +seller_id: number
+  +meta_title: string
+  +is_active: bool
+}
+
+class ProductVariant {
+  +id: number
+  +sku: string
+  +size: string
+  +color: string
+  +stock: int
+}
+
+class ProductImage {
+  +url: string
+  +position: int
+}
+
+class Category {
+  +id: number
+  +name: string
+  +slug: string
+  +parent_id: number
+}
+
+class Cart {
+}
+
+class CartItem {
+  +quantity: int
+  +unit_price: decimal
+}
+
+class Order {
+  +id: number
+  +order_number: string
+  +status: OrderStatus
+  +total: decimal
+  +placed_at: datetime
+  +shipping_method: string
+}
+
+class OrderItem {
+  +quantity: int
+  +unit_price: decimal
+  +seller_id: number
+}
+
+class Payment {
+  +method: PaymentMethod
+  +status: PaymentStatus
+  +amount: decimal
+  +ctp_transaction_id: string
+}
+
+class Shipment {
+  +tracking_number: string
+  +carrier: string
+  +status: ShipmentStatus
+}
+
+class Coupon {
+  +code: string
+  +discount_type: DiscountType
+  +amount: decimal
+  +valid_until: datetime
+}
+
+class Seller {
+  +id: number
+  +business_name: string
+  +legal_name: string
+  +commission_rate: decimal
+  +status: SellerStatus
+}
+
+class SellerFulfillment {
+  +order_item_id: number
+  +status: FulfillmentStatus
+  +tracking_number: string
+}
+
+class SellerPayout {
+  +period_start: date
+  +period_end: date
+  +gross_amount: decimal
+  +commission: decimal
+  +net_amount: decimal
+}
+
+class Warehouse {
+  +code: string
+  +name: string
+  +city: string
+  +is_default: bool
+}
+
+class ProductStock {
+  +quantity: int
+  +reserved: int
+  +safety_stock: int
+}
+
+class ReturnRequest {
+  +reason: string
+  +status: ReturnStatus
+}
+
+class Review {
+  +rating: int
+  +body: text
+}
+
+class GdprRequest {
+  +type: GdprRequestType
+  +status: GdprRequestStatus
+}
+
+class FraudSignal {
+  +severity: SignalSeverity
+  +signal_type: string
+}
+
+class Recommendation {
+  +strategy: string
+  +score: float
+}
+
+class LifecycleSequence {
+  +trigger_event: string
+  +steps: json
+}
+
+User "1" --> "*" Address
+User "1" --> "0..1" StyleProfile
+User "1" --> "*" Order
+User "1" --> "*" Cart
+User "1" --> "*" Review
+User "1" --> "*" GdprRequest
+
+Cart "1" --> "*" CartItem
+CartItem "*" --> "1" Product
+
+Product "*" --> "1" Category
+Product "1" --> "*" ProductVariant
+Product "1" --> "*" ProductImage
+Product "*" --> "0..1" Seller
+Product "1" --> "*" ProductStock
+ProductStock "*" --> "1" Warehouse
+
+Order "1" --> "*" OrderItem
+Order "1" --> "*" Payment
+Order "1" --> "*" Shipment
+Order "1" --> "*" ReturnRequest
+Order "*" --> "0..*" Coupon
+OrderItem "*" --> "1" Product
+OrderItem "1" --> "0..1" SellerFulfillment
+
+Seller "1" --> "*" SellerPayout
+Seller "1" --> "*" SellerFulfillment
+
+Review "*" --> "1" Product
+Recommendation "*" --> "1" User
+Recommendation "*" --> "1" Product
+
+@enduml

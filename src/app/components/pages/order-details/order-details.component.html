@@ -115,10 +115,26 @@
       </div>
     </div>
 
-    <div class="card-footer">
+    <div class="card-footer d-flex flex-wrap gap-2 align-items-center">
       <button class="btn btn-secondary" routerLink="/profile">
         Retour à mon compte
       </button>
+
+      <!-- Wave 4: Self-cancel inside the edit window -->
+      <ng-container *ngIf="canCancel && !cancelSuccess">
+        <button class="btn btn-outline-danger" (click)="selfCancelOrder()" [disabled]="cancellingOrder">
+          <i class="fas fa-ban me-1"></i>
+          {{ cancellingOrder ? 'Annulation...' : 'Annuler ma commande' }}
+        </button>
+        <small class="text-muted">
+          Annulation gratuite pendant encore {{ minutesLeftToCancel }} min
+        </small>
+      </ng-container>
+
+      <div *ngIf="cancelSuccess" class="text-success fw-semibold ms-2">
+        <i class="fas fa-check-circle me-1"></i> Commande annulée.
+      </div>
+      <div *ngIf="cancelError" class="text-danger ms-2 small">{{ cancelError }}</div>
     </div>
   </div>
 </div>

@@ -11,6 +11,10 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateOrderItemDto {
+  @IsNumber()
+  @IsOptional()
+  product_id?: number;
+
   @IsString()
   @IsOptional()
   sku?: string;

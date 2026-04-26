@@ -25,6 +25,9 @@ export class CartItem {
   @Column({ type: 'int', default: 1 })
   quantity: number;
 
+  @Column({ name: 'saved_for_later', default: false })
+  saved_for_later: boolean;
+
   @CreateDateColumn({ name: 'added_at' })
   added_at: Date;
 

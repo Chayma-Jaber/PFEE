@@ -38,6 +38,9 @@
         </button>
       </div>
 
+      <!-- Wave 4: Live autocomplete suggestions from backend -->
+      <app-search-autocomplete [query]="searchQuery"></app-search-autocomplete>
+
       <!-- Search Results -->
       <div class="search-results-dropdown" *ngIf="showSearchResults">
         <div class="search-results">

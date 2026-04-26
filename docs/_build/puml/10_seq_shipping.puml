@@ -1,0 +1,59 @@
+@startuml seq_shipping
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 12
+skinparam ArrowColor #4F6D8C
+title Diagramme de séquence — expédition & suivi de livraison
+
+actor Admin
+participant "Admin\nShippingComponent" as F
+participant "ShippingController" as SC
+participant "ShippingService" as SS
+participant "FirstDeliveryClient\n/ AramexClient" as PRV
+database MSSQL as DB
+participant "EventBusService" as EB
+participant "EmailService" as EM
+participant "SmsService" as SM
+actor Client
+participant "Angular\nOrderTrackingComponent" as TF
+
+Admin -> F : sélectionne commande\n→ "Marquer expédiée"
+F -> SC : POST /api/admin/shipping/:id/dispatch\n{carrier, weight}
+SC -> SS : createShipment(orderId, dto)
+SS -> PRV : createLabel(order)
+PRV --> SS : { trackingNumber, labelUrl }
+SS -> DB : INSERT shipments\nstatus=DISPATCHED
+SS -> DB : UPDATE orders.status=SHIPPED
+SS -> EB : emit(shipment.dispatched, {orderId, tracking})
+SS --> SC : ok
+SC --> F : 200 + tracking
+F --> Admin : étiquette PDF + numéro
+
+EB -> EM : sendShippingEmail(order, tracking)
+EM -->> Client : email "Votre commande est partie"
+EB -> SM : sendShippingSms(order, tracking)
+SM -->> Client : SMS suivi
+
+== Suivi côté client ==
+
+Client -> TF : ouvre /compte/commandes/:id/suivi
+TF -> SC : GET /api/shipping/track/:tracking
+SC -> SS : track(trackingNumber)
+SS -> PRV : GET status
+PRV --> SS : { events[], status }
+SS --> SC : timeline
+SC --> TF : 200 + JSON
+TF --> Client : timeline visuelle
+
+== Webhook livraison ==
+
+PRV -> SC : POST /api/shipping/webhook\n{tracking, status=DELIVERED}
+SC -> SS : onWebhook(payload)
+SS -> DB : UPDATE shipment.status=DELIVERED
+SS -> DB : UPDATE order.status=DELIVERED
+SS -> EB : emit(order.delivered)
+EB -> EM : sendDeliveryConfirmation
+EM -->> Client : email "Commande livrée"
+
+@enduml

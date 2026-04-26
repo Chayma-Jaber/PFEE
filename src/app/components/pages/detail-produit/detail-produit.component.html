@@ -311,6 +311,19 @@
             [limit]="2">
           </app-complete-the-look>
 
+          <!-- Wave 3: AI-powered "Complete this outfit" using bundles + style profile -->
+          <app-complete-outfit *ngIf="product?.id" [productId]="product.id"></app-complete-outfit>
+
+          <!-- Expansion Tier 1: Sizing / fit advisor -->
+          <app-size-recommender *ngIf="product?.id" [productId]="product.id"></app-size-recommender>
+
+          <!-- Expansion Tier 2: Pre-order / waitlist banner (auto-hides if no active drop) -->
+          <app-preorder-cta *ngIf="product?.id" [productId]="product.id"></app-preorder-cta>
+
+          <!-- Wave 4: Referral share + UGC social proof -->
+          <app-referral-share *ngIf="product?.id" [productId]="product.id"></app-referral-share>
+          <app-ugc-strip *ngIf="product?.id" [productId]="product.id"></app-ugc-strip>
+
           <!-- Product Reviews -->
           <app-product-reviews
             *ngIf="product?.id"

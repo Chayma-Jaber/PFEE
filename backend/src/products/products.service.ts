@@ -31,6 +31,7 @@ export class ProductsService {
     isNew?: boolean;
     brand?: string;
     categoryId?: number;
+    categorySlug?: string;
     limit?: number;
     offset?: number;
     sortBy?: string;
@@ -61,8 +62,27 @@ export class ProductsService {
     if (filters?.categoryId) {
       qb.andWhere('category.id = :categoryId', { categoryId: filters.categoryId });
     }
+    if (filters?.categorySlug) {
+      qb.andWhere('category.slug = :categorySlug', { categorySlug: filters.categorySlug });
+    }
 
-    const sortBy = filters?.sortBy || 'created_at';
+    // Map UI sort keys to entity property names (TypeORM uses entity props, not DB columns)
+    const sortKeyMap: Record<string, string> = {
+      'created_at': 'createdAt',
+      'createdAt': 'createdAt',
+      'price': 'price',
+      'current_price': 'currentPrice',
+      'currentPrice': 'currentPrice',
+      'title': 'title',
+      'view_count': 'viewCount',
+      'viewCount': 'viewCount',
+      'order_count': 'orderCount',
+      'orderCount': 'orderCount',
+      'total_stock': 'totalStock',
+      'totalStock': 'totalStock',
+    };
+    const rawSort = filters?.sortBy || 'createdAt';
+    const sortBy = sortKeyMap[rawSort] || 'createdAt';
     const sortOrder = filters?.sortOrder || 'DESC';
     qb.orderBy(`product.${sortBy}`, sortOrder);
 
@@ -99,6 +119,19 @@ export class ProductsService {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
     return product;
+  }
+
+  // Batched fetch — returns ONLY products that exist; missing ids are silently dropped.
+  // Caller can compare returned length vs requested length to detect missing items.
+  // Hard cap = 100 ids per call to keep query plans bounded.
+  async findByIds(ids: number[]): Promise<Product[]> {
+    const safeIds = (ids || []).map((x) => Number(x)).filter((x) => Number.isInteger(x) && x > 0).slice(0, 100);
+    if (safeIds.length === 0) return [];
+    return this.productRepo
+      .createQueryBuilder('p')
+      .where('p.id IN (:...ids)', { ids: safeIds })
+      .andWhere('p.is_active = :a', { a: true })
+      .getMany();
   }
 
   async findBySku(sku: string): Promise<Product> {

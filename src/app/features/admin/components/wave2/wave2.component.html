@@ -1,0 +1,279 @@
+<div class="wave2">
+  <div class="header">
+    <div>
+      <h1>Outils avancés <span class="chip">Wave 2</span></h1>
+      <p>11 outils premium — tendances, pricing intelligent, santé du catalogue, automation</p>
+    </div>
+  </div>
+
+  <div class="alert ok" *ngIf="ok"><i class="fas fa-check"></i> {{ ok }}</div>
+  <div class="alert err" *ngIf="err"><i class="fas fa-exclamation"></i> {{ err }}</div>
+
+  <div class="tabs">
+    <button [class.active]="tab==='trending'" (click)="switch('trending')"><i class="fas fa-fire"></i> Trending</button>
+    <button [class.active]="tab==='reorder'" (click)="switch('reorder')"><i class="fas fa-boxes-stacked"></i> Réappro suggéré</button>
+    <button [class.active]="tab==='images'" (click)="switch('images')"><i class="fas fa-images"></i> Santé images</button>
+    <button [class.active]="tab==='funnel'" (click)="switch('funnel')"><i class="fas fa-filter"></i> Funnel conversion</button>
+    <button [class.active]="tab==='canned'" (click)="switch('canned')"><i class="fas fa-comment-dots"></i> Réponses rapides</button>
+    <button [class.active]="tab==='synonyms'" (click)="switch('synonyms')"><i class="fas fa-language"></i> Synonymes</button>
+    <button [class.active]="tab==='featured'" (click)="switch('featured')"><i class="fas fa-star"></i> Rotation vedettes</button>
+    <button [class.active]="tab==='autocancel'" (click)="switch('autocancel')"><i class="fas fa-ban"></i> Auto-annulation</button>
+    <button [class.active]="tab==='aidesc'" (click)="switch('aidesc')"><i class="fas fa-robot"></i> Descriptions IA</button>
+    <button [class.active]="tab==='tags'" (click)="switch('tags')"><i class="fas fa-tags"></i> Tags en masse</button>
+    <button [class.active]="tab==='scheduled'" (click)="switch('scheduled')"><i class="fas fa-clock"></i> Campagnes planifiées</button>
+  </div>
+
+  <!-- TRENDING -->
+  <section *ngIf="tab==='trending'">
+    <h2>Produits tendance</h2>
+    <div class="toolbar">
+      <label>Fenêtre (jours):</label>
+      <input type="number" [(ngModel)]="trendingDays" min="1" max="90" />
+      <button class="btn" (click)="loadTrending()">Actualiser</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>#</th><th>Produit</th><th>SKU</th><th>Prix</th><th>Commandes récentes</th><th>Vues</th><th>Score</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let t of trending">
+          <td><strong>{{ t.rank }}</strong></td>
+          <td><img *ngIf="t.firstImageUrl" [src]="t.firstImageUrl" class="thumb" /> {{ t.title }}</td>
+          <td><code>{{ t.sku }}</code></td>
+          <td>{{ t.currentPrice }} TND</td>
+          <td><strong>{{ t.recentOrders }}</strong></td>
+          <td>{{ t.viewCount }}</td>
+          <td><span class="score">{{ t.trendingScore }}</span></td>
+        </tr>
+        <tr *ngIf="trending.length === 0"><td colspan="7" class="muted">Aucune donnée</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- REORDER -->
+  <section *ngIf="tab==='reorder'">
+    <h2>Réapprovisionnement suggéré</h2>
+    <div class="toolbar">
+      <label>Seuil stock:</label>
+      <input type="number" [(ngModel)]="reorderThreshold" min="1" />
+      <button class="btn" (click)="loadReorder()">Actualiser</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Produit</th><th>Stock</th><th>Ventes 30j</th><th>Jours restants</th><th>Urgence</th><th>Qté suggérée</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let r of reorder">
+          <td><img *ngIf="r.firstImageUrl" [src]="r.firstImageUrl" class="thumb" /> {{ r.title }}</td>
+          <td><strong>{{ r.currentStock }}</strong></td>
+          <td>{{ r.salesLast30Days }}</td>
+          <td>{{ r.daysLeft ?? '—' }}</td>
+          <td><span class="urgency" [style.background]="urgencyColor(r.urgency)">{{ r.urgency }}</span></td>
+          <td><strong>{{ r.suggestedReorder }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- IMAGES -->
+  <section *ngIf="tab==='images'">
+    <h2>Santé des images produits</h2>
+    <div *ngIf="imageHealth" class="health-grid">
+      <div class="stat-card healthy"><div class="big">{{ imageHealth.healthy }}</div><div>Produits OK</div></div>
+      <div class="stat-card warn"><div class="big">{{ imageHealth.missingImages }}</div><div>Images manquantes</div></div>
+      <div class="stat-card warn2"><div class="big">{{ imageHealth.placeholderImages }}</div><div>Placeholders</div></div>
+      <div class="stat-card total"><div class="big">{{ imageHealth.totalProducts }}</div><div>Total produits</div></div>
+    </div>
+    <div *ngIf="imageHealth?.missing?.length" class="issue-list">
+      <h4>Produits sans image</h4>
+      <ul>
+        <li *ngFor="let p of imageHealth.missing">#{{ p.id }} · {{ p.title }} · {{ p.sku }}</li>
+      </ul>
+    </div>
+    <div *ngIf="imageHealth?.placeholder?.length" class="issue-list">
+      <h4>Produits avec image placeholder</h4>
+      <ul>
+        <li *ngFor="let p of imageHealth.placeholder">#{{ p.id }} · {{ p.title }} · {{ p.url }}</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FUNNEL -->
+  <section *ngIf="tab==='funnel'">
+    <h2>Analyse du funnel de conversion</h2>
+    <div class="toolbar">
+      <label>Fenêtre (jours):</label>
+      <input type="number" [(ngModel)]="funnelDays" min="1" max="365" />
+      <button class="btn" (click)="loadFunnel()">Actualiser</button>
+    </div>
+    <div *ngIf="funnel">
+      <div class="funnel-chart">
+        <div class="fbar-row" *ngFor="let row of funnelRows()">
+          <div class="fbar-label">{{ row.label }}</div>
+          <div class="fbar-wrap">
+            <div class="fbar" [ngClass]="row.css" [style.width.%]="row.pct">
+              <span class="fbar-count">{{ row.count }}</span>
+            </div>
+          </div>
+          <div class="fbar-pct">{{ row.pct }}%</div>
+        </div>
+      </div>
+      <div class="rates">
+        <div><b>Vue → Panier:</b> {{ funnel.rates?.viewProductToCart || 0 }}%</div>
+        <div><b>Panier → Checkout:</b> {{ funnel.rates?.cartToCheckout || 0 }}%</div>
+        <div><b>Checkout → Achat:</b> {{ funnel.rates?.checkoutToPurchase || 0 }}%</div>
+        <div class="highlight"><b>Conversion globale:</b> {{ funnel.rates?.overallConversion || 0 }}%</div>
+      </div>
+      <div class="exit-box" *ngIf="funnel.steps?.EXIT_INTENT">
+        <i class="fas fa-sign-out-alt"></i> <strong>{{ funnel.steps.EXIT_INTENT }}</strong> intentions de sortie détectées
+      </div>
+    </div>
+  </section>
+
+  <!-- CANNED RESPONSES -->
+  <section *ngIf="tab==='canned'">
+    <h2>Réponses rapides (support)</h2>
+    <div class="card">
+      <h4>Nouvelle réponse</h4>
+      <input type="text" [(ngModel)]="newCanned.title" placeholder="Titre" />
+      <textarea [(ngModel)]="newCanned.body" rows="3" placeholder="Contenu de la réponse"></textarea>
+      <select [(ngModel)]="newCanned.category">
+        <option value="general">Général</option>
+        <option value="delivery">Livraison</option>
+        <option value="return">Retour</option>
+        <option value="size">Taille</option>
+        <option value="quality">Qualité</option>
+        <option value="promotion">Promotion</option>
+        <option value="payment">Paiement</option>
+      </select>
+      <button class="btn" (click)="createCanned()">Ajouter</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Titre</th><th>Catégorie</th><th>Utilisations</th><th>Contenu</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of canned">
+          <td><strong>{{ c.title }}</strong></td>
+          <td><span class="tag">{{ c.category }}</span></td>
+          <td>{{ c.usage_count }}</td>
+          <td class="ellipsis">{{ c.body }}</td>
+          <td><button class="del" (click)="deleteCanned(c)"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SYNONYMS -->
+  <section *ngIf="tab==='synonyms'">
+    <h2>Synonymes de recherche</h2>
+    <div class="card">
+      <h4>Nouveau synonyme</h4>
+      <input type="text" [(ngModel)]="newSyn.term" placeholder="Terme principal (ex: robe)" />
+      <input type="text" [(ngModel)]="newSyn.synonymsRaw" placeholder="Synonymes séparés par virgule (ex: dress, tunique)" />
+      <button class="btn" (click)="createSynonym()">Ajouter</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Terme</th><th>Synonymes</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let s of synonyms">
+          <td><strong>{{ s.term }}</strong></td>
+          <td>{{ s.synonyms?.join(', ') }}</td>
+          <td><span class="tag" [class.on]="s.is_active">{{ s.is_active ? 'Actif' : 'Inactif' }}</span></td>
+          <td><button class="del" (click)="deleteSynonym(s)"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- FEATURED ROTATION -->
+  <section *ngIf="tab==='featured'">
+    <h2>Rotation des produits vedettes</h2>
+    <div class="card">
+      <p>Sélectionne automatiquement les <strong>produits les plus consultés et commandés</strong> pour les mettre en vedette.</p>
+      <div class="form-row">
+        <label>Nombre à mettre en vedette:</label>
+        <input type="number" [(ngModel)]="featuredCount" min="1" max="30" />
+        <button class="btn" (click)="rotateFeatured()"><i class="fas fa-sync"></i> Rotation</button>
+      </div>
+      <div *ngIf="featuredResult" class="result">
+        <h4>Produits mis en vedette ({{ featuredResult.featured.length }}):</h4>
+        <ul><li *ngFor="let p of featuredResult.featured">#{{ p.id }} · {{ p.title }} <small>({{ p.views }} vues)</small></li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTO-CANCEL -->
+  <section *ngIf="tab==='autocancel'">
+    <h2>Auto-annulation commandes périmées</h2>
+    <div class="card">
+      <p>Annule toutes les commandes <strong>PENDING</strong> plus anciennes que le seuil. Un job cron s'exécute aussi automatiquement toutes les heures (24h par défaut).</p>
+      <div class="form-row">
+        <label>Seuil (heures):</label>
+        <input type="number" [(ngModel)]="autoCancelHours" min="1" />
+        <button class="btn danger" (click)="cancelStale()"><i class="fas fa-ban"></i> Lancer maintenant</button>
+      </div>
+      <div *ngIf="autoCancelResult" class="result">
+        <strong>{{ autoCancelResult.cancelled }}</strong> commande(s) annulée(s) (seuil {{ autoCancelResult.thresholdHours }}h)
+      </div>
+    </div>
+  </section>
+
+  <!-- AI DESCRIPTION -->
+  <section *ngIf="tab==='aidesc'">
+    <h2>Générateur de descriptions (IA)</h2>
+    <div class="card">
+      <p>Génère automatiquement description, meta title et meta description à partir des données produit.</p>
+      <div class="form-row">
+        <label>ID produit:</label>
+        <input type="number" [(ngModel)]="aidescProductId" />
+        <button class="btn" (click)="generateDesc()"><i class="fas fa-robot"></i> Générer</button>
+      </div>
+      <div *ngIf="aidescResult" class="result">
+        <h4>Description:</h4>
+        <p>{{ aidescResult.description }}</p>
+        <h4>Meta title:</h4>
+        <p><code>{{ aidescResult.metaTitle }}</code></p>
+        <h4>Meta description:</h4>
+        <p><code>{{ aidescResult.metaDescription }}</code></p>
+        <small *ngIf="aidescResult.persisted" class="ok">✓ Enregistré en base</small>
+        <small *ngIf="!aidescResult.persisted" class="muted">(Description existante non modifiée)</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAGS -->
+  <section *ngIf="tab==='tags'">
+    <h2>Tags en masse (saisons, collections)</h2>
+    <div class="card">
+      <p>Ajoute ou supprime des tags sur plusieurs produits en une opération.</p>
+      <label>IDs produits (séparés par virgule):</label>
+      <input type="text" [(ngModel)]="tagProductIds" placeholder="1, 2, 5, 10" />
+      <label>Tags à ajouter:</label>
+      <input type="text" [(ngModel)]="tagAdd" placeholder="summer2026, sale" />
+      <label>Tags à retirer:</label>
+      <input type="text" [(ngModel)]="tagRemove" placeholder="winter2025" />
+      <button class="btn" (click)="bulkTag()"><i class="fas fa-tags"></i> Appliquer</button>
+      <div *ngIf="tagResult" class="result">✓ {{ tagResult.updated }} produit(s) mis à jour</div>
+    </div>
+  </section>
+
+  <!-- SCHEDULED CAMPAIGNS -->
+  <section *ngIf="tab==='scheduled'">
+    <h2>Campagnes planifiées</h2>
+    <div class="card">
+      <p>Planifie une campagne newsletter existante. Le scheduler (toutes les 5 min) l'enverra automatiquement à la date prévue.</p>
+      <div class="form-row">
+        <input type="number" [(ngModel)]="scheduleId" placeholder="ID campagne" />
+        <input type="datetime-local" [(ngModel)]="scheduleAt" />
+        <button class="btn" (click)="scheduleCamp()"><i class="fas fa-clock"></i> Planifier</button>
+      </div>
+    </div>
+    <table class="data">
+      <thead><tr><th>Nom</th><th>Sujet</th><th>Date prévue</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let s of scheduled">
+          <td>{{ s.name }}</td>
+          <td>{{ s.subject }}</td>
+          <td>{{ formatDate(s.sent_at) }}</td>
+          <td><span class="tag">{{ s.status }}</span></td>
+        </tr>
+        <tr *ngIf="scheduled.length === 0"><td colspan="4" class="muted">Aucune campagne planifiée</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>

@@ -14,15 +14,18 @@ import { CartService } from '../../../services/cart.service';
 import { OrderService } from '../../../services/order.service';
 import { Router } from '@angular/router';
 import { TitleService } from '../../../services/title.service';
+import { FunnelService } from '../../../services/funnel.service';
 import { GiftCardService } from '../gift-card/gift-card.service';
 import { environementDev } from '../../../../environements/environementDev';
 import { AnalyticsService } from '../../../services/analytics.service';
 import { CartRecommendationsNextGenComponent } from '../../commun/next-gen-recommendations';
 import { CheckoutRewardsComponent, RewardsDiscount } from '../../commun/checkout-rewards/checkout-rewards.component';
+import { PremiumCheckoutOptionsComponent, PremiumOptions } from '../../commun/premium-checkout-options/premium-checkout-options.component';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-checkout',
-  imports: [RouterModule, CommonModule, ToastModule, FormsModule, CouponToastComponent, CartRecommendationsNextGenComponent, CheckoutRewardsComponent],
+  imports: [RouterModule, CommonModule, ToastModule, FormsModule, CouponToastComponent, CartRecommendationsNextGenComponent, CheckoutRewardsComponent, PremiumCheckoutOptionsComponent],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
   providers: [MessageService],
@@ -82,6 +85,28 @@ export class CheckoutComponent implements OnInit {
     this.calculateTotals();
   }
 
+  // Wave 4 premium options (gift wrap, delivery slot, click & collect)
+  premiumOpts: PremiumOptions = {
+    giftWrap: false,
+    giftMessage: '',
+    deliverySlotId: null,
+    pickupLocationId: null,
+    deliveryMode: 'HOME'
+  };
+
+  onPremiumOptionsChanged(opts: PremiumOptions): void {
+    this.premiumOpts = opts;
+    // Keep the legacy deliveryMethod in sync with the premium mode
+    if (opts.deliveryMode === 'PICKUP' && this.deliveryMethod !== 'store') {
+      this.deliveryMethod = 'store';
+      this.onDeliveryMethodChange();
+    }
+  }
+
+  get premiumCity(): string {
+    return (this.selectedAddress?.city || this.selectedStore?.city || 'Tunis') as string;
+  }
+
 
 
   constructor(
@@ -94,12 +119,38 @@ export class CheckoutComponent implements OnInit {
     private orderService: OrderService,
     private titleService: TitleService,
     private giftCardService: GiftCardService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private funnel: FunnelService,
+    private http: HttpClient
   ) { }
+
+  // Wave 4: persist gift wrap, delivery slot, pickup on the NestJS side after order creation.
+  // Fire-and-forget — the legacy order has already been committed so this must not block.
+  private persistPremiumOptions(orderId: number) {
+    const hasAnyOpt =
+      this.premiumOpts.giftWrap ||
+      !!this.premiumOpts.giftMessage ||
+      this.premiumOpts.deliverySlotId != null ||
+      this.premiumOpts.pickupLocationId != null;
+    if (!hasAnyOpt) return;
+    const token = localStorage.getItem('jwt');
+    if (!token) return;
+    this.http.post(
+      `${environementDev.api}/api/storefront/w4/orders/${orderId}/premium-options`,
+      {
+        giftWrap: this.premiumOpts.giftWrap,
+        giftMessage: this.premiumOpts.giftMessage,
+        deliverySlotId: this.premiumOpts.deliverySlotId,
+        pickupLocationId: this.premiumOpts.pickupLocationId,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).subscribe({ next: () => {}, error: (e) => console.warn('premium-options attach failed', e) });
+  }
 
 
   ngOnInit() {
     this.titleService.setSpecificTitle('Finaliser ma commande');
+    this.funnel.track('START_CHECKOUT');
     this.loadPaymentMethods();
     this.loadShippingMethods();
     this.loadStores();
@@ -631,6 +682,11 @@ export class CheckoutComponent implements OnInit {
         this.cartService.clearCart();
         sessionStorage.removeItem('checkoutState');
 
+        // Wave 4: persist premium options on the NestJS order row (fire-and-forget)
+        if (orderResponse?.data?.id) {
+          this.persistPremiumOptions(orderResponse.data.id);
+        }
+
         if (this.selectedPaymentMethod === 'CBE') {
           // Include orderId in redirect URL for payment verification
           const orderId = orderResponse.data.id;
@@ -775,6 +831,20 @@ export class CheckoutComponent implements OnInit {
     // Ajouter l'ID du coupon si un coupon est appliqué
     if (this.appliedCoupon) {
       payload.orderData.coupon = this.appliedCoupon.id;
+    }
+
+    // Wave 4: premium checkout options
+    if (this.premiumOpts.giftWrap) {
+      payload.orderData.giftWrap = true;
+      if (this.premiumOpts.giftMessage) {
+        payload.orderData.giftMessage = this.premiumOpts.giftMessage.slice(0, 240);
+      }
+    }
+    if (this.premiumOpts.deliverySlotId) {
+      payload.orderData.deliverySlotId = this.premiumOpts.deliverySlotId;
+    }
+    if (this.premiumOpts.pickupLocationId) {
+      payload.orderData.pickupLocationId = this.premiumOpts.pickupLocationId;
     }
 
     return payload;

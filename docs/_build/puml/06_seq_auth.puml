@@ -1,0 +1,57 @@
+@startuml seq_auth
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 14
+skinparam BoxPadding 8
+skinparam ArrowColor #4F6D8C
+skinparam SequenceLifeLineBorderColor #4F6D8C
+title Diagramme de séquence — authentification (login + JWT refresh)
+
+actor "Utilisateur" as U
+participant "Angular SPA\nAuthService" as F
+participant "AuthController\n(NestJS)" as A
+participant "AuthService" as AS
+participant "UsersService" as US
+database "MSSQL\nusers" as DB
+participant "JwtService" as J
+
+U -> F : saisit email + mot de passe
+F -> A : POST /api/auth/login\n{email, password}
+A -> AS : login(dto)
+AS -> US : findByEmail(email)
+US -> DB : SELECT * FROM users WHERE email=?
+DB --> US : user
+US --> AS : user
+AS -> AS : bcrypt.compare(password, user.hash)
+alt mot de passe invalide
+  AS --> A : UnauthorizedException
+  A --> F : 401
+  F --> U : message d'erreur
+else identifiants valides
+  AS -> J : sign({sub, role}, accessTTL)
+  AS -> J : sign({sub}, refreshTTL)
+  J --> AS : access_token, refresh_token
+  AS --> A : { user, access, refresh }
+  A --> F : 200 OK + tokens
+  F -> F : localStorage.setItem('jwt')
+  F --> U : redirection / dashboard
+end
+
+== Plus tard : access_token expiré ==
+
+F -> A : GET /api/orders/me\nAuthorization: Bearer <expired>
+A -> J : verify(access_token)
+J --> A : TokenExpiredError
+A --> F : 401
+F -> A : POST /api/auth/refresh\n{ refresh_token }
+A -> AS : refresh(token)
+AS -> J : verify(refresh_token)
+J --> AS : { sub }
+AS -> J : sign(new access_token)
+AS --> A : { access_token }
+A --> F : 200 OK
+F -> A : GET /api/orders/me\nAuthorization: Bearer <new>
+A --> F : 200 + données
+
+@enduml

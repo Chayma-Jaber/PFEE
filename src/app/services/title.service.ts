@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
@@ -44,9 +44,46 @@ export class TitleService {
 
   constructor(
     private title: Title,
+    private meta: Meta,
     private router: Router,
     private activatedRoute: ActivatedRoute
   ) {}
+
+  /**
+   * Set page SEO from entity SEO fields (product or category).
+   * Falls back to fallback params when the entity has no metaTitle/metaDescription.
+   */
+  setSeo(opts: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    keywords?: string | null;
+    fallbackTitle?: string;
+    fallbackDescription?: string;
+    imageUrl?: string;
+    url?: string;
+  }) {
+    const t = (opts.metaTitle && opts.metaTitle.trim()) || opts.fallbackTitle || 'Barsha - Tunisie';
+    const d = (opts.metaDescription && opts.metaDescription.trim()) ||
+              opts.fallbackDescription ||
+              'Découvrez notre collection de mode premium chez Barsha - Tunisie.';
+
+    this.title.setTitle(`${t} | Barsha - Tunisie`);
+    this.meta.updateTag({ name: 'description', content: d });
+    if (opts.keywords) this.meta.updateTag({ name: 'keywords', content: opts.keywords });
+
+    // Open Graph
+    this.meta.updateTag({ property: 'og:title', content: t });
+    this.meta.updateTag({ property: 'og:description', content: d });
+    if (opts.imageUrl) this.meta.updateTag({ property: 'og:image', content: opts.imageUrl });
+    if (opts.url) this.meta.updateTag({ property: 'og:url', content: opts.url });
+    this.meta.updateTag({ property: 'og:type', content: 'product' });
+
+    // Twitter
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: t });
+    this.meta.updateTag({ name: 'twitter:description', content: d });
+    if (opts.imageUrl) this.meta.updateTag({ name: 'twitter:image', content: opts.imageUrl });
+  }
 
   // Initialiser le service pour surveiller les changements de route
   initTitleService() {

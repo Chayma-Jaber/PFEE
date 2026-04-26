@@ -1,6 +1,10 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { MeiliSearch, Index } from 'meilisearch';
+import { SearchQuery } from '../analytics/entities/search-query.entity';
+import { SearchSynonym } from './entities/search-synonym.entity';
 
 /**
  * Map of legacy / alternate index names to the real Meilisearch index name.
@@ -45,7 +49,52 @@ export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
   private client: MeiliSearch;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional()
+    @InjectRepository(SearchQuery)
+    private readonly searchQueryRepo?: Repository<SearchQuery>,
+    @Optional()
+    @InjectRepository(SearchSynonym)
+    private readonly synonymRepo?: Repository<SearchSynonym>,
+  ) {}
+
+  /** Expand query with synonyms. Used by Meilisearch as space-separated alternatives. */
+  async expandQuery(q: string): Promise<string> {
+    if (!q || !q.trim() || !this.synonymRepo) return q;
+    try {
+      const qLower = q.toLowerCase();
+      const synonyms = await this.synonymRepo.find({ where: { is_active: true } });
+      const extras: string[] = [];
+      for (const s of synonyms) {
+        if (qLower.includes(s.term)) {
+          (s.synonyms || []).forEach((alt) => { if (!qLower.includes(alt)) extras.push(alt); });
+        }
+      }
+      if (extras.length === 0) return q;
+      // Meilisearch's default is AND-tokens; append alternatives to broaden match.
+      return q + ' ' + extras.slice(0, 5).join(' ');
+    } catch {
+      return q;
+    }
+  }
+
+  /** Fire-and-forget analytics write. Never throws. */
+  private async trackQuery(query: string, resultCount: number, indexName: string): Promise<void> {
+    if (!this.searchQueryRepo) return;
+    try {
+      await this.searchQueryRepo.save(
+        this.searchQueryRepo.create({
+          query: query.substring(0, 255),
+          result_count: resultCount,
+          index_name: indexName,
+          user_id: null,
+        }),
+      );
+    } catch {
+      // ignore
+    }
+  }
 
   async onModuleInit() {
     const host = this.configService.get<string>('meilisearch.url', 'http://localhost:7700');
@@ -241,12 +290,17 @@ export class SearchService implements OnModuleInit {
     const { q, ...rest } = params;
     const sanitized = this.sanitizeParams(rest);
 
+    const expandedQuery = await this.expandQuery(q || '');
     try {
-      const result = await index.search(q || '', sanitized);
+      const result = await index.search(expandedQuery, sanitized);
       this.logger.debug(
         `Search on "${resolved}" returned ${result.hits?.length ?? 0} hits ` +
         `(estimated total: ${result.estimatedTotalHits ?? result.totalHits ?? '?'})`,
       );
+      // Fire-and-forget analytics tracking for product searches with a real query
+      if ((q || '').trim() && (resolved === 'products')) {
+        this.trackQuery(q!.trim(), result.hits?.length ?? 0, resolved).catch(() => {});
+      }
       return result;
     } catch (error: any) {
       const msg: string = error?.message || error?.toString() || '';

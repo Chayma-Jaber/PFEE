@@ -15,7 +15,14 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node src/database/seed.ts"
+    "seed": "ts-node src/database/seed.ts",
+    "build:scripts": "tsc scripts/run-migrations.ts --outDir dist/scripts --target es2021 --module commonjs --moduleResolution node --esModuleInterop --experimentalDecorators --emitDecoratorMetadata --skipLibCheck",
+    "migrate": "ts-node scripts/run-migrations.ts",
+    "migrate:dry": "ts-node scripts/run-migrations.ts --dry-run",
+    "migrate:rollback": "ts-node scripts/run-migrations.ts --rollback",
+    "migrate:prod": "node dist/scripts/run-migrations.js",
+    "migrate:prod:dry": "node dist/scripts/run-migrations.js --dry-run",
+    "migrate:prod:rollback": "node dist/scripts/run-migrations.js --rollback"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

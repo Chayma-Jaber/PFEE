@@ -1,0 +1,390 @@
+<div class="admin-advanced">
+  <div class="page-header">
+    <h1>Fonctionnalités avancées</h1>
+    <p>10 outils premium: Client 360, journal, analytics, pricing, SEO, campagnes…</p>
+  </div>
+
+  <div class="alert success" *ngIf="successMessage"><i class="fas fa-check"></i> {{ successMessage }}</div>
+  <div class="alert error" *ngIf="errorMessage"><i class="fas fa-exclamation"></i> {{ errorMessage }}</div>
+
+  <div class="tabs">
+    <button [class.active]="tab==='customer360'" (click)="switchTab('customer360')"><i class="fas fa-user-circle"></i> Client 360°</button>
+    <button [class.active]="tab==='activity'" (click)="switchTab('activity')"><i class="fas fa-clipboard-list"></i> Journal d'activité</button>
+    <button [class.active]="tab==='search'" (click)="switchTab('search')"><i class="fas fa-search"></i> Analytics recherche</button>
+    <button [class.active]="tab==='abandoned'" (click)="switchTab('abandoned')"><i class="fas fa-shopping-cart"></i> Paniers abandonnés</button>
+    <button [class.active]="tab==='stock'" (click)="switchTab('stock')"><i class="fas fa-warehouse"></i> Mouvements stock</button>
+    <button [class.active]="tab==='csv'" (click)="switchTab('csv')"><i class="fas fa-file-csv"></i> Import/Export CSV</button>
+    <button [class.active]="tab==='campaigns'" (click)="switchTab('campaigns')"><i class="fas fa-envelope"></i> Campagnes</button>
+    <button [class.active]="tab==='segments'" (click)="switchTab('segments')"><i class="fas fa-users-cog"></i> Segments clients</button>
+    <button [class.active]="tab==='seo'" (click)="switchTab('seo')"><i class="fas fa-search-plus"></i> SEO</button>
+    <button [class.active]="tab==='pricing'" (click)="switchTab('pricing')"><i class="fas fa-tags"></i> Règles de prix</button>
+  </div>
+
+  <!-- 1. Customer 360 -->
+  <section *ngIf="tab==='customer360'">
+    <h2>Fiche client 360°</h2>
+    <div class="toolbar">
+      <input type="number" [(ngModel)]="c360UserId" placeholder="ID client" />
+      <button class="btn-primary" (click)="loadCustomer360()">Charger</button>
+    </div>
+    <div class="c360" *ngIf="c360Data">
+      <div class="profile">
+        <div class="avatar">{{ (c360Data.user.firstName?.[0] || '?').toUpperCase() }}</div>
+        <div>
+          <h3>{{ c360Data.user.firstName }} {{ c360Data.user.lastName }}</h3>
+          <p>{{ c360Data.user.email }} · {{ c360Data.user.phone || '—' }}</p>
+          <span class="segment-badge" [class]="'seg-'+c360Data.summary.segment">{{ c360Data.summary.segment }}</span>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div><span>Commandes</span><strong>{{ c360Data.summary.orderCount }}</strong></div>
+        <div><span>CA total</span><strong>{{ c360Data.summary.totalSpent }} TND</strong></div>
+        <div><span>Panier moyen</span><strong>{{ c360Data.summary.averageOrderValue }} TND</strong></div>
+        <div><span>Jours depuis dernière cmd.</span><strong>{{ c360Data.summary.daysSinceLastOrder ?? '—' }}</strong></div>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <h4>Fidélité</h4>
+          <p *ngIf="c360Data.loyalty">{{ c360Data.loyalty.tier }} · {{ c360Data.loyalty.availablePoints }} points</p>
+          <p *ngIf="!c360Data.loyalty" class="muted">Pas de compte fidélité</p>
+        </div>
+        <div class="card">
+          <h4>Commandes récentes ({{ c360Data.orders.length }})</h4>
+          <ul>
+            <li *ngFor="let o of $any(c360Data).orders.slice(0,5)">
+              <strong>{{ o.reference }}</strong> · {{ o.status }} · {{ o.totalAmount }} TND
+              <small>{{ formatDate(o.createdAt) }}</small>
+            </li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Tickets support ({{ c360Data.tickets.length }})</h4>
+          <ul>
+            <li *ngFor="let t of $any(c360Data).tickets.slice(0,5)">
+              <strong>{{ t.subject }}</strong> · {{ t.status }}
+            </li>
+            <li *ngIf="c360Data.tickets.length === 0" class="muted">Aucun ticket</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Avis ({{ c360Data.reviews.length }})</h4>
+          <ul>
+            <li *ngFor="let r of $any(c360Data).reviews.slice(0,5)">
+              <strong>{{ r.rating }}★</strong> · {{ r.title }}
+              <span class="tag" [class.on]="r.isApproved">{{ r.isApproved ? 'Approuvé' : 'En attente' }}</span>
+            </li>
+            <li *ngIf="c360Data.reviews.length === 0" class="muted">Aucun avis</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p *ngIf="!c360Data && !isLoading" class="muted">Saisissez un ID client pour voir sa fiche complète.</p>
+  </section>
+
+  <!-- 2. Activity log -->
+  <section *ngIf="tab==='activity'">
+    <h2>Journal d'activité admin</h2>
+    <div class="toolbar">
+      <input type="text" [(ngModel)]="activityActionFilter" placeholder="Filtrer par action (ex: DELETE)" />
+      <button class="btn-primary" (click)="activityPage=1;loadActivity()">Filtrer</button>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Ressource</th><th>ID</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let l of activityItems">
+          <td>{{ formatDate(l.timestamp) }}</td>
+          <td>{{ l.adminName }}</td>
+          <td><code>{{ l.action }}</code></td>
+          <td>{{ l.resourceType }}</td>
+          <td>{{ l.resourceId }}</td>
+        </tr>
+        <tr *ngIf="activityItems.length === 0"><td colspan="5" class="muted">Aucune activité enregistrée</td></tr>
+      </tbody>
+    </table>
+    <div class="pagination" *ngIf="activityPages > 1">
+      <button [disabled]="activityPage <= 1" (click)="activityPage=activityPage-1; loadActivity()">← Préc.</button>
+      <span>Page {{ activityPage }} / {{ activityPages }}</span>
+      <button [disabled]="activityPage >= activityPages" (click)="activityPage=activityPage+1; loadActivity()">Suiv. →</button>
+    </div>
+  </section>
+
+  <!-- 3. Search analytics -->
+  <section *ngIf="tab==='search'">
+    <h2>Analytics de recherche</h2>
+    <div class="toolbar">
+      <label>Période (jours):</label>
+      <input type="number" [(ngModel)]="searchDays" min="1" max="365" />
+      <button class="btn-primary" (click)="loadSearch()">Actualiser</button>
+      <span class="badge">{{ searchAnalytics.totalQueries }} requêtes</span>
+    </div>
+    <div class="two-col">
+      <div>
+        <h4>🔝 Top recherches</h4>
+        <table class="data-table">
+          <thead><tr><th>Requête</th><th>Nb</th><th>Résultats moy.</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let q of searchAnalytics.topQueries"><td>{{ q.query }}</td><td>{{ q.count }}</td><td>{{ q.avgResults }}</td></tr>
+            <tr *ngIf="searchAnalytics.topQueries.length === 0"><td colspan="3" class="muted">Pas encore de données. Le tracking s'alimente via l'endpoint /admin/search-analytics/track</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h4>⚠️ Recherches sans résultat</h4>
+        <table class="data-table">
+          <thead><tr><th>Requête</th><th>Occurrences</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let q of searchAnalytics.noResultQueries"><td>{{ q.query }}</td><td>{{ q.count }}</td></tr>
+            <tr *ngIf="searchAnalytics.noResultQueries.length === 0"><td colspan="2" class="muted">Aucune requête vide</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Abandoned carts -->
+  <section *ngIf="tab==='abandoned'">
+    <h2>Paniers abandonnés</h2>
+    <div class="toolbar">
+      <label>Seuil (heures):</label>
+      <input type="number" [(ngModel)]="abandonedHours" min="1" />
+      <button class="btn-primary" (click)="loadAbandoned()">Actualiser</button>
+      <span class="badge">Potentiel: {{ abandonedTotalValue }} TND</span>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Client</th><th>Email</th><th>Articles</th><th>Valeur</th><th>Inactif depuis</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of abandonedCarts">
+          <td>{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.itemCount }}</td>
+          <td><strong>{{ c.cartValue }} TND</strong></td>
+          <td>{{ c.hoursSinceUpdate }}h</td>
+          <td class="actions">
+            <button class="send" (click)="sendRecovery(c)" title="Envoyer coupon de récupération">
+              <i class="fas fa-paper-plane"></i> Récupérer
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="abandonedCarts.length === 0"><td colspan="6" class="muted">Aucun panier abandonné</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5. Stock movements -->
+  <section *ngIf="tab==='stock'">
+    <h2>Mouvements de stock</h2>
+    <div class="card">
+      <h4>Ajuster le stock</h4>
+      <div class="form-row">
+        <input type="number" [(ngModel)]="stockAddProductId" placeholder="ID produit" />
+        <input type="number" [(ngModel)]="stockAddNewStock" placeholder="Nouveau stock" />
+        <select [(ngModel)]="stockAddReason">
+          <option value="ADMIN_ADJUSTMENT">Ajustement admin</option>
+          <option value="RESTOCK">Réapprovisionnement</option>
+          <option value="CORRECTION">Correction</option>
+          <option value="LOSS">Perte</option>
+        </select>
+        <input type="text" [(ngModel)]="stockAddNotes" placeholder="Notes (optionnel)" />
+        <button class="btn-primary" (click)="addStock()">Enregistrer</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="number" [(ngModel)]="stockProductFilter" placeholder="Filtrer ID produit" />
+      <button (click)="stockPage=1; loadStock()">Filtrer</button>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Produit</th><th>Avant</th><th>Après</th><th>Δ</th><th>Raison</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let m of stockItems">
+          <td>{{ formatDate(m.created_at) }}</td>
+          <td>#{{ m.product_id }}</td>
+          <td>{{ m.previous_stock }}</td>
+          <td>{{ m.new_stock }}</td>
+          <td [class.pos]="m.delta>0" [class.neg]="m.delta<0">{{ m.delta > 0 ? '+' : '' }}{{ m.delta }}</td>
+          <td><code>{{ m.reason }}</code></td>
+          <td>{{ m.notes }}</td>
+        </tr>
+        <tr *ngIf="stockItems.length === 0"><td colspan="7" class="muted">Aucun mouvement enregistré</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. CSV -->
+  <section *ngIf="tab==='csv'">
+    <h2>Import / Export produits CSV</h2>
+    <div class="card">
+      <h4><i class="fas fa-download"></i> Export CSV</h4>
+      <p>Télécharger tous les produits au format CSV.</p>
+      <button class="btn-primary" (click)="downloadCsv()"><i class="fas fa-download"></i> Télécharger products.csv</button>
+    </div>
+    <div class="card">
+      <h4><i class="fas fa-upload"></i> Import CSV</h4>
+      <p>Colonnes requises: <code>sku,title,slug,price,current_price,famille,total_stock,is_active,is_featured,first_image_url</code></p>
+      <input type="file" accept=".csv" (change)="onCsvFile($event)" />
+      <textarea [(ngModel)]="csvContent" rows="6" placeholder="ou collez votre CSV ici..."></textarea>
+      <button class="btn-primary" (click)="importCsv()" [disabled]="!csvContent">Importer</button>
+      <div *ngIf="csvImportResult" class="import-result">
+        <p><strong>{{ csvImportResult.imported }}</strong> créés · <strong>{{ csvImportResult.updated }}</strong> mis à jour</p>
+        <ul *ngIf="csvImportResult.errors?.length">
+          <li *ngFor="let e of csvImportResult.errors" class="err">{{ e }}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Campaigns -->
+  <section *ngIf="tab==='campaigns'">
+    <h2>Campagnes newsletter</h2>
+    <div class="card">
+      <h4>{{ editingCampaign ? 'Modifier' : 'Nouvelle' }} campagne</h4>
+      <input type="text" [(ngModel)]="campaignForm.name" placeholder="Nom interne" />
+      <input type="text" [(ngModel)]="campaignForm.subject" placeholder="Sujet de l'email" />
+      <textarea [(ngModel)]="campaignForm.body" rows="6" placeholder="Contenu de l'email (HTML autorisé)"></textarea>
+      <div class="form-row">
+        <input type="text" [(ngModel)]="campaignForm.ctaLabel" placeholder="Texte bouton (ex: Découvrir)" />
+        <input type="text" [(ngModel)]="campaignForm.ctaUrl" placeholder="URL bouton" />
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="saveCampaign()">{{ editingCampaign ? 'Mettre à jour' : 'Créer brouillon' }}</button>
+        <button *ngIf="editingCampaign" (click)="editingCampaign=null; campaignForm=emptyCampaignForm()">Annuler</button>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Nom</th><th>Sujet</th><th>Statut</th><th>Envoyé à</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of campaigns">
+          <td>{{ c.name }}</td><td>{{ c.subject }}</td>
+          <td><span class="tag" [class.on]="c.status==='SENT'">{{ c.status }}</span></td>
+          <td>{{ c.sent_count || 0 }}</td>
+          <td>{{ c.sent_at ? formatDate(c.sent_at) : formatDate(c.created_at) }}</td>
+          <td class="actions">
+            <button *ngIf="c.status !== 'SENT'" (click)="editCampaign(c)" title="Modifier"><i class="fas fa-pencil"></i></button>
+            <button *ngIf="c.status !== 'SENT'" class="send" (click)="sendCampaignNow(c)" title="Envoyer"><i class="fas fa-paper-plane"></i></button>
+            <button class="del" (click)="deleteCampaign(c)" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+        <tr *ngIf="campaigns.length === 0"><td colspan="6" class="muted">Aucune campagne</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 8. Segments -->
+  <section *ngIf="tab==='segments'">
+    <h2>Segmentation clients</h2>
+    <div *ngIf="segments">
+      <p class="muted">Sur {{ segments.totalCustomers }} clients enregistrés.</p>
+      <div class="segments-grid">
+        <div *ngFor="let key of segmentKeys()" class="segment-card" [class]="'seg-'+key">
+          <h3>{{ segments.segments[key] }}</h3>
+          <p>{{ key }}</p>
+          <small>{{ segments.definitions[key] }}</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. SEO -->
+  <section *ngIf="tab==='seo'">
+    <h2>Gestionnaire SEO</h2>
+    <div *ngIf="seoEditing" class="card">
+      <h4>Éditer SEO — {{ seoEditing._kind === 'product' ? 'Produit' : 'Catégorie' }}: {{ seoEditing.name || seoEditing.title }}</h4>
+      <label>Meta title ({{ seoForm.metaTitle.length }}/60)</label>
+      <input type="text" [(ngModel)]="seoForm.metaTitle" maxlength="70" />
+      <label>Meta description ({{ seoForm.metaDescription.length }}/160)</label>
+      <textarea [(ngModel)]="seoForm.metaDescription" rows="3" maxlength="200"></textarea>
+      <label>Mots-clés</label>
+      <input type="text" [(ngModel)]="seoForm.keywords" placeholder="mot1, mot2, mot3" />
+      <div class="seo-preview">
+        <h5>Aperçu Google</h5>
+        <div class="preview-title">{{ seoForm.metaTitle || 'Titre par défaut' }}</div>
+        <div class="preview-url">barsha.com.tn › {{ seoEditing.slug }}</div>
+        <div class="preview-desc">{{ seoForm.metaDescription || 'Description par défaut...' }}</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="saveSeo()">Enregistrer</button>
+        <button (click)="seoEditing=null">Annuler</button>
+      </div>
+    </div>
+    <h4>Produits</h4>
+    <table class="data-table">
+      <thead><tr><th>Produit</th><th>Meta Title</th><th>Score SEO</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let p of seoProducts | slice:0:20">
+          <td>{{ p.title }}</td>
+          <td class="ellipsis">{{ p.metaTitle || '—' }}</td>
+          <td><div class="score" [style.width]="p.score+'%'"></div>{{ p.score }}%</td>
+          <td><button (click)="editSeo(p,'product')"><i class="fas fa-pencil"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>Catégories</h4>
+    <table class="data-table">
+      <thead><tr><th>Catégorie</th><th>Meta Title</th><th>Score SEO</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of seoCategories">
+          <td>{{ c.name }}</td>
+          <td class="ellipsis">{{ c.metaTitle || '—' }}</td>
+          <td><div class="score" [style.width]="c.score+'%'"></div>{{ c.score }}%</td>
+          <td><button (click)="editSeo(c,'category')"><i class="fas fa-pencil"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 10. Pricing rules -->
+  <section *ngIf="tab==='pricing'">
+    <h2>Règles de pricing intelligent</h2>
+    <div class="card">
+      <h4>{{ editingPricing ? 'Modifier' : 'Nouvelle' }} règle</h4>
+      <input type="text" [(ngModel)]="pricingForm.name" placeholder="Nom (ex: -20% catégorie Femme)" />
+      <div class="form-row">
+        <select [(ngModel)]="pricingForm.ruleType">
+          <option value="CATEGORY_DISCOUNT">Par catégorie</option>
+          <option value="VOLUME_DISCOUNT">Par quantité</option>
+          <option value="TAG_DISCOUNT">Par tag</option>
+        </select>
+        <select [(ngModel)]="pricingForm.discountType">
+          <option value="percentage">Pourcentage</option>
+          <option value="fixed">Montant fixe</option>
+        </select>
+        <input type="number" step="0.01" [(ngModel)]="pricingForm.discountValue" placeholder="Valeur" />
+      </div>
+      <div class="form-row">
+        <select [(ngModel)]="pricingForm.targetType">
+          <option value="category">Catégorie</option>
+          <option value="famille">Famille</option>
+          <option value="tag">Tag</option>
+          <option value="all">Tout</option>
+        </select>
+        <input type="text" [(ngModel)]="pricingForm.targetValue" placeholder="ex: femme, WOMEN, été" />
+        <input type="number" [(ngModel)]="pricingForm.minQuantity" placeholder="Qté min" />
+        <input type="number" [(ngModel)]="pricingForm.minAmount" placeholder="Montant min" />
+      </div>
+      <div class="form-row">
+        <input type="number" [(ngModel)]="pricingForm.priority" placeholder="Priorité" />
+        <label><input type="checkbox" [(ngModel)]="pricingForm.isActive" /> Active</label>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="savePricingRule()">{{ editingPricing ? 'Mettre à jour' : 'Créer' }}</button>
+        <button *ngIf="editingPricing" (click)="editingPricing=null; pricingForm=emptyPricingForm()">Annuler</button>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Nom</th><th>Type</th><th>Réduction</th><th>Cible</th><th>Priorité</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let r of pricingRules">
+          <td>{{ r.name }}</td>
+          <td><code>{{ r.rule_type }}</code></td>
+          <td>{{ r.discount_value }}{{ r.discount_type === 'percentage' ? '%' : ' TND' }}</td>
+          <td>{{ r.target_type }}: {{ r.target_value }}</td>
+          <td>{{ r.priority }}</td>
+          <td><span class="tag" [class.on]="r.is_active">{{ r.is_active ? 'Active' : 'Inactive' }}</span></td>
+          <td class="actions">
+            <button (click)="editPricingRule(r)"><i class="fas fa-pencil"></i></button>
+            <button (click)="togglePricing(r)"><i class="fas" [class.fa-eye]="r.is_active" [class.fa-eye-slash]="!r.is_active"></i></button>
+            <button class="del" (click)="deletePricing(r)"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+        <tr *ngIf="pricingRules.length === 0"><td colspan="7" class="muted">Aucune règle de pricing</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>

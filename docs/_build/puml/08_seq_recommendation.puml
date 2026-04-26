@@ -1,0 +1,46 @@
+@startuml seq_reco
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 12
+skinparam ArrowColor #4F6D8C
+title Diagramme de séquence — recommandations IA personnalisées
+
+actor Client
+participant "Angular\nRecommendationsService" as F
+participant "RecommendationsController\n(NestJS)" as RC
+participant "RecommendationsService" as RS
+database MSSQL as DB
+participant "AnalyticsService" as AN
+participant "FastAPI ai-service" as AI
+participant "Meilisearch" as MEI
+participant "Recommendation\nstore" as RST
+
+Client -> F : ouvre la page d'accueil
+F -> RC : GET /api/recommendations/v3\n?strategy=personalized&userId=42
+RC -> RS : recommend(userId, strategy)
+RS -> AN : recentEvents(userId)
+AN -> DB : SELECT user_events ORDER BY ts DESC LIMIT 50
+AN --> RS : événements (vues, achats)
+RS -> DB : SELECT recently_viewed, wishlist, orders
+DB --> RS : profil comportemental
+RS -> AI : POST /recommend\n{userId, profile, k=12}
+AI -> AI : embedding utilisateur (CLIP + features)
+AI -> MEI : recherche kNN (vecteurs produits)
+MEI --> AI : 30 candidats
+AI -> AI : re-ranking par score & business rules
+AI --> RS : 12 produits triés
+RS -> RST : store(userId, list, scoreVector)
+RS --> RC : recommandations
+RC --> F : 200 + JSON
+F --> Client : carrousel "Pour vous"
+
+== Tracking d'impression / conversion ==
+
+F -> AN : POST /analytics/track\n{event=reco.impression, ids}
+AN -> DB : INSERT funnel_events
+Client -> F : clique sur produit
+F -> AN : POST /analytics/track\n{event=reco.click, productId}
+AN -> DB : INSERT funnel_events
+
+@enduml

@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../../services/order.service';
+import { FunnelService } from '../../../services/funnel.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PostPurchaseRecommendationsComponent } from '../../commun/next-gen-recommendations';
@@ -20,7 +21,8 @@ export class OrderConfirmationComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private funnel: FunnelService
   ) {}
 
   ngOnInit() {
@@ -29,6 +31,8 @@ export class OrderConfirmationComponent implements OnInit {
                     this.route.snapshot.queryParamMap.get('orderId');
 
     if (orderId) {
+      // Wave 2: purchase completed funnel event
+      this.funnel.track('COMPLETE_PURCHASE', undefined, { orderId: +orderId });
       this.verifyPaymentAndLoadOrder(+orderId);
     } else {
       this.paymentStatus = 'error';

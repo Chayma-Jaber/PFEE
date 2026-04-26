@@ -1,0 +1,60 @@
+@startuml architecture
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ComponentBackgroundColor #F5F7FA
+skinparam ComponentBorderColor #4F6D8C
+skinparam DatabaseBackgroundColor #FFF6E5
+skinparam ArrowColor #4F6D8C
+skinparam Padding 4
+title Architecture globale — plateforme Barsha (vue logicielle)
+
+actor "Client / Admin\n(navigateur)" as User
+
+package "Couche présentation" #FAFCFE {
+  component "Angular 19 SPA\n(storefront + admin)" as NG
+  component "Service Worker\n(offline + PWA)" as SW
+}
+
+package "Reverse-proxy & CDN" #F0F8FF {
+  component "nginx / Cloudflare" as NGINX
+}
+
+package "Couche application" #FAFCFE {
+  component "NestJS 10\n(API métier — 50+ modules)" as NEST
+  component "Python FastAPI\n(ai-service)" as FAST
+  component "Ollama\n(qwen2.5:7b LLM)" as OLLAMA
+}
+
+package "Couche données" #FFF8E5 {
+  database "MSSQL 2022\n(base relationnelle)" as DB
+  database "Meilisearch\n(index recherche)" as MEI
+}
+
+package "Services externes" #F4F4FB {
+  cloud "SMTP" as SMTP
+  cloud "SMS\n(Twilio / Infobip)" as SMS
+  cloud "CTP / Konnekt\n(paiement)" as CTP
+  cloud "FirstDelivery / Aramex\n(transporteurs)" as SHIP
+  cloud "TTN\n(fiscal Tunisie)" as TTN
+  cloud "Gemini / OpenRouter\n(LLM cloud fallback)" as CLOUD
+}
+
+User --> NGINX : HTTPS
+NGINX --> NG : "/" SPA
+NGINX --> NEST : "/api/*"
+NGINX --> NEST : "/indexes/*"
+NG ..> SW : install
+NEST --> DB : TypeORM
+NEST --> MEI : REST
+NEST --> FAST : HTTP
+NEST --> SMTP
+NEST --> SMS
+NEST --> CTP
+NEST --> SHIP
+NEST --> TTN
+FAST --> OLLAMA : chat
+FAST --> CLOUD : fallback
+FAST --> MEI : grounding produits
+
+@enduml

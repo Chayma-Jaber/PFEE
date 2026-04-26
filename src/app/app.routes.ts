@@ -7,8 +7,25 @@ import { SharedWishlistComponent } from './components/pages/shared-wishlist/shar
 import { ProductComparisonComponent } from './components/commun/product-comparison/product-comparison.component';
 import { StoreLocatorComponent } from './components/pages/store-locator/store-locator.component';
 import { FlashSaleDetailComponent } from './components/pages/flash-sale-detail/flash-sale-detail.component';
+import { StudioLookComponent } from './components/pages/studio-look/studio-look.component';
+import { StylistPageComponent } from './components/pages/stylist-page/stylist-page.component';
+import { B2bPortalComponent } from './components/pages/b2b-portal/b2b-portal.component';
+import { CmsPageComponent } from './components/pages/cms-page/cms-page.component';
+import { ConfiguratorPageComponent } from './components/pages/configurator-page/configurator-page.component';
+import { SellerPortalComponent } from './components/pages/seller-portal/seller-portal.component';
 
 export const routes: Routes = [
+  // Studio Look — Mannequin composer (Wave 3)
+  { path: 'studio-look', component: StudioLookComponent },
+
+  // Expansion roadmap — customer-facing standalone pages
+  { path: 'stylist', component: StylistPageComponent },
+  { path: 'b2b', component: B2bPortalComponent },
+  { path: 'seller', component: SellerPortalComponent },
+  { path: 'page/:slug', component: CmsPageComponent },
+  { path: 'configurator', component: ConfiguratorPageComponent },
+  { path: 'configurator/:slug', component: ConfiguratorPageComponent },
+
   // Home route — matches /fr/ (because baseHref is /fr/)
   { path: '', component: HomeAllComponent },
 

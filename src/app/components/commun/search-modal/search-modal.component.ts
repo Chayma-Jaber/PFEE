@@ -7,10 +7,11 @@ import { Category, SearchResult, ProductTitle } from '../../../models/menu';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Product } from '../../../models/Product';
 import { ProductService } from '../../../services/product.service';
+import { SearchAutocompleteComponent } from '../search-autocomplete/search-autocomplete.component';
 
 @Component({
   selector: 'app-search-modal',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, SearchAutocompleteComponent],
   templateUrl: './search-modal.component.html',
   styleUrl: './search-modal.component.scss'
 })

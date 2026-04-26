@@ -1,0 +1,70 @@
+@startuml activity_checkout
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam Padding 4
+skinparam ActivityBackgroundColor #FAFCFE
+skinparam ActivityBorderColor #4F6D8C
+title Diagramme d'activité — tunnel d'achat Barsha
+
+start
+:Visiteur ajoute des produits au panier;
+if (Compte existant ?) then (oui)
+  :Connexion;
+else (non)
+  :Inscription rapide;
+endif
+:Saisie / sélection adresse de livraison;
+if (Code coupon saisi ?) then (oui)
+  :Validation du coupon;
+  if (Coupon valide ?) then (oui)
+    :Application réduction;
+  else (non)
+    :Message d'erreur;
+  endif
+else (non)
+endif
+:Sélection mode de paiement\n(CTP / COD);
+:Récapitulatif final;
+if (Validation client ?) then (oui)
+  partition "Backend NestJS" {
+    :Calcul prix final + règles auto;
+    :Réservation stock multi-entrepôt;
+    if (Stock disponible ?) then (oui)
+      :Création commande + items;
+      if (Méthode = CTP ?) then (oui)
+        :Appel passerelle CTP (sandbox/live);
+        if (Paiement OK ?) then (oui)
+          :Statut PAID;
+        else (non)
+          :Annulation, libération stock;
+          stop
+        endif
+      else (non — COD)
+        :Statut PENDING (paiement à la livraison);
+      endif
+      :emit(order.placed);
+      partition "Asynchrone" {
+        fork
+          :Email confirmation;
+        fork again
+          :SMS confirmation;
+        fork again
+          :Génération reçu fiscal (TTN);
+        fork again
+          :Lifecycle drip post-achat;
+        end fork
+      }
+    else (non)
+      :Page "Stock insuffisant";
+      stop
+    endif
+  }
+  :Page de confirmation client;
+else (non)
+  :Retour panier;
+  stop
+endif
+stop
+
+@enduml

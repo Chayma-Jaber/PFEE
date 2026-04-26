@@ -1,0 +1,101 @@
+@startuml use_cases
+!theme plain
+skinparam backgroundColor white
+skinparam ActorFontSize 12
+skinparam UsecaseFontSize 11
+skinparam Padding 4
+skinparam DefaultFontName "Segoe UI"
+left to right direction
+title Diagramme de cas d'utilisation — plateforme Barsha
+
+actor "Visiteur" as V
+actor "Client" as C
+actor "Vendeur\n(marketplace)" as S
+actor "Administrateur" as A
+actor "Système IA\n(Ollama, CLIP, FastAPI)" as AI
+actor "Passerelles externes\n(SMTP, SMS, CTP, TTN, Shipping)" as EXT
+
+C -|> V
+
+rectangle "Storefront Barsha" {
+  usecase "Consulter le catalogue" as UC1
+  usecase "Rechercher un produit\n(texte / visuel)" as UC2
+  usecase "Filtrer / trier" as UC3
+  usecase "S'inscrire / se connecter" as UC4
+  usecase "Gérer son compte\n& adresses" as UC5
+  usecase "Ajouter au panier" as UC6
+  usecase "Passer commande" as UC7
+  usecase "Payer (CTP / COD)" as UC8
+  usecase "Suivre la livraison" as UC9
+  usecase "Demander un retour (RMA)" as UC10
+  usecase "Gérer favoris\n& wishlist" as UC11
+  usecase "Discuter avec l'assistant IA" as UC12
+  usecase "Recevoir des recommandations" as UC13
+  usecase "Recherche visuelle\n(image)" as UC14
+  usecase "Laisser un avis / poser\nune question (Q&A)" as UC15
+  usecase "Souscrire newsletter" as UC16
+  usecase "Programme de fidélité\n& parrainage" as UC17
+  usecase "Demande RGPD\n(export / effacement)" as UC18
+}
+
+rectangle "Espace vendeur" {
+  usecase "Postuler comme vendeur" as UC20
+  usecase "Gérer ses produits\n& fulfillments" as UC21
+  usecase "Consulter ses payouts" as UC22
+}
+
+rectangle "Back-office Admin" {
+  usecase "Dashboard & KPIs" as UC30
+  usecase "Gérer commandes\n& retours" as UC31
+  usecase "Gérer catalogue, stock,\nentrepôts" as UC32
+  usecase "Gérer marketing\n(coupons, lifecycle, drops)" as UC33
+  usecase "Gérer marketplace\n(approbations, payouts)" as UC34
+  usecase "Conformité fiscale (TTN),\nRGPD, fraude" as UC35
+  usecase "Configurer pricing\ndynamique & règles" as UC36
+  usecase "Modération UGC IA" as UC37
+}
+
+V --> UC1
+V --> UC2
+V --> UC3
+V --> UC4
+V --> UC12
+V --> UC13
+V --> UC14
+V --> UC16
+
+C --> UC5
+C --> UC6
+C --> UC7
+C --> UC8
+C --> UC9
+C --> UC10
+C --> UC11
+C --> UC15
+C --> UC17
+C --> UC18
+
+S --> UC20
+S --> UC21
+S --> UC22
+
+A --> UC30
+A --> UC31
+A --> UC32
+A --> UC33
+A --> UC34
+A --> UC35
+A --> UC36
+A --> UC37
+
+UC2 ..> AI : <<include>>
+UC12 ..> AI : <<include>>
+UC13 ..> AI : <<include>>
+UC14 ..> AI : <<include>>
+UC37 ..> AI : <<include>>
+
+UC8 ..> EXT : <<include>>
+UC9 ..> EXT : <<include>>
+UC35 ..> EXT : <<include>>
+
+@enduml

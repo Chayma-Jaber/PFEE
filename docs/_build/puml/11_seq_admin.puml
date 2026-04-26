@@ -1,0 +1,54 @@
+@startuml seq_admin
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 12
+skinparam ArrowColor #4F6D8C
+title Diagramme de séquence — gestion admin (création produit + indexation Meilisearch)
+
+actor Admin
+participant "Angular\nAdminProductsComponent" as F
+participant "AdminController" as AC
+participant "ProductsService" as PS
+participant "WarehousesService" as WH
+participant "MediaService" as MS
+participant "SearchService" as SR
+database MSSQL as DB
+database "Meilisearch" as MEI
+participant "EventBusService" as EB
+
+Admin -> F : ouvre /admin/produits → "Nouveau"
+F -> MS : POST /api/media/upload\n(images multipart)
+MS --> F : { urls[] }
+Admin -> F : remplit nom, prix, catégorie, stock
+F -> AC : POST /api/admin/products\n{ name, slug, price, ..., images, stockByWarehouse }
+AC -> PS : create(dto)
+PS -> DB : INSERT products
+DB --> PS : product_id
+PS -> DB : INSERT product_images, product_variants
+PS -> WH : initStock(product_id, stockByWarehouse)
+WH -> DB : INSERT product_stock par warehouse
+WH -> DB : UPDATE products.total_stock
+PS -> EB : emit(product.created)
+EB -> SR : indexProduct(product)
+SR -> MEI : POST /indexes/products/documents
+MEI --> SR : 200 (queued)
+PS --> AC : product
+AC --> F : 201 + produit
+F --> Admin : confirmation + produit listé
+
+== Mise à jour de prix dynamique ==
+
+Admin -> F : règle de pricing dynamique
+F -> AC : POST /api/admin/dynamic-pricing/sweep
+AC -> PS : applyDynamicRules()
+PS -> DB : SELECT eligible products
+loop pour chaque produit
+  PS -> DB : UPDATE products.sale_price
+  PS -> EB : emit(product.priceChanged)
+  EB -> SR : reindexProduct
+end
+PS --> AC : { changedCount }
+AC --> F : 200 + résumé
+
+@enduml

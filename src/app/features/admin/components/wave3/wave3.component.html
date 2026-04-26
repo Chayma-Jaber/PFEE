@@ -1,0 +1,185 @@
+<div class="wave3">
+  <div class="header">
+    <h1>Wave 3 <span class="chip">Intelligent merchandising</span></h1>
+    <p>Blocs d'accueil dynamiques, A/B testing, segments email, merchandising, expéditions.</p>
+  </div>
+
+  <div class="alert ok" *ngIf="ok"><i class="fas fa-check"></i> {{ ok }}</div>
+  <div class="alert err" *ngIf="err"><i class="fas fa-exclamation"></i> {{ err }}</div>
+
+  <div class="tabs">
+    <button [class.active]="tab==='blocks'" (click)="switch('blocks')"><i class="fas fa-th-large"></i> Blocs d'accueil</button>
+    <button [class.active]="tab==='abtests'" (click)="switch('abtests')"><i class="fas fa-flask"></i> A/B tests</button>
+    <button [class.active]="tab==='segments'" (click)="switch('segments')"><i class="fas fa-bullseye"></i> Envoi par segment</button>
+    <button [class.active]="tab==='merchandising'" (click)="switch('merchandising')"><i class="fas fa-grip-vertical"></i> Merchandising</button>
+    <button [class.active]="tab==='shipments'" (click)="switch('shipments')"><i class="fas fa-truck"></i> Expéditions</button>
+  </div>
+
+  <!-- BLOCKS -->
+  <section *ngIf="tab==='blocks'">
+    <h2>Blocs dynamiques de la homepage</h2>
+    <div class="card">
+      <h4>Nouveau bloc</h4>
+      <div class="form-grid">
+        <input type="text" [(ngModel)]="newBlock.key" placeholder="Clé (ex: hero-soldes)" />
+        <input type="text" [(ngModel)]="newBlock.title" placeholder="Titre visible" />
+        <select [(ngModel)]="newBlock.type">
+          <option value="banner">Bannière</option>
+          <option value="products_carousel">Carrousel produits</option>
+          <option value="category_grid">Grille catégories</option>
+          <option value="bundles">Packs</option>
+          <option value="outfits">Tenues</option>
+        </select>
+        <input type="number" [(ngModel)]="newBlock.position" placeholder="Position" />
+        <input type="text" [(ngModel)]="newBlock.config" placeholder='Config JSON ex: {"limit":8}' />
+      </div>
+      <button class="btn" (click)="createBlock()"><i class="fas fa-plus"></i> Créer</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Pos</th><th>Titre</th><th>Type</th><th>Config</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let b of blocks">
+          <td>{{ b.position }}</td>
+          <td><strong>{{ b.title }}</strong> <code>{{ b.key }}</code></td>
+          <td><span class="tag">{{ b.type }}</span></td>
+          <td class="ellipsis"><code>{{ b.config | json }}</code></td>
+          <td><span class="tag" [class.on]="b.is_active">{{ b.is_active ? 'Actif' : 'Inactif' }}</span></td>
+          <td><button (click)="toggleBlock(b)"><i class="fas" [class.fa-eye]="b.is_active" [class.fa-eye-slash]="!b.is_active"></i></button> <button class="del" (click)="deleteBlock(b)"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- AB TESTS -->
+  <section *ngIf="tab==='abtests'">
+    <h2>Expériences A/B</h2>
+    <div class="card">
+      <h4>Nouveau test</h4>
+      <input type="text" [(ngModel)]="newTest.key" placeholder="Clé (ex: hero-cta-color)" />
+      <input type="text" [(ngModel)]="newTest.name" placeholder="Nom lisible" />
+      <textarea rows="3" [(ngModel)]="newTest.variantsRaw" placeholder="Une variante par ligne: ID|Label|Poids"></textarea>
+      <select [(ngModel)]="newTest.goalEvent">
+        <option value="ADD_TO_CART">Ajout panier</option>
+        <option value="START_CHECKOUT">Début checkout</option>
+        <option value="COMPLETE_PURCHASE">Achat</option>
+      </select>
+      <button class="btn" (click)="createTest()"><i class="fas fa-plus"></i> Créer test</button>
+    </div>
+    <table class="data">
+      <thead><tr><th>Clé</th><th>Nom</th><th>Variantes</th><th>Objectif</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let t of tests">
+          <td><code>{{ t.key }}</code></td>
+          <td>{{ t.name }}</td>
+          <td>{{ t.variants?.length || 0 }}</td>
+          <td><span class="tag">{{ t.goal_event }}</span></td>
+          <td><button (click)="viewResults(t)"><i class="fas fa-chart-line"></i> Résultats</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="results-card" *ngIf="selectedResults">
+      <h4>Résultats — {{ selectedResults.test?.name }}</h4>
+      <table class="data">
+        <thead><tr><th>Variante</th><th>Impressions</th><th>Objectifs</th><th>Taux conversion</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let v of selectedResults.variants">
+            <td><strong>{{ v.variant?.label }}</strong></td>
+            <td>{{ v.impressions }}</td>
+            <td>{{ v.goals }}</td>
+            <td><span class="cr">{{ v.conversionRate }}%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SEGMENTS -->
+  <section *ngIf="tab==='segments'">
+    <h2>Envoi campagne par segment client</h2>
+    <div class="card">
+      <p>Sélectionne une campagne existante et un segment cible. L'envoi passe par SMTP si configuré.</p>
+      <select [(ngModel)]="segmentSend.campaignId">
+        <option [ngValue]="null">-- Campagne --</option>
+        <option *ngFor="let c of campaigns" [ngValue]="c.id">{{ c.name }} ({{ c.status }})</option>
+      </select>
+      <select [(ngModel)]="segmentSend.segment">
+        <option value="ALL">Tous les abonnés</option>
+        <option value="VIP">VIP</option>
+        <option value="LOYAL">LOYAL</option>
+        <option value="NEW">NEW</option>
+        <option value="AT_RISK">AT_RISK</option>
+        <option value="PROSPECT">PROSPECT</option>
+      </select>
+      <button class="btn" (click)="sendToSegment()"><i class="fas fa-paper-plane"></i> Envoyer au segment</button>
+    </div>
+  </section>
+
+  <!-- MERCHANDISING -->
+  <section *ngIf="tab==='merchandising'">
+    <h2>Ordre d'affichage par catégorie</h2>
+    <div class="card">
+      <p>Définis manuellement l'ordre des produits dans une catégorie.</p>
+      <input type="number" [(ngModel)]="merchCategoryId" placeholder="ID catégorie" (change)="loadMerch()" />
+      <div *ngIf="merchPositions.length > 0" class="positions-list">
+        <strong>Ordre actuel:</strong>
+        <ol>
+          <li *ngFor="let p of merchPositions">Produit #{{ p.product_id }} (position {{ p.position }})</li>
+        </ol>
+      </div>
+      <textarea rows="2" [(ngModel)]="merchNewOrder" placeholder="Nouvel ordre: IDs séparés par virgule (ex: 5, 2, 8, 1)"></textarea>
+      <button class="btn" (click)="reorderMerch()"><i class="fas fa-sort"></i> Réordonner</button>
+    </div>
+  </section>
+
+  <!-- SHIPMENTS -->
+  <section *ngIf="tab==='shipments'">
+    <h2>Gestion des expéditions</h2>
+    <div class="card">
+      <h4>Créer une expédition</h4>
+      <input type="number" [(ngModel)]="newShipment.orderId" placeholder="ID commande" />
+      <select [(ngModel)]="newShipment.provider">
+        <option *ngFor="let p of providers" [value]="p.key">{{ p.displayName }}</option>
+      </select>
+      <input type="number" step="0.1" [(ngModel)]="newShipment.weightKg" placeholder="Poids (kg)" />
+      <button class="btn" (click)="createShipment()"><i class="fas fa-truck"></i> Créer expédition</button>
+    </div>
+
+    <div class="toolbar">
+      <select [(ngModel)]="shipStatusFilter" (change)="shipPage=1;loadShipments()">
+        <option value="">Tous statuts</option>
+        <option *ngFor="let s of STATUS_OPTIONS" [value]="s">{{ s }}</option>
+      </select>
+    </div>
+
+    <table class="data">
+      <thead><tr><th>ID</th><th>Transporteur</th><th>Tracking</th><th>Commande</th><th>Ville</th><th>Statut</th><th>ETA</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let s of shipments">
+          <td>#{{ s.id }}</td>
+          <td><span class="tag">{{ providerLabel(s.provider) }}</span></td>
+          <td><code>{{ s.tracking_number }}</code></td>
+          <td>#{{ s.order_id }}</td>
+          <td>{{ s.recipient_city || '—' }}</td>
+          <td><span class="pill" [ngClass]="statusBadge(s.status)">{{ s.status }}</span></td>
+          <td>{{ formatDate(s.estimated_delivery_at) }}</td>
+          <td class="actions">
+            <button title="Synchroniser" (click)="syncShipment(s)"><i class="fas fa-sync"></i></button>
+            <button title="Pousser statut" (click)="openStatusPicker(s)"><i class="fas fa-forward"></i></button>
+            <button class="del" title="Annuler" (click)="cancelShipment(s)"><i class="fas fa-ban"></i></button>
+          </td>
+        </tr>
+        <tr *ngIf="shipments.length===0"><td colspan="8" class="muted">Aucune expédition</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card" *ngIf="statusPicker.shipmentId">
+      <h4>Push statut pour expédition #{{ statusPicker.shipmentId }}</h4>
+      <select [(ngModel)]="statusPicker.status">
+        <option *ngFor="let s of STATUS_OPTIONS" [value]="s">{{ s }}</option>
+      </select>
+      <input type="text" [(ngModel)]="statusPicker.note" placeholder="Note (optionnel)" />
+      <button class="btn" (click)="pushStatus()">Enregistrer</button>
+      <button class="btn-cancel" (click)="statusPicker.shipmentId = null">Annuler</button>
+    </div>
+  </section>
+</div>

@@ -9,6 +9,7 @@ import { Category } from '../categories/entities/category.entity';
 import { EditorialRecommendation } from './entities/recommendation.entity';
 import { RecommendationsService } from './recommendations.service';
 import { RecommendationsController } from './recommendations.controller';
+import { RecommendationsV2CompatController } from './recommendations-v2-compat.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { RecommendationsController } from './recommendations.controller';
       EditorialRecommendation,
     ]),
   ],
-  controllers: [RecommendationsController],
+  controllers: [RecommendationsController, RecommendationsV2CompatController],
   providers: [RecommendationsService],
   exports: [RecommendationsService],
 })

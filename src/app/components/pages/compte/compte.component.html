@@ -98,7 +98,19 @@
 
         <!-- Style Profile Tab -->
         <div *ngIf="selectedTab === 'monstyle'" class="style-profile-section">
+          <!-- Wave 2: Style Quiz CTA -->
+          <div class="style-quiz-cta" (click)="openStyleQuiz = true">
+            <div class="sq-left">
+              <span class="sq-icon">✨</span>
+              <div>
+                <h3>Découvrez votre style Barsha en 30 secondes</h3>
+                <p>Répondez au quiz pour recevoir des recommandations personnalisées à votre mesure.</p>
+              </div>
+            </div>
+            <button class="sq-btn">Commencer le quiz <i class="fas fa-arrow-right"></i></button>
+          </div>
           <app-style-profile (profileSaved)="onStyleProfileSaved($event)"></app-style-profile>
+          <app-style-quiz-modal [open]="openStyleQuiz" (closed)="openStyleQuiz = false"></app-style-quiz-modal>
         </div>
 
         <div *ngIf="selectedTab === 'achat'">
@@ -189,6 +201,9 @@
                           </div>
                         </div>
                       </div>
+
+                      <!-- Wave 3: real shipment tracking timeline -->
+                      <app-shipment-tracking [orderId]="order.id"></app-shipment-tracking>
                     </div>
 
                     <div class="card-footer text-end" *ngIf="isOrderExpanded(order.id)">
@@ -448,6 +463,8 @@
 
         </div>
         <div *ngIf="selectedTab === 'points'" class="profile-section">
+            <!-- Wave 3: Tier progress widget -->
+            <app-tier-progress-widget></app-tier-progress-widget>
             <app-loyalty-dashboard></app-loyalty-dashboard>
         </div>
 

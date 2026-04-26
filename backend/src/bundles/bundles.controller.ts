@@ -66,30 +66,5 @@ export class BundlesController {
     return { success: true, ...result };
   }
 
-  @Post('admin/bundles')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN', 'MARKETING_MANAGER')
-  async createBundle(@Body() dto: CreateBundleDto) {
-    const bundle = await this.bundlesService.create(dto);
-    return { success: true, bundle };
-  }
-
-  @Put('admin/bundles/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN', 'MARKETING_MANAGER')
-  async updateBundle(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateBundleDto,
-  ) {
-    const bundle = await this.bundlesService.update(id, dto);
-    return { success: true, bundle };
-  }
-
-  @Delete('admin/bundles/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN', 'MARKETING_MANAGER')
-  async deleteBundle(@Param('id', ParseIntPipe) id: number) {
-    await this.bundlesService.delete(id);
-    return { success: true, message: 'Bundle deleted' };
-  }
+  // Admin bundle routes moved to AdminBundlesController (admin/admin-bundles.controller.ts)
 }

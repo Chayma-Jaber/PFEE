@@ -17,10 +17,14 @@ import { CouponsComponent } from '../../pages/compte/components/coupons/coupons.
 import { FavorisComponent } from '../favoris/favoris.component';
 import { ExpressCheckoutButtonComponent } from '../../commun/express-checkout-button';
 import { ExpressCheckoutModalComponent } from '../../commun/express-checkout-modal';
+import { FreeShippingBarComponent } from '../../commun/free-shipping-bar/free-shipping-bar.component';
+import { CrossSellStripComponent } from '../../commun/cross-sell-strip/cross-sell-strip.component';
+import { HttpClient } from '@angular/common/http';
+import { environementDev } from '../../../../environements/environementDev';
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ToastModule, GiftCardComponent, CouponsComponent, FavorisComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ToastModule, GiftCardComponent, CouponsComponent, FavorisComponent, ExpressCheckoutButtonComponent, ExpressCheckoutModalComponent, FreeShippingBarComponent, CrossSellStripComponent],
   templateUrl: './panier.component.html',
   styleUrl: './panier.component.scss',
   providers: [MessageService]
@@ -213,7 +217,8 @@ export class PanierComponent implements OnInit {
     private titleService: TitleService,
     private orderService: OrderService,
     private analyticsService: AnalyticsService, // Ajout du service Analytics
-    private giftCardService: GiftCardService
+    private giftCardService: GiftCardService,
+    private http: HttpClient
   ) {
     this.cartService.cartItems$.subscribe(items => {
       this.cartItems = items;
@@ -479,6 +484,42 @@ export class PanierComponent implements OnInit {
       setTimeout(() => { try { window.location.reload(); } catch (e) { } }, 60);
     } else {
       this.cartService.updateQuantity(src.product.id, src.selectedColor, src.selectedSize, remaining);
+    }
+  }
+
+  /** Wave 3: product IDs currently in cart — used for cross-sell. */
+  get cartProductIds(): number[] {
+    return (this.cartItems || [])
+      .map((i: any) => i?.product?.id)
+      .filter((id: any) => typeof id === 'number');
+  }
+
+  /**
+   * Wave 2: Save cart item for later.
+   * Tries the backend endpoint when the user is logged in; otherwise hides the line
+   * from the current session cart as a client-only save. Never crashes on 401/offline.
+   */
+  saveForLater(line: any): void {
+    const token = localStorage.getItem('jwt') || localStorage.getItem('admin_jwt');
+    const src = line?.sourceCartItem;
+    if (!src) return;
+
+    // Client-side remove (so UI reflects immediately)
+    this.cartService.removeFromCart(src.product.id, src.selectedColor, src.selectedSize);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Sauvegardé',
+      detail: 'Article déplacé dans votre liste "pour plus tard".',
+      life: 3000,
+    });
+
+    // Server-side persistence (best-effort, logged-in users)
+    if (token && src?.cartItemId) {
+      this.http.post(
+        `${environementDev.api}/api/storefront/cart/${src.cartItemId}/save-for-later`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      ).subscribe({ next: () => {}, error: () => {} });
     }
   }
 

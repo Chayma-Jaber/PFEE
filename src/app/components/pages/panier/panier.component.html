@@ -59,6 +59,10 @@
                   <button class="quantity-btn" (click)="increaseQuantityDisplay(item)">+</button>
                 </div>
                 <span class="sep"> | </span>
+                <button class="save-later-btn" title="Sauvegarder pour plus tard" (click)="saveForLater(item)">
+                  <i class="fas fa-bookmark"></i> Plus tard
+                </button>
+                <span class="sep"> | </span>
                 <button class="remove-btn" (click)="removeDisplayLine(item)">×</button>
               </div>
             </div>
@@ -72,6 +76,11 @@
 
       <!-- Résumé du panier - affiché uniquement s'il y a des articles -->
       <div class="cart-summary" *ngIf="cartItems.length > 0">
+        <!-- Wave 2: Free shipping progress bar -->
+        <app-free-shipping-bar [subtotal]="total"></app-free-shipping-bar>
+        <!-- Wave 3: Cross-sell based on co-occurrence in past orders -->
+        <app-cross-sell-strip [productIds]="cartProductIds" [limit]="4"></app-cross-sell-strip>
+
         <div class="total-section">
           <div class="total-label">TOTAL <span class="vat-text">(TVA compris)</span></div>
           <div class="total-amount">{{ total }} TND</div>

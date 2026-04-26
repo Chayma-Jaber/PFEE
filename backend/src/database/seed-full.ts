@@ -338,6 +338,229 @@ async function seed() {
     console.log(`  ${Math.min(orders.length, 4)} return requests created`);
   }
 
+  // ─── PRODUCT Q&A ───
+  if ((await count('product_qa')) < 5) {
+    console.log('Seeding product Q&A...');
+    const users = (await q('SELECT TOP 6 id FROM users WHERE LOWER(role) = \'customer\' ORDER BY id')).recordset;
+    const prods = (await q('SELECT TOP 5 id, title FROM products WHERE is_active = 1 ORDER BY id')).recordset;
+    const admin = (await q("SELECT TOP 1 id FROM users WHERE role IN ('super_admin','SUPER_ADMIN','admin','ADMIN') ORDER BY id")).recordset[0];
+    const questions = [
+      { q: 'La taille taille grand ou petit ?', a: 'Taille grand, nous recommandons de prendre une taille en dessous.' },
+      { q: 'Est-ce que ça convient pour un cadeau ?', a: 'Oui absolument, nous livrons dans un bel emballage cadeau sur demande.' },
+      { q: 'La couleur correspond bien à la photo ?', a: 'La couleur réelle est légèrement plus foncée que sur la photo.' },
+      { q: 'Le tissu gratte ?', a: null },
+      { q: 'Quelle est la composition exacte ?', a: '60% coton, 40% polyester.' },
+      { q: 'Disponible en taille XL ?', a: null },
+    ];
+    let qaCount = 0;
+    for (const prod of prods) {
+      for (let i = 0; i < Math.min(2, questions.length); i++) {
+        const qa = questions[(qaCount + i) % questions.length];
+        const uid = users[qaCount % users.length].id;
+        const answer = qa.a ? `N'${esc(qa.a)}'` : 'NULL';
+        const answeredBy = qa.a ? admin.id : 'NULL';
+        const answeredAt = qa.a ? `'${randomDate(new Date('2026-02-01'), new Date('2026-04-15'))}'` : 'NULL';
+        const createdAt = randomDate(new Date('2026-01-15'), new Date('2026-04-10'));
+        await q(`INSERT INTO product_qa (product_id, user_id, question, answer, answered_by, is_published, helpful_count, created_at, answered_at)
+                 VALUES (${prod.id}, ${uid}, N'${esc(qa.q)}', ${answer}, ${answeredBy}, 1, ${Math.floor(Math.random() * 12)}, '${createdAt}', ${answeredAt})`);
+        qaCount++;
+      }
+    }
+    console.log(`  ${qaCount} product Q&A created`);
+  }
+
+  // ─── SEARCH QUERIES ───
+  if ((await count('search_queries')) < 10) {
+    console.log('Seeding search queries (analytics)...');
+    const queries = [
+      { q: 'robe soirée', count: 8, avg: 12 },
+      { q: 'jean bleu', count: 5, avg: 8 },
+      { q: 't-shirt coton', count: 12, avg: 15 },
+      { q: 'chaussures femme', count: 4, avg: 6 },
+      { q: 'sac à main', count: 6, avg: 4 },
+      { q: 'pull hiver', count: 3, avg: 5 },
+      { q: 'blazer noir', count: 2, avg: 3 },
+      { q: 'casquette enfant', count: 2, avg: 1 },
+      { q: 'licorne pyjama', count: 4, avg: 0 },
+      { q: 'parapluie', count: 3, avg: 0 },
+      { q: 'xyzabc', count: 2, avg: 0 },
+    ];
+    for (const entry of queries) {
+      for (let i = 0; i < entry.count; i++) {
+        const createdAt = randomDate(new Date('2026-03-15'), new Date('2026-04-20'));
+        await q(`INSERT INTO search_queries (query, result_count, index_name, created_at)
+                 VALUES (N'${esc(entry.q)}', ${entry.avg}, 'products', '${createdAt}')`);
+      }
+    }
+    console.log(`  ${queries.reduce((s, q) => s + q.count, 0)} search query events created`);
+  }
+
+  // ─── COUPON USAGES ───
+  if ((await count('coupon_usages')) < 3) {
+    console.log('Seeding coupon usages...');
+    const coupons = (await q('SELECT TOP 3 id, discount_value FROM coupons ORDER BY id')).recordset;
+    const orders = (await q("SELECT TOP 5 o.id, o.user_id FROM orders o WHERE o.status NOT IN ('cancelled','failed') ORDER BY o.id")).recordset;
+    if (coupons.length > 0 && orders.length > 0) {
+      let cu = 0;
+      for (let i = 0; i < Math.min(orders.length, 5); i++) {
+        const coupon = coupons[i % coupons.length];
+        const order = orders[i];
+        const discount = (Number(coupon.discount_value) || 10).toFixed(2);
+        const usedAt = randomDate(new Date('2026-03-01'), new Date('2026-04-15'));
+        await q(`INSERT INTO coupon_usages (coupon_id, user_id, order_id, discount_amount, used_at)
+                 VALUES (${coupon.id}, ${order.user_id}, ${order.id}, ${discount}, '${usedAt}')`);
+        // also bump usage_count on coupon
+        await q(`UPDATE coupons SET usage_count = ISNULL(usage_count,0) + 1 WHERE id = ${coupon.id}`);
+        cu++;
+      }
+      console.log(`  ${cu} coupon usages created`);
+    }
+  }
+
+  // ─── STOCK MOVEMENTS ───
+  if ((await count('stock_movements')) < 5) {
+    console.log('Seeding stock movements...');
+    const prods = (await q('SELECT TOP 5 id, total_stock FROM products ORDER BY id')).recordset;
+    for (let i = 0; i < prods.length; i++) {
+      const p = prods[i];
+      const reason = ['RESTOCK', 'ADMIN_ADJUSTMENT', 'CORRECTION'][i % 3];
+      const delta = 10 + i * 5;
+      const prev = Math.max(0, (p.total_stock || 0) - delta);
+      const createdAt = randomDate(new Date('2026-03-01'), new Date('2026-04-18'));
+      await q(`INSERT INTO stock_movements (product_id, previous_stock, new_stock, delta, reason, notes, created_at)
+               VALUES (${p.id}, ${prev}, ${p.total_stock || 0}, ${delta}, '${reason}', 'Approvisionnement initial', '${createdAt}')`);
+    }
+    console.log(`  ${prods.length} stock movements created`);
+  }
+
+  // ─── NEWSLETTER CAMPAIGNS ───
+  if ((await count('newsletter_campaigns')) < 2) {
+    console.log('Seeding newsletter campaigns...');
+    await q(`INSERT INTO newsletter_campaigns (name, subject, body, cta_label, cta_url, status, sent_count, sent_at, created_at, updated_at)
+             VALUES (N'Soldes Été 2026', N'Soldes Été -40% partout !', N'Profitez de nos soldes exceptionnelles jusqu''au 30 juin.', N'Voir les soldes', '/tn/soldes', 'SENT', 42, '2026-04-01 10:00:00', '2026-03-25 14:00:00', '2026-04-01 10:00:00')`);
+    await q(`INSERT INTO newsletter_campaigns (name, subject, body, cta_label, cta_url, status, sent_count, created_at, updated_at)
+             VALUES (N'Nouvelle collection Femme', N'Nouvelle collection printanière', N'Découvrez en avant-première notre nouvelle collection.', N'Découvrir', '/tn/femme', 'DRAFT', 0, '2026-04-15 09:00:00', '2026-04-15 09:00:00')`);
+    console.log('  2 newsletter campaigns created');
+  }
+
+  // ─── PRICING RULES ───
+  if ((await count('pricing_rules')) < 2) {
+    console.log('Seeding pricing rules...');
+    await q(`INSERT INTO pricing_rules (name, rule_type, discount_type, discount_value, target_type, target_value, priority, is_active, created_at, updated_at)
+             VALUES (N'-15% sur la catégorie Femme', 'CATEGORY_DISCOUNT', 'percentage', 15, 'category', 'femme', 10, 1, GETDATE(), GETDATE())`);
+    await q(`INSERT INTO pricing_rules (name, rule_type, discount_type, discount_value, target_type, target_value, min_quantity, priority, is_active, created_at, updated_at)
+             VALUES (N'Achetez-en 3 = -20%', 'VOLUME_DISCOUNT', 'percentage', 20, 'all', '', 3, 5, 1, GETDATE(), GETDATE())`);
+    console.log('  2 pricing rules created');
+  }
+
+  // ─── RECENTLY VIEWED ───
+  if ((await count('recently_viewed')) < 6) {
+    console.log('Seeding recently viewed products...');
+    const customers = (await q('SELECT TOP 5 id FROM users WHERE LOWER(role) = \'customer\'')).recordset;
+    const prods = (await q('SELECT TOP 10 id FROM products WHERE is_active = 1 ORDER BY id')).recordset;
+    let rv = 0;
+    for (const c of customers) {
+      const sampled = prods.sort(() => 0.5 - Math.random()).slice(0, 3);
+      for (const p of sampled) {
+        try {
+          await q(`INSERT INTO recently_viewed (user_id, product_id, view_count, first_viewed_at, last_viewed_at)
+                   VALUES (${c.id}, ${p.id}, ${Math.floor(Math.random() * 5) + 1}, '${randomDate(new Date('2026-04-01'), new Date('2026-04-15'))}', '${randomDate(new Date('2026-04-15'), new Date('2026-04-22'))}')`);
+          rv++;
+        } catch {}
+      }
+    }
+    console.log(`  ${rv} recently viewed entries created`);
+  }
+
+  // ─── CANNED RESPONSES (Wave 2) ───
+  if ((await count('canned_responses')) < 5) {
+    console.log('Seeding canned responses...');
+    const canned = [
+      { title: 'Livraison retardée', body: 'Bonjour, nous sommes désolés pour ce retard. Votre commande a été expédiée et devrait arriver sous 24-48h. Un bon de réduction vous sera offert en guise de geste commercial.', category: 'delivery', count: 23 },
+      { title: 'Retour accepté', body: 'Bonjour, votre demande de retour a été acceptée. Vous recevrez un bon de retour sous 24h. Le remboursement sera traité sous 3-5 jours ouvrés après réception.', category: 'return', count: 18 },
+      { title: 'Taille incorrecte', body: 'Bonjour, nous comprenons votre préoccupation concernant la taille. Vous pouvez consulter notre guide des tailles ou demander un échange gratuit via votre espace client.', category: 'size', count: 15 },
+      { title: 'Article défectueux', body: 'Bonjour, nous sommes vraiment navrés pour ce désagrément. Veuillez nous envoyer une photo du défaut pour un échange immédiat ou un remboursement complet.', category: 'quality', count: 8 },
+      { title: 'Code promo non fonctionnel', body: "Bonjour, votre code promo peut être expiré ou soumis à des conditions (minimum d'achat, catégorie). Nous vous envoyons un nouveau code valide avec ce message.", category: 'promotion', count: 12 },
+      { title: 'Paiement refusé', body: "Bonjour, si votre paiement a été refusé, vérifiez vos informations ou choisissez un autre moyen. Notre équipe peut aussi proposer le paiement à la livraison.", category: 'payment', count: 7 },
+    ];
+    for (const c of canned) {
+      await q(`INSERT INTO canned_responses (title, body, category, usage_count, is_active, created_at, updated_at)
+               VALUES (N'${esc(c.title)}', N'${esc(c.body)}', '${c.category}', ${c.count}, 1, GETDATE(), GETDATE())`);
+    }
+    console.log(`  ${canned.length} canned responses created`);
+  }
+
+  // ─── SEARCH SYNONYMS (Wave 2) ───
+  if ((await count('search_synonyms')) < 5) {
+    console.log('Seeding search synonyms...');
+    const syns = [
+      { term: 'robe', synonyms: '["dress","tunique","kaftan"]' },
+      { term: 'jean', synonyms: '["denim","pantalon jean","jeans"]' },
+      { term: 'pull', synonyms: '["sweater","pullover","chandail"]' },
+      { term: 'chaussures', synonyms: '["shoes","souliers","baskets","sneakers"]' },
+      { term: 'sac', synonyms: '["bag","sacoche","cabas","pochette"]' },
+      { term: 'veste', synonyms: '["jacket","blazer","cardigan"]' },
+    ];
+    for (const s of syns) {
+      await q(`INSERT INTO search_synonyms (term, synonyms, is_active, created_at)
+               VALUES (N'${esc(s.term)}', N'${esc(s.synonyms)}', 1, GETDATE())`);
+    }
+    console.log(`  ${syns.length} search synonyms created`);
+  }
+
+  // ─── FUNNEL EVENTS (Wave 2) ───
+  if ((await count('funnel_events')) < 50) {
+    console.log('Seeding funnel events...');
+    // Generate realistic funnel with drop-off: VIEW_HOME → VIEW_PRODUCT → ADD_TO_CART → START_CHECKOUT → COMPLETE_PURCHASE
+    const steps = [
+      { step: 'VIEW_HOME', count: 120 },
+      { step: 'VIEW_PRODUCT', count: 85 },
+      { step: 'ADD_TO_CART', count: 38 },
+      { step: 'START_CHECKOUT', count: 22 },
+      { step: 'COMPLETE_PURCHASE', count: 14 },
+      { step: 'EXIT_INTENT', count: 18 },
+    ];
+    for (const s of steps) {
+      for (let i = 0; i < s.count; i++) {
+        const createdAt = randomDate(new Date('2026-03-25'), new Date('2026-04-22'));
+        const sessionId = `sess-${Math.floor(Math.random() * 200)}`;
+        const productId = ['VIEW_PRODUCT', 'ADD_TO_CART'].includes(s.step) ? Math.floor(Math.random() * 30) + 1 : 'NULL';
+        const pidStr = productId === 'NULL' ? 'NULL' : String(productId);
+        await q(`INSERT INTO funnel_events (step, session_id, product_id, created_at)
+                 VALUES ('${s.step}', '${sessionId}', ${pidStr}, '${createdAt}')`);
+      }
+    }
+    console.log(`  ${steps.reduce((a, b) => a + b.count, 0)} funnel events created`);
+  }
+
+  // ─── STYLE PROFILES (Wave 2) ───
+  if ((await count('style_profiles')) < 4) {
+    console.log('Seeding style profiles...');
+    const customers = (await q('SELECT TOP 5 id FROM users WHERE LOWER(role) = \'customer\' ORDER BY id')).recordset;
+    const styles = ['chic', 'casual', 'boho', 'sport', 'classic'];
+    const budgets = ['mid', 'premium', 'mid', 'economy', 'premium'];
+    const sizesTop = ['S', 'M', 'L', 'M', 'XL'];
+    const colorsOpts = ['["black","white","beige"]', '["navy","grey","white"]', '["burgundy","olive","camel"]', '["red","blue","white"]', '["black","silver","gold"]'];
+    for (let i = 0; i < Math.min(4, customers.length); i++) {
+      const uid = customers[i].id;
+      try {
+        await q(`INSERT INTO style_profiles (user_id, style, size_top, size_bottom, shoe_size, preferred_colors, budget_range, created_at, updated_at)
+                 VALUES (${uid}, '${styles[i]}', '${sizesTop[i]}', '${sizesTop[i]}', '39', N'${colorsOpts[i]}', '${budgets[i]}', GETDATE(), GETDATE())`);
+      } catch {}
+    }
+    console.log('  4 style profiles created');
+  }
+
+  // Set birthdays on some customers (for birthday rewards demo)
+  if (true) {
+    console.log('Setting birthdays on sample customers...');
+    await q(`UPDATE users SET birth_date = DATEADD(day, -2, CAST(GETDATE() AS DATE))
+             WHERE email = 'sarah.benali@gmail.com'`);
+    await q(`UPDATE users SET birth_date = DATEADD(day, 3, CAST(GETDATE() AS DATE))
+             WHERE email = 'ahmed.trabelsi@gmail.com'`);
+    console.log('  2 customers with birthdays close to today');
+  }
+
   // ─── Verify final counts ───
   console.log('\n=== FINAL DATABASE STATUS ===');
   const tables = (await q("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' ORDER BY TABLE_NAME")).recordset;

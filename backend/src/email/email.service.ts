@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+import { EmailLog, EmailLogKind, EmailLogStatus } from './entities/email-log.entity';
 
 interface OrderEmailData {
   id: number | string;
@@ -52,11 +56,17 @@ export class EmailService {
   private readonly fromName: string;
   private readonly frontendUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  private readonly appUrl: string;
+
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(EmailLog) private readonly logRepo: Repository<EmailLog>,
+  ) {
     this.enabled = this.configService.get<boolean>('email.enabled', true);
     this.fromEmail = this.configService.get<string>('email.fromEmail', 'noreply@barsha.com.tn');
     this.fromName = this.configService.get<string>('email.fromName', 'Barsha');
     this.frontendUrl = this.configService.get<string>('app.frontendUrl', 'http://localhost:4200');
+    this.appUrl = this.configService.get<string>('app.url', 'http://localhost:8000');
 
     if (this.enabled) {
       this.createTransporter();
@@ -90,30 +100,67 @@ export class EmailService {
     subject: string,
     html: string,
     text?: string,
+    meta?: { kind?: EmailLogKind; userId?: number | null },
   ): Promise<boolean> {
+    const recipients = Array.isArray(to) ? to.join(', ') : to;
+    const trackingId = randomUUID().replace(/-/g, '').slice(0, 32);
+    const kind = meta?.kind || EmailLogKind.OTHER;
+
+    // Persist the attempt first (QUEUED) so partial failures leave an audit trail.
+    let logRow: EmailLog | null = null;
+    try {
+      logRow = this.logRepo.create({
+        tracking_id: trackingId,
+        recipient: recipients.slice(0, 255),
+        subject: subject.slice(0, 400),
+        kind,
+        status: this.enabled ? EmailLogStatus.QUEUED : EmailLogStatus.DISABLED,
+        user_id: meta?.userId ?? null,
+      });
+      logRow = await this.logRepo.save(logRow);
+    } catch (err) {
+      this.logger.warn(`email_log insert failed: ${(err as any)?.message || err}`);
+    }
+
     if (!this.enabled) {
-      this.logger.debug(`Email disabled. Would send to ${to}: ${subject}`);
+      this.logger.debug(`Email disabled. Would send to ${recipients}: ${subject}`);
       return false;
     }
 
-    const recipients = Array.isArray(to) ? to.join(', ') : to;
+    // Inject a 1×1 open-tracking pixel at end of <body> (or HTML if no <body>)
+    const pixel = `<img src="${this.appUrl}/api/email-tracking/pixel/${trackingId}.png" alt="" width="1" height="1" style="display:none;" />`;
+    const instrumentedHtml = /<\/body>/i.test(html)
+      ? html.replace(/<\/body>/i, `${pixel}</body>`)
+      : html + pixel;
 
     try {
       const info = await this.transporter.sendMail({
         from: `"${this.fromName}" <${this.fromEmail}>`,
         to: recipients,
         subject,
-        html,
+        html: instrumentedHtml,
         text: text || subject,
+        headers: { 'X-Barsha-Tracking': trackingId },
       });
 
       this.logger.log(`Email sent to ${recipients}: ${info.messageId}`);
+      if (logRow) {
+        logRow.status = EmailLogStatus.SENT;
+        logRow.sent_at = new Date();
+        logRow.provider_message_id = info?.messageId || null;
+        try { await this.logRepo.save(logRow); } catch {}
+      }
       return true;
     } catch (error) {
       this.logger.error(
         `Failed to send email to ${recipients}: ${error.message}`,
         error.stack,
       );
+      if (logRow) {
+        logRow.status = EmailLogStatus.FAILED;
+        logRow.error_message = String(error?.message || error).slice(0, 500);
+        try { await this.logRepo.save(logRow); } catch {}
+      }
       return false;
     }
   }
@@ -165,6 +212,7 @@ export class EmailService {
       `Barsha - Order Confirmation ${orderRef}`,
       html,
       `Your order ${orderRef} has been confirmed. Total: ${order.totalAmount?.toFixed(2) || 'N/A'} TND`,
+      { kind: EmailLogKind.ORDER_CONFIRMATION },
     );
   }
 
@@ -197,40 +245,84 @@ export class EmailService {
       `Barsha - Payment Confirmation for Order #${payment.orderId}`,
       html,
       `Payment of ${payment.amount.toFixed(2)} TND confirmed for order #${payment.orderId}.`,
+      { kind: EmailLogKind.PAYMENT_CONFIRMATION },
     );
   }
 
+  // Backwards-compatible signature: trackingNumber as the 2nd positional arg still
+  // works. New callers pass an options object instead with carrier + URL + items so
+  // the rendered email gets a proper tracking CTA button.
   async sendShippingNotification(
     order: OrderEmailData,
-    trackingNumber: string,
+    trackingOrOpts: string | { trackingNumber: string; carrier?: string; trackingUrl?: string; itemTitle?: string } = '',
   ): Promise<boolean> {
+    const opts = typeof trackingOrOpts === 'string'
+      ? { trackingNumber: trackingOrOpts }
+      : trackingOrOpts;
+    const trackingNumber = (opts.trackingNumber || '').trim();
+    const carrier = (opts.carrier || '').trim();
+    const trackingUrl = (opts.trackingUrl || '').trim();
+    const itemTitle = (opts.itemTitle || '').trim();
     const orderRef = order.orderNumber || `#${order.id}`;
+    // Prefer the explicit carrier URL when the seller filled it in. Fall back to the
+    // customer's order page on barsha — never leave the CTA dead.
+    const ctaHref = trackingUrl || `${this.frontendUrl}/account/orders/${order.id}`;
+    const ctaLabel = trackingUrl ? 'Suivre mon colis' : 'Voir ma commande';
+    // Item-aware subject when the caller is a per-line seller fulfillment.
+    const subject = itemTitle
+      ? `Barsha — "${itemTitle}" expédié (cmd ${orderRef})${trackingNumber ? ` — Suivi ${trackingNumber}` : ''}`
+      : `Barsha — Cmd ${orderRef} expédiée${trackingNumber ? ` — Suivi ${trackingNumber}` : ''}`;
+
     const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:#1a1a2e;color:#fff;padding:20px;text-align:center;">
-          <h1 style="margin:0;">Barsha</h1>
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#fafafa;">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d4d);color:#fff;padding:24px 20px;text-align:center;">
+          <h1 style="margin:0;font-size:24px;letter-spacing:0.5px;">Barsha</h1>
+          <p style="margin:6px 0 0;font-size:13px;opacity:.8;">Votre commande est en route</p>
         </div>
-        <div style="padding:20px;">
-          <h2>Your Order Has Been Shipped!</h2>
-          <p>Hello ${order.customerName || 'Customer'},</p>
-          <p>Great news! Your order ${orderRef} has been shipped.</p>
-          <div style="background:#f0f8ff;padding:15px;border-radius:8px;margin:15px 0;">
-            <p style="margin:0;"><strong>Tracking Number:</strong> ${trackingNumber}</p>
+        <div style="background:#fff;padding:28px 26px;">
+          <h2 style="margin:0 0 12px;color:#111827;font-size:20px;">${itemTitle ? '📦 Votre article est expédié !' : '📦 Votre commande est expédiée !'}</h2>
+          <p style="color:#374151;line-height:1.6;margin:0 0 14px;">Bonjour ${order.customerName || 'cher client'},</p>
+          <p style="color:#374151;line-height:1.6;margin:0 0 18px;">
+            ${itemTitle
+              ? `L'article <strong>${itemTitle}</strong> de votre commande <strong>${orderRef}</strong> vient d'être expédié.`
+              : `Votre commande <strong>${orderRef}</strong> vient d'être expédiée.`}
+          </p>
+          ${trackingNumber ? `
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:16px 18px;margin:0 0 18px;">
+            <div style="font-size:12px;color:#4f46e5;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Suivi</div>
+            <div style="font-size:18px;font-weight:700;color:#111827;margin-top:4px;letter-spacing:0.5px;">${trackingNumber}</div>
+            ${carrier ? `<div style="font-size:13px;color:#4b5563;margin-top:2px;">Transporteur : <strong>${carrier}</strong></div>` : ''}
+          </div>` : ''}
+          <div style="text-align:center;margin:24px 0 12px;">
+            <a href="${ctaHref}"
+               style="display:inline-block;background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff;
+                      padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px;
+                      box-shadow:0 4px 12px rgba(99,102,241,.3);">
+              ${ctaLabel} →
+            </a>
           </div>
-          ${order.shippingAddress ? `<p><strong>Delivering to:</strong> ${order.shippingAddress}</p>` : ''}
-          <p>Track your order <a href="${this.frontendUrl}/orders/${order.id}">here</a>.</p>
+          ${!trackingUrl ? `<p style="text-align:center;color:#6b7280;font-size:12px;margin:8px 0 0;">
+            Vous pouvez aussi suivre l'évolution depuis votre espace compte.
+          </p>` : ''}
+          ${order.shippingAddress ? `<p style="margin:24px 0 0;color:#4b5563;font-size:13px;line-height:1.6;border-top:1px solid #f3f4f6;padding-top:18px;"><strong>Livraison à :</strong> ${order.shippingAddress}</p>` : ''}
         </div>
-        <div style="background:#f5f5f5;padding:10px;text-align:center;font-size:12px;color:#888;">
-          <p>&copy; Barsha - All rights reserved</p>
+        <div style="background:#f5f5f5;padding:14px;text-align:center;font-size:11px;color:#9ca3af;">
+          <p style="margin:0;">© Barsha — Tous droits réservés</p>
+          <p style="margin:4px 0 0;">Cet email a été envoyé suite à votre commande sur barsha.com.tn</p>
         </div>
       </div>
     `;
 
+    const text = itemTitle
+      ? `Bonjour ${order.customerName || 'cher client'},\n\nL'article "${itemTitle}" de votre commande ${orderRef} est expédié.${trackingNumber ? `\nNuméro de suivi : ${trackingNumber}` : ''}${carrier ? ` (${carrier})` : ''}\n\nSuivre : ${ctaHref}\n\n— Barsha`
+      : `Bonjour ${order.customerName || 'cher client'},\n\nVotre commande ${orderRef} est expédiée.${trackingNumber ? `\nNuméro de suivi : ${trackingNumber}` : ''}${carrier ? ` (${carrier})` : ''}\n\nSuivre : ${ctaHref}\n\n— Barsha`;
+
     return this.sendMail(
       order.customerEmail,
-      `Barsha - Order ${orderRef} Shipped - Tracking: ${trackingNumber}`,
+      subject,
       html,
-      `Your order ${orderRef} has been shipped. Tracking number: ${trackingNumber}`,
+      text,
+      { kind: EmailLogKind.SHIPPING },
     );
   }
 
@@ -263,6 +355,7 @@ export class EmailService {
       'Barsha - Password Reset Code',
       html,
       `Your password reset code is: ${code}. This code expires in 15 minutes.`,
+      { kind: EmailLogKind.PASSWORD_RESET },
     );
   }
 
@@ -304,6 +397,49 @@ export class EmailService {
       `Barsha - Support Ticket #${ticket.id} Updated`,
       html,
       `Your support ticket #${ticket.id} (${ticket.subject}) status: ${ticket.status}`,
+      { kind: EmailLogKind.SUPPORT },
+    );
+  }
+
+  async sendCartRecovery(
+    email: string,
+    customerName: string | undefined,
+    couponCode: string,
+    discountPercent: number,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    const cartUrl = `${this.frontendUrl}/tn/panier`;
+    const expDate = expiresAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#1a1a2e;color:#fff;padding:24px;text-align:center;">
+          <h1 style="margin:0;">Barsha</h1>
+        </div>
+        <div style="padding:30px 20px;">
+          <h2 style="color:#1a1a2e;">Votre panier vous attend !</h2>
+          <p>Bonjour ${customerName || 'cher(e) client(e)'},</p>
+          <p>Vous avez laissé des articles dans votre panier. Pour vous remercier, voici un code promo exclusif :</p>
+          <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:24px;border-radius:10px;margin:20px 0;text-align:center;">
+            <p style="margin:0;font-size:14px;opacity:0.9;">CODE PROMO — -${discountPercent}%</p>
+            <p style="font-size:36px;font-weight:800;letter-spacing:3px;margin:8px 0;">${couponCode}</p>
+            <p style="margin:0;font-size:12px;opacity:0.9;">Valable jusqu'au ${expDate}</p>
+          </div>
+          <p style="text-align:center;margin:30px 0;">
+            <a href="${cartUrl}" style="display:inline-block;background:#1a1a2e;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:600;">Finaliser ma commande</a>
+          </p>
+          <p style="color:#888;font-size:13px;text-align:center;">Ce code est à usage unique et expire dans 7 jours.</p>
+        </div>
+        <div style="background:#f5f5f5;padding:12px;text-align:center;font-size:12px;color:#888;">
+          <p>&copy; Barsha - Tunisie</p>
+        </div>
+      </div>
+    `;
+    return this.sendMail(
+      email,
+      `Votre panier + un code -${discountPercent}% offert`,
+      html,
+      `Code promo ${couponCode} (-${discountPercent}%) valable jusqu'au ${expDate}. Votre panier: ${cartUrl}`,
+      { kind: EmailLogKind.CART_RECOVERY },
     );
   }
 
@@ -335,7 +471,7 @@ export class EmailService {
       const batch = recipients.slice(i, i + batchSize);
       const results = await Promise.allSettled(
         batch.map((email) =>
-          this.sendMail(email, content.subject, html, content.textBody),
+          this.sendMail(email, content.subject, html, content.textBody, { kind: EmailLogKind.NEWSLETTER }),
         ),
       );
 

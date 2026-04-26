@@ -1,0 +1,64 @@
+@startuml deployment
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam Padding 4
+title Diagramme de déploiement — environnement staging single-host (docker-compose.staging.yml)
+
+node "Poste client" as Client {
+  artifact "Navigateur\nChrome / Edge / Safari" as Browser
+}
+
+cloud "Internet" as Net
+
+node "Hôte staging (Docker host)" as Host {
+  node "Conteneur frontend" as N1 {
+    artifact "nginx:1.27-alpine" as Nginx
+    artifact "dist/barsha/browser/\n(SPA Angular 19)" as Spa
+  }
+  node "Conteneur backend" as N2 {
+    artifact "node:20-alpine" as Node
+    artifact "dist/main.js\n(NestJS 10)" as NestApp
+    artifact "dist/scripts/\nrun-migrations.js" as Mig
+  }
+  node "Conteneur ai-service" as N3 {
+    artifact "python:3.11-slim" as Py
+    artifact "main.py FastAPI\n+ CLIP weights" as AiApp
+  }
+  node "Conteneur ollama" as N4 {
+    artifact "ollama/ollama:latest" as Ollama
+    artifact "modèle qwen2.5:7b" as Model
+  }
+  node "Conteneur mssql" as N5 {
+    database "mcr.../mssql/server:2022\n(volume mssql-data)" as Mssql
+  }
+  node "Conteneur meilisearch" as N6 {
+    database "getmeili/meilisearch:v1.6\n(volume meili-data)" as Meili
+  }
+}
+
+cloud "Services externes" as External {
+  artifact "SMTP — Mailtrap / SendGrid" as Smtp
+  artifact "Twilio / Infobip" as SmsP
+  artifact "CTP / Konnekt" as Ctp
+  artifact "FirstDelivery / Aramex" as Ship
+  artifact "TTN — fiscal Tunisie" as Ttn
+}
+
+Browser --> Net : 443
+Net --> Nginx : 80
+Nginx --> NestApp : proxy_pass /api
+Nginx --> NestApp : proxy_pass /indexes
+NestApp --> Mssql : tedious 1433
+NestApp --> Meili : 7700
+NestApp --> AiApp : 8001
+NestApp --> Smtp
+NestApp --> SmsP
+NestApp --> Ctp
+NestApp --> Ship
+NestApp --> Ttn
+AiApp --> Ollama : 11434
+AiApp --> Meili : 7700
+Mig ..> Mssql : applique migrations\nau premier boot
+
+@enduml

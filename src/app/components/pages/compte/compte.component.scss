@@ -2679,3 +2679,61 @@ body.modal-open {
     }
   }
 }
+
+/* Wave 2: Style Quiz CTA */
+.style-quiz-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #eef2ff 0%, #fce7f3 100%);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+  }
+
+  .sq-left {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex: 1;
+
+    .sq-icon {
+      font-size: 40px;
+      line-height: 1;
+    }
+
+    h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; color: #1a1a2e; }
+    p { margin: 0; font-size: 13px; color: #4b5563; }
+  }
+
+  .sq-btn {
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    &:hover { opacity: 0.92; }
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    .sq-btn { width: 100%; justify-content: center; }
+  }
+}

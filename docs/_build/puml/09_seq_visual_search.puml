@@ -1,0 +1,41 @@
+@startuml seq_visual
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 12
+skinparam ArrowColor #4F6D8C
+title Diagramme de séquence — recherche visuelle (image → produits similaires)
+
+actor Client
+participant "Angular\nVisualSearchComponent" as F
+participant "AiController\n(NestJS)" as AC
+participant "AiService" as AS
+participant "FastAPI\nai-service /like-this" as AI
+participant "CLIP encoder\n(PyTorch)" as CLIP
+participant "Index vecteurs\n(numpy/Meilisearch)" as IDX
+database "products" as DB
+
+Client -> F : sélectionne une image\n(drag & drop / fichier)
+F -> F : compresse en base64 (≤ 10 MB)
+F -> AC : POST /api/ai/like-this\n{image_base64}
+AC -> AS : likeThis(image)
+AS -> AI : POST /like-this\n{image}
+AI -> CLIP : encode(image) → vecteur 512d
+CLIP --> AI : embedding
+AI -> IDX : kNN search (cosine)
+IDX --> AI : top-N product_ids + scores
+AI --> AS : { products: [...] }
+AS -> DB : SELECT products WHERE id IN (...)
+DB --> AS : produits enrichis
+AS --> AC : résultats triés par score
+AC --> F : 200 OK + JSON
+F --> Client : grille "Produits similaires"
+
+note over AI
+  fallback : si Ollama / GPU
+  indisponibles, l'API renvoie
+  un message "indisponible" et
+  l'UI passe en mode dégradé
+end note
+
+@enduml

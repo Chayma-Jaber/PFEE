@@ -1,0 +1,60 @@
+@startuml seq_order
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam ParticipantPadding 12
+skinparam ArrowColor #4F6D8C
+title Diagramme de séquence — passage de commande (panier → commande → paiement → notifications)
+
+actor Client
+participant "Angular\nCheckoutComponent" as F
+participant "OrdersController" as OC
+participant "OrdersService" as OS
+participant "PromotionsService" as PR
+participant "WarehousesService" as W
+participant "PaymentsService" as PS
+participant "CtpGateway" as CTP
+database MSSQL as DB
+participant "EventBusService" as EB
+participant "EmailService" as EM
+participant "SmsService" as SM
+participant "FiscalService\n(TTN)" as FS
+
+Client -> F : valide le panier (clic "Commander")
+F -> OC : POST /api/orders\n{addressId, paymentMethod, couponCode}
+OC -> OS : create(dto, userId)
+OS -> PR : applyAutoDiscounts(cart)
+PR --> OS : prix recalculés
+OS -> W : reserveStock(items)
+W -> DB : UPDATE product_stock SET reserved+=qty
+W --> OS : ok
+OS -> DB : INSERT orders, order_items
+DB --> OS : order_id
+OS -> PS : initiate(order, method)
+alt méthode = CTP (carte)
+  PS -> CTP : POST /sandbox/charge
+  CTP --> PS : { authCode, txId }
+  PS -> DB : INSERT payment(status=PAID)
+else méthode = COD (cash)
+  PS -> DB : INSERT payment(status=PENDING)
+end
+PS --> OS : payment ok
+OS -> EB : emit(order.placed, {orderId, userId})
+OS --> OC : order created
+OC --> F : 201 + order
+F --> Client : page de confirmation
+
+== Asynchrone (event-driven) ==
+
+EB -> EM : sendOrderConfirmation(order)
+EM -->> Client : email "Commande confirmée"
+EB -> SM : sendOrderConfirmationSms(order)
+SM -->> Client : SMS récap commande
+EB -> FS : generateReceipt(order)
+alt FISCAL_TTN_ENABLED
+  FS -> FS : POST TTN endpoint
+end
+FS -> DB : INSERT fiscal_receipt
+EB -> W : releaseReserved → onShipment(order)
+
+@enduml

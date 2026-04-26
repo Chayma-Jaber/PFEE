@@ -6,7 +6,10 @@
  */
 
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { catchError, of } from 'rxjs';
+import { environementDev } from '../../environements/environementDev';
 
 export interface RecentlyViewedProduct {
   id: number;
@@ -30,8 +33,35 @@ export class RecentlyViewedService {
   private recentlyViewedSubject = new BehaviorSubject<RecentlyViewedProduct[]>([]);
   public recentlyViewed$ = this.recentlyViewedSubject.asObservable();
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.loadFromStorage();
+  }
+
+  private authHeaders(): HttpHeaders | null {
+    const token = localStorage.getItem('jwt') || localStorage.getItem('admin_jwt');
+    if (!token) return null;
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
+
+  /** Optionally sync to backend for logged-in users. Fire-and-forget. */
+  trackOnBackend(productId: number): void {
+    const headers = this.authHeaders();
+    if (!headers) return;
+    this.http.post(
+      `${environementDev.api}/api/recently-viewed/track`,
+      { productId },
+      { headers }
+    ).pipe(catchError(() => of(null))).subscribe();
+  }
+
+  /** Load the authenticated user's recently-viewed from backend. */
+  loadFromBackend(limit: number = 12): Observable<any> {
+    const headers = this.authHeaders();
+    if (!headers) return of({ items: [] });
+    return this.http.get<any>(
+      `${environementDev.api}/api/recently-viewed?limit=${limit}`,
+      { headers }
+    ).pipe(catchError(() => of({ items: [] })));
   }
 
   /**
@@ -76,6 +106,9 @@ export class RecentlyViewedService {
 
     // Also update the simple ID list for AI recommendations
     this.updateProductIdList(updated);
+
+    // Persist to backend for logged-in users (fire-and-forget)
+    this.trackOnBackend(product.id);
   }
 
   /**

@@ -13,10 +13,22 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import { PromotionsService } from './promotions.service';
 import { ValidateCodeDto } from './dto/promotions.dto';
+import { PricingService } from './pricing.service';
 
 @Controller()
 export class PromotionsController {
-  constructor(private readonly promotionsService: PromotionsService) {}
+  constructor(
+    private readonly promotionsService: PromotionsService,
+    private readonly pricingService: PricingService,
+  ) {}
+
+  @Post('cart/calculate-pricing')
+  async calculatePricing(
+    @Body() body: { items: Array<{ productId: number; quantity: number; unitPrice?: number }>; segment?: string },
+  ) {
+    const result = await this.pricingService.computeTotals(body?.items || [], body?.segment);
+    return { success: true, ...result };
+  }
 
   private mapFlashSale(p: any): any {
     const now = Date.now();

@@ -592,6 +592,21 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
       // Delay scroll state update to allow DOM to render
       setTimeout(() => this.updateScrollState(), 100);
     });
+
+    // For logged-in users, hydrate from backend (cross-device recently-viewed)
+    this.recentlyViewedService.loadFromBackend(this.maxProducts).subscribe((r: any) => {
+      const items = r?.items || [];
+      for (const p of items) {
+        this.recentlyViewedService.addProduct({
+          id: p.id,
+          title: p.title,
+          currentPrice: p.currentPrice,
+          price: p.price,
+          image: p.firstImageUrl,
+          firstImg: { url: p.firstImageUrl },
+        });
+      }
+    });
   }
 
   ngAfterViewInit(): void {

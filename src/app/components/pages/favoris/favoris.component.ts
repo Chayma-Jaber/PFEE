@@ -5,13 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../services/product.service';
 import { TitleService } from '../../../services/title.service';
 import { WishlistSharingService, SharedWishlist } from '../../../services/wishlist-sharing.service';
+import { WishlistPriceAlertsComponent } from '../../commun/wishlist-price-alerts/wishlist-price-alerts.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-favoris',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, WishlistPriceAlertsComponent],
   templateUrl: './favoris.component.html',
   styleUrls: ['./favoris.component.scss'],
 })

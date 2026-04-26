@@ -325,17 +325,15 @@ export class AiService {
         query_description: data.query_description || data.description,
       };
     } catch (error) {
-      if (error instanceof HttpException) throw error;
-      if (error.name === 'AbortError') {
-        throw new HttpException(
-          'Visual search service timed out',
-          HttpStatus.GATEWAY_TIMEOUT,
-        );
-      }
-      throw new HttpException(
-        `Visual search service unavailable: ${error.message}`,
-        HttpStatus.BAD_GATEWAY,
+      // Graceful degradation: when AI service is unavailable, return empty results
+      // instead of throwing. This keeps the UI usable without a CLIP backend.
+      this.logger.warn(
+        `Visual search fallback (AI service unavailable): ${error?.message || error}`,
       );
+      return {
+        results: [],
+        query_description: 'Recherche visuelle indisponible — veuillez réessayer plus tard.',
+      };
     } finally {
       clearTimeout(timeoutId);
     }

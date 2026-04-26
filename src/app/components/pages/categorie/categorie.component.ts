@@ -85,6 +85,18 @@ export class CategorieComponent implements OnInit {
           };
 
           this.titleService.setSpecificTitle(categoryData.name);
+
+          // Apply backend SEO fields (metaTitle, metaDescription, keywords)
+          this.titleService.setSeo({
+            metaTitle: (categoryData as any).metaTitle || null,
+            metaDescription: (categoryData as any).metaDescription || null,
+            keywords: (categoryData as any).keywords || null,
+            fallbackTitle: `${categoryData.name} - Mode Tunisie`,
+            fallbackDescription: categoryData.description || `Découvrez notre sélection ${categoryData.name} chez Barsha Tunisie.`,
+            imageUrl: categoryData.bannerUrl || categoryData.imageUrl,
+            url: typeof window !== 'undefined' ? window.location.href : undefined,
+          });
+
           this.isLoading = false;
 
           // Apply SEO optimizations

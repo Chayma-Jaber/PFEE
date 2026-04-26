@@ -4,6 +4,7 @@ import { Product } from '../models/Product';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ProductService } from './product.service';
 import { AnalyticsService } from './analytics.service';
+import { FunnelService } from './funnel.service';
 
 export interface CartItem {
   product: Product;
@@ -22,7 +23,7 @@ export class CartService {
   cartItems$ = this.cartItemsSource.asObservable();
   private currentUserId: string | null = null;
 
-  constructor(private http: HttpClient, private productService: ProductService, private analyticsService: AnalyticsService) {
+  constructor(private http: HttpClient, private productService: ProductService, private analyticsService: AnalyticsService, private funnel: FunnelService) {
     // Écouter les changements de stockage pour la synchronisation entre les onglets
     window.addEventListener('storage', (e) => {
       if (e.key === 'jwt') {
@@ -152,6 +153,8 @@ export class CartService {
   }
 
   addToCart(item: CartItem): Observable<{success: boolean, message?: string}> {
+    // Wave 2: fire funnel event (fire-and-forget)
+    try { this.funnel.track('ADD_TO_CART', item?.product?.id); } catch {}
     return new Observable(observer => {
       // Récupérer les articles actuels du panier
       let currentItems = this.cartItemsSource.getValue();

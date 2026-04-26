@@ -78,6 +78,7 @@ export class ProductsController {
     @Query('isNew') isNew?: boolean,
     @Query('brand') brand?: string,
     @Query('categoryId') categoryId?: number,
+    @Query('category') categorySlug?: string,
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
     @Query('sortBy') sortBy?: string,
@@ -91,11 +92,32 @@ export class ProductsController {
       isNew,
       brand,
       categoryId,
+      categorySlug,
       limit,
       offset,
       sortBy,
       sortOrder,
     });
+  }
+
+  // Batched fetch — accepts repeated ?ids=1&ids=2&ids=3 OR a single ?ids=1,2,3 string.
+  // Declared BEFORE the :id route so "by-ids" isn't parsed as an integer.
+  @Get('products/by-ids')
+  @ApiOperation({ summary: 'Get multiple products by id (batched)' })
+  @ApiQuery({ name: 'ids', description: 'Repeated query param OR comma-separated list', required: true })
+  async findByIds(@Query('ids') ids: string | string[]) {
+    const flat: number[] = [];
+    const consume = (v: any) => {
+      if (v == null) return;
+      if (Array.isArray(v)) { v.forEach(consume); return; }
+      String(v).split(',').forEach((part) => {
+        const n = Number(part.trim());
+        if (Number.isInteger(n) && n > 0) flat.push(n);
+      });
+    };
+    consume(ids);
+    const items = await this.productsService.findByIds(flat);
+    return { items, requested: flat.length, returned: items.length };
   }
 
   @Get('products/:id')

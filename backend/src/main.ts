@@ -8,6 +8,42 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // ─── Production-safety preflight ────────────────────────────────────────
+  // Refuse to boot in production with the default JWT secret. Other env vars
+  // have safe degraded fallbacks (SMS=console, Email disabled, etc.) so we don't
+  // hard-fail on those — but a default JWT secret is a critical security risk.
+  if (process.env.NODE_ENV === 'production') {
+    const jwtSecret = process.env.JWT_SECRET || '';
+    if (!jwtSecret || jwtSecret === 'barsha-dev-secret-change-in-production' || jwtSecret === 'barsha-dev-secret-CHANGE-IN-PRODUCTION') {
+      // eslint-disable-next-line no-console
+      console.error('\n[FATAL] NODE_ENV=production but JWT_SECRET is unset or still the default placeholder.');
+      // eslint-disable-next-line no-console
+      console.error('[FATAL] Generate a strong secret:  openssl rand -base64 64');
+      // eslint-disable-next-line no-console
+      console.error('[FATAL] Then set JWT_SECRET=<value> in your environment and retry.\n');
+      process.exit(1);
+    }
+    if (jwtSecret.length < 32) {
+      // eslint-disable-next-line no-console
+      console.warn('[WARN] JWT_SECRET is < 32 chars — recommend at least 64 chars for production.');
+    }
+    // Soft warnings for misconfigurations that won't block boot but degrade UX.
+    if (process.env.EMAIL_ENABLED === 'true' && !process.env.SMTP_USER) {
+      // eslint-disable-next-line no-console
+      console.warn('[WARN] EMAIL_ENABLED=true but SMTP_USER is empty — emails will fail to send.');
+    }
+    if (process.env.SMS_ENABLED === 'true' && process.env.SMS_PROVIDER !== 'console' &&
+        !process.env.SMS_TWILIO_ACCOUNT_SID && !process.env.SMS_INFOBIP_API_KEY) {
+      // eslint-disable-next-line no-console
+      console.warn('[WARN] SMS_ENABLED=true with provider != console but no provider credentials set.');
+    }
+    if (process.env.CTP_SANDBOX_MODE !== 'false') {
+      // eslint-disable-next-line no-console
+      console.warn('[WARN] CTP_SANDBOX_MODE is not "false" in production — card payments are sandboxed.');
+    }
+  }
+
   const app = await NestFactory.create(AppModule, {
     bodyParser: false, // disable default parser so we can set custom limits
   });

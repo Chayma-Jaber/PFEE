@@ -1,0 +1,85 @@
+# Barsha production-ready stack — local or single-host deploy.
+# Runs the three services the storefront actually depends on: Ollama (LLM),
+# the FastAPI AI microservice, and the NestJS backend. The Angular frontend
+# is served separately (dev via ng serve, prod via your static host/CDN).
+#
+# Quick start (CPU-only, no GPU):
+#   docker compose up -d
+#   # wait for ollama to pull the model on first boot (~5 GB)
+#
+# Ollama model is pulled lazily by the `ollama-pull` one-shot at boot.
+# Change the model via OLLAMA_MODEL in .env.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: barsha-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # One-shot sidecar: ensures the requested model is present before AI service starts.
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "OLLAMA_HOST=http://ollama:11434 ollama pull ${OLLAMA_MODEL:-qwen2.5:7b}"
+    restart: "no"
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    image: barsha/ai-service:latest
+    container_name: barsha-ai
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      MEILISEARCH_URL: ${MEILISEARCH_URL:-http://host.docker.internal:7700}
+      MEILISEARCH_TOKEN: ${MEILISEARCH_TOKEN:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      # Cache CLIP weights between rebuilds
+      - ai-cache:/root/.cache
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: barsha/backend:latest
+    container_name: barsha-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override env so the NestJS app reaches the in-compose AI service.
+      AI_SERVICE_URL: http://ai-service:8001
+      OLLAMA_URL: http://ollama:11434
+    depends_on:
+      - ai-service
+    volumes:
+      - backend-uploads:/app/uploads
+
+volumes:
+  ollama-models:
+  ai-cache:
+  backend-uploads:

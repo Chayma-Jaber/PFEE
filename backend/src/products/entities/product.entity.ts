@@ -7,6 +7,7 @@ import {
   ManyToMany,
   OneToMany,
   JoinTable,
+  Index,
 } from 'typeorm';
 import { Category } from '../../categories/entities/category.entity';
 import { ProductVariant } from './product-variant.entity';
@@ -98,6 +99,22 @@ export class Product {
 
   @Column({ type: 'simple-json', nullable: true })
   tags: string[];
+
+  @Column({ name: 'meta_title', type: 'varchar', length: 255, nullable: true })
+  metaTitle: string;
+
+  @Column({ name: 'meta_description', type: 'nvarchar', length: 'MAX', nullable: true })
+  metaDescription: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  keywords: string;
+
+  // Marketplace ownership: null = merchant-owned (legacy default).
+  // Non-null = product belongs to a third-party seller (see marketplace module).
+  // Indexed because seller catalog queries filter on this column on every page load.
+  @Index('IDX_products_seller_id')
+  @Column({ name: 'seller_id', type: 'int', nullable: true })
+  seller_id: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

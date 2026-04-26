@@ -23,6 +23,9 @@ export class WishlistItem {
   @Column({ name: 'collection_id', nullable: true })
   collection_id: number;
 
+  @Column({ name: 'price_at_add', type: 'decimal', precision: 10, scale: 3, nullable: true })
+  price_at_add: number | null;
+
   @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
   notes: string;
 

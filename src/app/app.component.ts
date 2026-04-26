@@ -8,6 +8,7 @@ import { ComparisonWidgetComponent } from './components/commun/comparison-widget
 import { SocialProofPopupComponent } from './components/commun/social-proof-popup/social-proof-popup.component';
 import { QuickViewModalComponent } from './components/commun/quick-view-modal/quick-view-modal.component';
 import { NewsletterPopupComponent } from './components/commun/newsletter-popup/newsletter-popup.component';
+import { FunnelService } from './services/funnel.service';
 
 
 import { CommonModule } from '@angular/common';
@@ -38,7 +39,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private titleService: TitleService,
     private metaService: MetaService,
     private analyticsService: AnalyticsService,
-    private scrollPositionService: ScrollPositionService
+    private scrollPositionService: ScrollPositionService,
+    private funnel: FunnelService
   ) {
     // Track route changes for home page detection
     this.routerSubscription = this.router.events
@@ -64,6 +66,17 @@ export class AppComponent implements OnInit, OnDestroy {
           this.currentUrl = event.urlAfterRedirects || event.url;
         }
       });
+
+    // Wave 2 — exit intent detection (once per session)
+    let exitIntentFired = false;
+    document.addEventListener('mouseleave', (e: MouseEvent) => {
+      if (exitIntentFired) return;
+      // Only fire when the cursor leaves via the top edge
+      if (e.clientY <= 0) {
+        exitIntentFired = true;
+        try { this.funnel.track('EXIT_INTENT', undefined, { path: this.currentUrl }); } catch {}
+      }
+    });
 
     // Tracking scroll utilisateur
     const scrollThresholds = [25, 50, 75, 100];

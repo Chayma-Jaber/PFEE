@@ -1,0 +1,186 @@
+@startuml er_model
+!theme plain
+skinparam backgroundColor white
+skinparam DefaultFontName "Segoe UI"
+skinparam Padding 4
+skinparam EntityBackgroundColor #FFF6E5
+skinparam EntityBorderColor #C8893E
+skinparam ArrowColor #4F6D8C
+title Modèle conceptuel de données (extrait — schéma relationnel MSSQL)
+
+entity "users" as users {
+  *id : int <<PK>>
+  --
+  *email : nvarchar(160) <<UK>>
+  password_hash : varchar(80)
+  role : varchar(20)
+  first_name : nvarchar(80)
+  last_name : nvarchar(80)
+  phone : varchar(30)
+}
+entity "addresses" as addresses {
+  *id : int <<PK>>
+  --
+  *user_id : int <<FK>>
+  line1 : nvarchar(200)
+  city : nvarchar(80)
+  is_default : bit
+}
+entity "categories" as categories {
+  *id : int <<PK>>
+  --
+  *slug : varchar(120) <<UK>>
+  name : nvarchar(120)
+  parent_id : int <<FK>>
+}
+entity "products" as products {
+  *id : int <<PK>>
+  --
+  *slug : varchar(160) <<UK>>
+  category_id : int <<FK>>
+  seller_id : int <<FK>>
+  name : nvarchar(200)
+  price : decimal(10,3)
+  sale_price : decimal(10,3)
+  total_stock : int
+  is_active : bit
+}
+entity "product_variants" as variants {
+  *id : int <<PK>>
+  *product_id : int <<FK>>
+  *sku : varchar(80) <<UK>>
+  size : varchar(20)
+  color : nvarchar(40)
+  stock : int
+}
+entity "product_images" as images {
+  *id : int <<PK>>
+  *product_id : int <<FK>>
+  url : varchar(500)
+  position : int
+}
+entity "warehouses" as wh {
+  *id : int <<PK>>
+  *code : varchar(20) <<UK>>
+  name : nvarchar(120)
+  city : nvarchar(80)
+  is_default : bit
+}
+entity "product_stock" as ps {
+  *id : int <<PK>>
+  *product_id : int <<FK>>
+  *warehouse_id : int <<FK>>
+  quantity : int
+  reserved : int
+  safety_stock : int
+}
+entity "carts" as carts {
+  *id : int <<PK>>
+  *user_id : int <<FK>>
+  status : varchar(20)
+}
+entity "cart_items" as ci {
+  *id : int <<PK>>
+  *cart_id : int <<FK>>
+  *product_id : int <<FK>>
+  quantity : int
+  unit_price : decimal(10,3)
+}
+entity "orders" as orders {
+  *id : int <<PK>>
+  *order_number : varchar(40) <<UK>>
+  *user_id : int <<FK>>
+  status : varchar(30)
+  total : decimal(10,3)
+  shipping_total : decimal(10,3)
+  placed_at : datetime
+}
+entity "order_items" as oi {
+  *id : int <<PK>>
+  *order_id : int <<FK>>
+  *product_id : int <<FK>>
+  seller_id : int <<FK>>
+  quantity : int
+  unit_price : decimal(10,3)
+}
+entity "payments" as payments {
+  *id : int <<PK>>
+  *order_id : int <<FK>>
+  method : varchar(20)
+  status : varchar(20)
+  amount : decimal(10,3)
+}
+entity "shipments" as ship {
+  *id : int <<PK>>
+  *order_id : int <<FK>>
+  tracking_number : varchar(80)
+  carrier : varchar(40)
+  status : varchar(30)
+}
+entity "sellers" as sel {
+  *id : int <<PK>>
+  business_name : nvarchar(200)
+  status : varchar(20)
+  commission_rate : decimal(5,2)
+}
+entity "seller_fulfillments" as sf {
+  *id : int <<PK>>
+  *order_item_id : int <<FK>>
+  *seller_id : int <<FK>>
+  status : varchar(30)
+}
+entity "seller_payouts" as sp {
+  *id : int <<PK>>
+  *seller_id : int <<FK>>
+  period_start : date
+  net_amount : decimal(10,3)
+}
+entity "coupons" as coup {
+  *id : int <<PK>>
+  *code : varchar(40) <<UK>>
+  amount : decimal(10,3)
+}
+entity "return_requests" as ret {
+  *id : int <<PK>>
+  *order_id : int <<FK>>
+  reason : nvarchar(MAX)
+  status : varchar(20)
+}
+entity "product_reviews" as rev {
+  *id : int <<PK>>
+  *product_id : int <<FK>>
+  *user_id : int <<FK>>
+  rating : tinyint
+  body : nvarchar(MAX)
+}
+entity "_migration_history" as mh {
+  *id : varchar(120) <<PK>>
+  applied_at : datetime
+  checksum : varchar(64)
+}
+
+users ||--o{ addresses
+users ||--o{ orders
+users ||--o{ carts
+users ||--o{ rev
+categories ||--o{ products
+categories }o--|| categories
+sel ||--o{ products
+products ||--o{ variants
+products ||--o{ images
+products ||--o{ ps
+wh ||--o{ ps
+carts ||--o{ ci
+products ||--o{ ci
+orders ||--o{ oi
+orders ||--o{ payments
+orders ||--o{ ship
+orders ||--o{ ret
+products ||--o{ oi
+oi ||--o| sf
+sel ||--o{ sf
+sel ||--o{ sp
+products ||--o{ rev
+orders }o--o{ coup
+
+@enduml

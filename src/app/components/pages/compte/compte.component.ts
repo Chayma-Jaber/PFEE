@@ -27,17 +27,23 @@ import { StockAlertsListComponent } from '../../commun/stock-alerts-list/stock-a
 import { StockAlertService, StockAlert as StockAlertModel } from '../../../services/stock-alert.service';
 import { SavedAddressesComponent } from '../../commun/saved-addresses';
 import { SavedPaymentsComponent } from '../../commun/saved-payments';
+import { StyleQuizModalComponent } from '../../commun/style-quiz-modal/style-quiz-modal.component';
+import { ShipmentTrackingComponent } from '../../commun/shipment-tracking/shipment-tracking.component';
+import { TierProgressWidgetComponent } from '../../commun/tier-progress-widget/tier-progress-widget.component';
 
 @Component({
   selector: 'app-compte',
   standalone: true,
 
-  imports: [CommonModule, RouterModule, CouponsComponent, FormsModule, RetourComponent, ToastModule, AccountRecommendationsComponent, StyleProfileComponent, LoyaltyDashboardComponent, GiftCardsComponent, ReferralDashboardComponent, WishlistCollectionsComponent, StockAlertsListComponent, SavedAddressesComponent, SavedPaymentsComponent],
+  imports: [CommonModule, RouterModule, CouponsComponent, FormsModule, RetourComponent, ToastModule, AccountRecommendationsComponent, StyleProfileComponent, LoyaltyDashboardComponent, GiftCardsComponent, ReferralDashboardComponent, WishlistCollectionsComponent, StockAlertsListComponent, SavedAddressesComponent, SavedPaymentsComponent, StyleQuizModalComponent, ShipmentTrackingComponent, TierProgressWidgetComponent],
   providers: [MessageService],
   templateUrl: './compte.component.html',
   styleUrls: ['./compte.component.scss']
 })
 export class CompteComponent implements OnInit, AfterViewInit  {
+  // Wave 2: style quiz modal flag
+  openStyleQuiz = false;
+
   produits: any[] = []; // Liste des produits dans la wishlist
   isLoading: boolean = true; // Indicateur de chargement
   orders: any[] = [];

@@ -3,6 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { HomeService } from './home';
 import { CommonModule } from '@angular/common';
 import { TitleService } from '../../../services/title.service';
+import { FunnelService } from '../../../services/funnel.service';
 import { WelcomePopupComponent } from '../../shared/welcome-popup.component';
 import { FeaturedProductsService, FeaturedProduct, FeaturedCategory } from '../../../services/featured-products.service';
 import { HomepageRecommendationsComponent } from '../../commun/next-gen-recommendations';
@@ -10,11 +11,13 @@ import { RecentlyViewedComponent } from '../../commun/recently-viewed/recently-v
 import { FeaturedOutfitsComponent } from '../../commun/featured-outfits/featured-outfits.component';
 import { BundlesSectionComponent } from '../../commun/bundles-section/bundles-section.component';
 import { FlashSalesSectionComponent } from '../../commun/flash-sales-section/flash-sales-section.component';
+import { DynamicHomepageBlocksComponent } from '../../commun/dynamic-homepage-blocks/dynamic-homepage-blocks.component';
+import { DailyDealBannerComponent } from '../../commun/daily-deal-banner/daily-deal-banner.component';
 
 @Component({
   selector: 'app-home-all',
   standalone: true,
-  imports: [RouterModule, CommonModule, WelcomePopupComponent, HomepageRecommendationsComponent, RecentlyViewedComponent, FeaturedOutfitsComponent, BundlesSectionComponent, FlashSalesSectionComponent],
+  imports: [RouterModule, CommonModule, WelcomePopupComponent, HomepageRecommendationsComponent, RecentlyViewedComponent, FeaturedOutfitsComponent, BundlesSectionComponent, FlashSalesSectionComponent, DynamicHomepageBlocksComponent, DailyDealBannerComponent],
   templateUrl: './home-all.component.html',
   styleUrl: './home-all.component.scss'
 })
@@ -47,7 +50,8 @@ export class HomeAllComponent implements OnInit, OnDestroy {
     private homeService: HomeService,
     private titleService: TitleService,
     private featuredService: FeaturedProductsService,
-    private router: Router
+    private router: Router,
+    private funnel: FunnelService
   ) {
     this.resizeListener = () => this.checkIfMobile();
   }
@@ -69,6 +73,7 @@ export class HomeAllComponent implements OnInit, OnDestroy {
     this.titleService.setSpecificTitle('Accueil');
     this.checkIfMobile();
     this.isUserLoggedIn = !!localStorage.getItem('jwt');
+    this.funnel.track('VIEW_HOME');
 
     // Get selected gender for filtering recommendations
     const gender = localStorage.getItem('selectedGender');

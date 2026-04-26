@@ -16,9 +16,15 @@ export enum OrderStatus {
   CONFIRMED = 'CONFIRMED',
   PROCESSING = 'PROCESSING',
   READY = 'READY',
+  // Mixed orders: emitted by the auto-promote when seller items are all shipped
+  // but merchant items are still in earlier states. The merchant's normal flow
+  // promotes this to SHIPPED once their lines leave the warehouse.
+  PARTIALLY_SHIPPED = 'PARTIALLY_SHIPPED',
   SHIPPED = 'SHIPPED',
   IN_TRANSIT = 'IN_TRANSIT',
   OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  // Symmetric partial-delivery state for mixed orders.
+  PARTIALLY_DELIVERED = 'PARTIALLY_DELIVERED',
   DELIVERED = 'DELIVERED',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
@@ -164,6 +170,25 @@ export class Order {
 
   @Column({ type: 'nvarchar', length: 'MAX', nullable: true })
   notes: string;
+
+  // Wave 4: Premium checkout add-ons
+  @Column({ name: 'gift_wrap', default: false })
+  gift_wrap: boolean;
+
+  @Column({ name: 'gift_message', type: 'nvarchar', length: 500, nullable: true })
+  gift_message: string;
+
+  @Column({ name: 'delivery_slot_id', type: 'int', nullable: true })
+  delivery_slot_id: number | null;
+
+  @Column({ name: 'pickup_location_id', type: 'int', nullable: true })
+  pickup_location_id: number | null;
+
+  @Column({ name: 'referral_share_code', type: 'varchar', length: 20, nullable: true })
+  referral_share_code: string | null;
+
+  @Column({ name: 'review_requested_at', type: 'datetime', nullable: true })
+  review_requested_at: Date | null;
 
   @Column({ name: 'cancel_reason', nullable: true })
   cancel_reason: string;

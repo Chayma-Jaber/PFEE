@@ -1,5 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { SmsService } from '../sms/sms.service';
 
 class GenerateOtpDto {
   @IsString()
@@ -26,23 +27,29 @@ class ValidateOtpDto {
 export class OtpController {
   private otpStore = new Map<string, { code: string; expiresAt: number }>();
 
+  constructor(private readonly sms: SmsService) {}
+
   @Post('code-otp/generate')
   async generateOtp(@Body() dto: GenerateOtpDto) {
-    // Generate a 4-digit OTP (in production, send via SMS provider)
-    const code =
-      process.env.NODE_ENV === 'production'
-        ? Math.floor(1000 + Math.random() * 9000).toString()
-        : '1234';
+    // Generate a 4-digit OTP. Prod always random; dev random unless no provider, in which case '1234'.
+    const devFallback = process.env.SMS_ENABLED !== 'true';
+    const code = devFallback
+      ? '1234'
+      : Math.floor(1000 + Math.random() * 9000).toString();
 
     this.otpStore.set(dto.phone, {
       code,
-      expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+      expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
-    // In production, integrate with SMS provider (e.g., Twilio, Vonage)
-    console.log(`[OTP] Generated code ${code} for ${dto.phone}`);
+    // Real send (or console-provider log when SMS_ENABLED!=true)
+    const msg = await this.sms.sendOtp(dto.phone, code);
 
-    return { success: true, message: 'OTP sent successfully' };
+    return {
+      success: msg.status !== 'FAILED',
+      message: msg.status === 'FAILED' ? (msg.error_message || 'SMS failed') : 'OTP sent successfully',
+      provider: msg.provider,
+    };
   }
 
   @Post('code-otp/validate')

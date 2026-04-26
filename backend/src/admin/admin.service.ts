@@ -18,6 +18,7 @@ import { Banner } from './entities/banner.entity';
 import { FAQ } from '../faq/entities/faq.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { AdminLog } from '../analytics/entities/admin-log.entity';
+import { StockMovement } from '../analytics/entities/stock-movement.entity';
 
 import { DashboardPeriod } from './dto/dashboard.dto';
 import { UpdateOrderStatusDto, CreateShipmentDto, ProcessRefundDto } from './dto/admin-orders.dto';
@@ -62,7 +63,41 @@ export class AdminService {
 
     @InjectRepository(AdminLog)
     private readonly adminLogRepo: Repository<AdminLog>,
+
+    @InjectRepository(StockMovement)
+    private readonly stockMovRepo: Repository<StockMovement>,
   ) {}
+
+  /** Auto-restock products on return approval + log each movement. */
+  private async restockFromReturn(returnRequest: ReturnRequest): Promise<void> {
+    try {
+      const items = Array.isArray(returnRequest.items) ? returnRequest.items : [];
+      for (const it of items) {
+        const pid = Number(it?.product_id || it?.productId);
+        const qty = Number(it?.quantity) || 0;
+        if (!pid || qty <= 0) continue;
+        const product = await this.productRepo.findOne({ where: { id: pid } });
+        if (!product) continue;
+        const prev = product.totalStock || 0;
+        const next = prev + qty;
+        product.totalStock = next;
+        await this.productRepo.save(product);
+        await this.stockMovRepo.save(
+          this.stockMovRepo.create({
+            product_id: pid,
+            previous_stock: prev,
+            new_stock: next,
+            delta: qty,
+            reason: 'RETURN',
+            reference_id: `RET-${returnRequest.id}`,
+            notes: `Retour #${returnRequest.id} approuvé`,
+          }),
+        );
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to restock from return ${returnRequest.id}: ${err.message}`);
+    }
+  }
 
   // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -441,7 +476,8 @@ export class AdminService {
       throw new BadRequestException('Refund amount exceeds order total');
     }
 
-    if (dto.amount >= Number(order.total_amount)) {
+    const wasFullRefund = dto.amount >= Number(order.total_amount);
+    if (wasFullRefund) {
       order.payment_status = PaymentStatus.REFUNDED;
       order.status = OrderStatus.REFUNDED;
     } else {
@@ -453,6 +489,35 @@ export class AdminService {
       : `[REFUND] ${dto.reason} - Amount: ${dto.amount}`;
 
     await this.orderRepo.save(order);
+
+    // Full refund triggers stock restoration for all line items with a product_id
+    if (wasFullRefund) {
+      try {
+        const items = await this.orderItemRepo.find({ where: { order_id: orderId } });
+        for (const it of items) {
+          if (!it.product_id) continue;
+          const product = await this.productRepo.findOne({ where: { id: it.product_id } });
+          if (!product) continue;
+          const prev = product.totalStock || 0;
+          const next = prev + it.quantity;
+          product.totalStock = next;
+          await this.productRepo.save(product);
+          await this.stockMovRepo.save(
+            this.stockMovRepo.create({
+              product_id: it.product_id,
+              previous_stock: prev,
+              new_stock: next,
+              delta: it.quantity,
+              reason: 'REFUND',
+              reference_id: order.reference,
+              notes: `Remboursement total ${order.reference}`,
+            }),
+          );
+        }
+      } catch (err: any) {
+        this.logger.warn(`Stock restore on refund failed for order ${orderId}: ${err.message}`);
+      }
+    }
 
     if (adminId) {
       await this.logAction(adminId, 'PROCESS_REFUND', 'order', orderId, null, {
@@ -868,6 +933,9 @@ export class AdminService {
     returnRequest.resolved_at = new Date();
 
     await this.returnRepo.save(returnRequest);
+
+    // Auto-restock on return approval
+    await this.restockFromReturn(returnRequest);
 
     if (adminId) {
       await this.logAction(adminId, 'APPROVE_RETURN', 'return_request', id, null, {
