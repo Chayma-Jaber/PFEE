@@ -97,6 +97,96 @@ export class ProductReviewService {
 
   constructor(private http: HttpClient) {}
 
+  private getDefaultStats(productId: number): ProductRatingStats {
+    return {
+      productId,
+      averageRating: 0,
+      totalReviews: 0,
+      ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
+      verifiedReviews: 0,
+      recommendationRate: 0,
+      fitDistribution: { small: 0, trueToSize: 0, large: 0 }
+    };
+  }
+
+  private getDefaultReviewsResponse(): ReviewsResponse {
+    return {
+      reviews: [],
+      pagination: { page: 1, limit: 10, total: 0, pages: 0 }
+    };
+  }
+
+  private normalizeReview(raw: any): ProductReview {
+    const firstName = raw?.user?.firstName || raw?.user?.first_name || '';
+    const lastName = raw?.user?.lastName || raw?.user?.last_name || '';
+
+    return {
+      id: raw?.id || 0,
+      productId: raw?.productId || raw?.product_id || 0,
+      rating: raw?.rating || 0,
+      title: raw?.title || '',
+      comment: raw?.comment || '',
+      images: Array.isArray(raw?.images) ? raw.images : [],
+      isVerifiedPurchase: !!(raw?.isVerifiedPurchase ?? raw?.is_verified_purchase),
+      isRecommended: !!(raw?.isRecommended ?? raw?.is_recommended),
+      fitRating: raw?.fitRating || raw?.fit_rating,
+      helpfulCount: raw?.helpfulCount ?? raw?.helpful_count ?? 0,
+      notHelpfulCount: raw?.notHelpfulCount ?? raw?.not_helpful_count ?? 0,
+      isFeatured: !!raw?.isFeatured,
+      createdAt: raw?.createdAt || raw?.created_at || new Date().toISOString(),
+      adminResponse: raw?.adminResponse || raw?.admin_response,
+      adminResponseAt: raw?.adminResponseAt || raw?.admin_response_at,
+      user: raw?.user ? {
+        id: raw.user.id || 0,
+        firstName,
+        lastInitial: lastName ? lastName.charAt(0).toUpperCase() : ''
+      } : undefined,
+      userVote: raw?.userVote ?? raw?.user_vote ?? null
+    };
+  }
+
+  private normalizeReviewsResponse(raw: any): ReviewsResponse {
+    const reviews = Array.isArray(raw?.reviews)
+      ? raw.reviews.map((review: any) => this.normalizeReview(review))
+      : [];
+
+    return {
+      reviews,
+      pagination: {
+        page: raw?.pagination?.page ?? raw?.page ?? 1,
+        limit: raw?.pagination?.limit ?? raw?.limit ?? 10,
+        total: raw?.pagination?.total ?? raw?.total ?? reviews.length,
+        pages: raw?.pagination?.pages ?? raw?.totalPages ?? 0
+      }
+    };
+  }
+
+  private normalizeStats(productId: number, raw: any): ProductRatingStats {
+    const base = this.getDefaultStats(productId);
+    const distribution = raw?.ratingDistribution || raw?.distribution || {};
+    const fitDistribution = raw?.fitDistribution || raw?.fit_distribution || {};
+
+    return {
+      productId: raw?.productId || raw?.product_id || productId,
+      averageRating: Number(raw?.averageRating ?? raw?.average_rating ?? 0),
+      totalReviews: Number(raw?.totalReviews ?? raw?.total_reviews ?? 0),
+      ratingDistribution: {
+        '1': Number(distribution?.['1'] ?? distribution?.[1] ?? 0),
+        '2': Number(distribution?.['2'] ?? distribution?.[2] ?? 0),
+        '3': Number(distribution?.['3'] ?? distribution?.[3] ?? 0),
+        '4': Number(distribution?.['4'] ?? distribution?.[4] ?? 0),
+        '5': Number(distribution?.['5'] ?? distribution?.[5] ?? 0),
+      },
+      verifiedReviews: Number(raw?.verifiedReviews ?? raw?.verified_reviews ?? 0),
+      recommendationRate: Number(raw?.recommendationRate ?? raw?.recommendation_rate ?? 0),
+      fitDistribution: {
+        small: Number(fitDistribution?.small ?? 0),
+        trueToSize: Number(fitDistribution?.trueToSize ?? fitDistribution?.true_to_size ?? 0),
+        large: Number(fitDistribution?.large ?? 0)
+      }
+    };
+  }
+
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('jwt');
     if (token) {
@@ -126,13 +216,14 @@ export class ProductReviewService {
     if (options.rating) params = params.set('rating', options.rating.toString());
     if (options.verifiedOnly) params = params.set('verifiedOnly', 'true');
 
-    return this.http.get<ReviewsResponse>(
+    return this.http.get<any>(
       `${this.apiUrl}/product/${productId}`,
       { params, headers: this.getHeaders() }
     ).pipe(
+      map(response => this.normalizeReviewsResponse(response)),
       catchError(err => {
         console.error('Error fetching reviews:', err);
-        return of({ reviews: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
+        return of(this.getDefaultReviewsResponse());
       })
     );
   }
@@ -150,24 +241,17 @@ export class ProductReviewService {
       }
     }
 
-    return this.http.get<ProductRatingStats>(
+    return this.http.get<any>(
       `${this.apiUrl}/product/${productId}/stats`
     ).pipe(
+      map(stats => this.normalizeStats(productId, stats)),
       tap(stats => {
         this.statsCache.set(productId, stats);
         this.statsCacheTime.set(productId, Date.now());
       }),
       catchError(err => {
         console.error('Error fetching stats:', err);
-        return of({
-          productId,
-          averageRating: 0,
-          totalReviews: 0,
-          ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-          verifiedReviews: 0,
-          recommendationRate: 0,
-          fitDistribution: { small: 0, trueToSize: 0, large: 0 }
-        });
+        return of(this.getDefaultStats(productId));
       })
     );
   }
@@ -196,11 +280,16 @@ export class ProductReviewService {
    * Submit a new review
    */
   createReview(review: CreateReviewRequest): Observable<{ success: boolean; review?: ProductReview; message: string }> {
-    return this.http.post<{ success: boolean; review?: ProductReview; message: string }>(
+    return this.http.post<any>(
       this.apiUrl,
       review,
       { headers: this.getHeaders() }
     ).pipe(
+      map(response => ({
+        success: true,
+        review: this.normalizeReview(response),
+        message: 'Votre avis a ete publie avec succes'
+      })),
       tap(() => {
         // Invalidate cache
         this.statsCache.delete(review.productId);
@@ -208,7 +297,7 @@ export class ProductReviewService {
       }),
       catchError(err => {
         console.error('Error creating review:', err);
-        const message = err.error?.detail || 'Impossible de soumettre votre avis';
+        const message = err.error?.detail || err.error?.message || 'Impossible de soumettre votre avis';
         return of({ success: false, message });
       })
     );
@@ -218,11 +307,16 @@ export class ProductReviewService {
    * Vote on a review (helpful/not helpful)
    */
   voteOnReview(reviewId: number, isHelpful: boolean): Observable<{ success: boolean; helpfulCount: number; notHelpfulCount: number }> {
-    return this.http.post<{ success: boolean; helpfulCount: number; notHelpfulCount: number }>(
+    return this.http.post<any>(
       `${this.apiUrl}/${reviewId}/vote`,
       { isHelpful },
       { headers: this.getHeaders() }
     ).pipe(
+      map(response => ({
+        success: true,
+        helpfulCount: response?.helpfulCount ?? response?.helpful_count ?? 0,
+        notHelpfulCount: response?.notHelpfulCount ?? response?.not_helpful_count ?? 0
+      })),
       catchError(err => {
         console.error('Error voting on review:', err);
         return of({ success: false, helpfulCount: 0, notHelpfulCount: 0 });
@@ -234,16 +328,17 @@ export class ProductReviewService {
    * Get current user's reviews
    */
   getMyReviews(page = 1, limit = 10): Observable<ReviewsResponse> {
-    return this.http.get<ReviewsResponse>(
+    return this.http.get<any>(
       `${this.apiUrl}/user/my-reviews`,
       {
         params: new HttpParams().set('page', page.toString()).set('limit', limit.toString()),
         headers: this.getHeaders()
       }
     ).pipe(
+      map(response => this.normalizeReviewsResponse(response)),
       catchError(err => {
         console.error('Error fetching user reviews:', err);
-        return of({ reviews: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
+        return of(this.getDefaultReviewsResponse());
       })
     );
   }

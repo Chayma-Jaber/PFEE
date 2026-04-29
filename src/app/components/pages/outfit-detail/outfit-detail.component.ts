@@ -827,6 +827,6 @@ export class OutfitDetailComponent implements OnInit {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/images/placeholder-outfit.jpg';
+    img.src = 'assets/images/placeholder.jpg';
   }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
+import { environementDev } from '../../../../../environements/environementDev';
 
 @Component({
   selector: 'app-admin-returns',
@@ -85,6 +86,7 @@ import { AdminService } from '../../services/admin.service';
   `]
 })
 export class AdminReturnsComponent implements OnInit {
+  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
   returns: any[] = [];
   isLoading = false;
   statusFilter = '';
@@ -98,15 +100,35 @@ export class AdminReturnsComponent implements OnInit {
   loadReturns(): void {
     this.isLoading = true;
     this.adminService.getReturns({ status: this.statusFilter || undefined }).subscribe(response => {
-      this.returns = response.items;
+      this.returns = (response.items || []).map((ret: any) => this.normalizeReturn(ret));
       this.isLoading = false;
     });
   }
 
   updateStatus(ret: any, status: string): void {
-    this.adminService.updateReturnStatus(ret.id, status).subscribe(() => {
+    if (this.useLocalMode) {
       ret.status = status;
+      return;
+    }
+
+    this.adminService.updateReturnStatus(ret.id, status).subscribe({
+      next: () => {
+        ret.status = status;
+      }
     });
+  }
+
+  private normalizeReturn(ret: any): any {
+    return {
+      ...ret,
+      id: Number(ret?.id || 0),
+      reference: ret?.reference || ret?.ref || `RET-${ret?.id || ''}`,
+      orderReference: ret?.orderReference || ret?.order_reference || ret?.orderRef || '-',
+      reason: ret?.reason || 'unknown',
+      reasonDetails: ret?.reasonDetails || ret?.reason_details || '',
+      refundAmount: Number(ret?.refundAmount ?? ret?.refund_amount ?? 0),
+      status: ret?.status || 'pending'
+    };
   }
 
   getStatusClass(status: string): string {

@@ -1,28 +1,43 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environementDev } from '../../environements/environementDev';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FooterService {
+  private readonly footerFallback = { hits: [{ widgets: [], brand: 'Barsha' }] };
+  private readonly socialLinksFallback = { hits: [{ links: [] }] };
  
  
 
   constructor(private http: HttpClient) { }
   getFooterData(): Observable<any> {
+    if (environementDev.useMockSearchData) {
+      return of(this.footerFallback);
+    }
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${environementDev.tokenSearchDev}`
     });
    
-    return this.http.get<any>( environementDev.apiSearchDev + '/indexes/footer/search', { headers });
+    return this.http.get<any>( environementDev.apiSearchDev + '/indexes/footer/search', { headers }).pipe(
+      catchError(() => of(this.footerFallback))
+    );
   }
   getSocialLinks(): Observable<any> {
+    if (environementDev.useMockSearchData) {
+      return of(this.socialLinksFallback);
+    }
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${environementDev.tokenSearchDev}`
     });
-    return this.http.get<any>( environementDev.apiSearchDev + '/indexes/social-link/search', { headers });
+    return this.http.get<any>( environementDev.apiSearchDev + '/indexes/social-link/search', { headers }).pipe(
+      catchError(() => of(this.socialLinksFallback))
+    );
   }
   getAboutBrandData(): Observable<any> {
     const headers = new HttpHeaders({

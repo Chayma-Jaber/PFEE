@@ -14,7 +14,7 @@
  * - Handle empty state gracefully
  */
 
-import { Component, OnInit, Input, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -578,10 +578,12 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
   canScrollRight = false;
 
   private subscription?: Subscription;
+  private scrollStateTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(
     private recentlyViewedService: RecentlyViewedService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -589,8 +591,7 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
       this.products = products;
       this.displayProducts = products.slice(0, this.maxProducts);
       this.lastViewed = products.length > 0 ? products[0] : null;
-      // Delay scroll state update to allow DOM to render
-      setTimeout(() => this.updateScrollState(), 100);
+      this.scheduleScrollStateUpdate();
     });
 
     // For logged-in users, hydrate from backend (cross-device recently-viewed)
@@ -610,11 +611,14 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngAfterViewInit(): void {
-    this.updateScrollState();
+    this.scheduleScrollStateUpdate();
   }
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+    if (this.scrollStateTimeout) {
+      clearTimeout(this.scrollStateTimeout);
+    }
   }
 
   navigateToProduct(product: RecentlyViewedProduct): void {
@@ -677,6 +681,17 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
     this.updateScrollState();
   }
 
+  private scheduleScrollStateUpdate(): void {
+    if (this.scrollStateTimeout) {
+      clearTimeout(this.scrollStateTimeout);
+    }
+
+    this.scrollStateTimeout = setTimeout(() => {
+      this.updateScrollState();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
   private updateScrollState(): void {
     const container = this.productsContainerRef?.nativeElement;
     if (container) {
@@ -687,7 +702,7 @@ export class RecentlyViewedComponent implements OnInit, OnDestroy, AfterViewInit
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/images/placeholder-product.jpg';
+    img.src = 'assets/images/placeholder.jpg';
   }
 
   getRelativeTime(timestamp: number): string {

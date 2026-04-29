@@ -1,3 +1,4 @@
+
 <div class="stepper-toast-row">
   <div class="stepper-container">
   <ng-container *ngIf="hasCoupons; else noCouponStepper">
@@ -247,7 +248,7 @@
         </div>
       </div>
 
-      <!-- Wave 4: premium options (gift wrap + delivery slot + click & collect) -->
+      <!-- Premium checkout options -->
       <app-premium-checkout-options
         [city]="premiumCity"
         (changed)="onPremiumOptionsChanged($event)">
@@ -436,9 +437,9 @@
 </div>
 
 <!-- Cart Recommendations - Shown in confirmation step -->
-<div class="cart-recommendations-section" *ngIf="currentStep === (hasCoupons ? 4 : 3) && cartProductIds.length > 0">
+<div class="cart-recommendations-section" *ngIf="currentStep === (hasCoupons ? 4 : 3) && cartRecommendationProductIds.length > 0">
   <app-cart-recommendations-nextgen
-    [cartProductIds]="cartProductIds"
+    [cartProductIds]="cartRecommendationProductIds"
     [limit]="4"
     [showAiBadge]="true"
     [showReason]="true"
@@ -447,4 +448,4 @@
     subtitle="Ces articles accompagnent parfaitement votre sélection">
   </app-cart-recommendations-nextgen>
 </div>
-
+

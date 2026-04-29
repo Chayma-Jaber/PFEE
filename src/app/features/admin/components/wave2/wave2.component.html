@@ -9,6 +9,8 @@
   <div class="alert ok" *ngIf="ok"><i class="fas fa-check"></i> {{ ok }}</div>
   <div class="alert err" *ngIf="err"><i class="fas fa-exclamation"></i> {{ err }}</div>
 
+  <app-admin-module-context moduleKey="wave2" />
+
   <div class="tabs">
     <button [class.active]="tab==='trending'" (click)="switch('trending')"><i class="fas fa-fire"></i> Trending</button>
     <button [class.active]="tab==='reorder'" (click)="switch('reorder')"><i class="fas fa-boxes-stacked"></i> Réappro suggéré</button>

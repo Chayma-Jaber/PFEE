@@ -146,7 +146,10 @@ const CACHE_TTL = {
 })
 export class NextGenRecommendationsService {
   private readonly apiUrl = `${environementDev.backendAiUrl}/api/recommendations/v3`;
+  private readonly analyticsApiUrl = `${environementDev.api}/api/analytics`;
+  private readonly analyticsEnabled = (environementDev as any).enableAnalytics !== false;
   private cache = new Map<string, CacheEntry<any>>();
+  private trackedImpressions = new Set<string>();
 
   // Analytics event buffer for batching
   private analyticsBuffer: AnalyticsEvent[] = [];
@@ -212,6 +215,88 @@ export class NextGenRecommendationsService {
     this.loadingStrategies.next(new Set(current));
   }
 
+  private ensureAbsoluteUrl(url?: string): string {
+    const value = (url || '').toString().trim();
+    if (!value) return 'assets/images/placeholder.png';
+    if (value.startsWith('http') || value.startsWith('data:') || value.startsWith('assets/')) {
+      return value;
+    }
+    return `https://barsha.com.tn/${value.replace(/^\/+/, '')}`;
+  }
+
+  private normalizeRecommendationResponse(response: any, fallbackTitle: string): RecommendationResponse {
+    if (response?.products) {
+      return {
+        strategy: response.strategy || '',
+        title: response.title || fallbackTitle,
+        subtitle: response.subtitle || '',
+        products: (response.products || []).map((product: any, index: number) => ({
+          ...product,
+          id: Number(product.id || product.product_id || 0),
+          price: Number(product.price || product.currentPrice || 0),
+          originalPrice: product.originalPrice != null ? Number(product.originalPrice) : undefined,
+          discountPercent: product.discountPercent != null ? Number(product.discountPercent) : undefined,
+          image: this.ensureAbsoluteUrl(product.image),
+          secondImage: product.secondImage ? this.ensureAbsoluteUrl(product.secondImage) : undefined,
+          name: product.name || product.nom || `Produit #${product.id || product.product_id}`,
+          family: product.family || product.famille || 'UNISEX',
+          url: product.url || `/produit/${product.id || product.product_id}`,
+          colors: Array.isArray(product.colors) ? product.colors : [],
+          position: Number(product.position ?? index),
+        })),
+        metadata: {
+          totalCandidates: Number(response?.metadata?.totalCandidates || response?.total_candidates || 0),
+          executionTimeMs: Number(response?.metadata?.executionTimeMs || 0),
+          cacheHit: Boolean(response?.metadata?.cacheHit),
+          experimentId: response?.metadata?.experimentId,
+        }
+      };
+    }
+
+    const results = Array.isArray(response?.results) ? response.results : [];
+    return {
+      strategy: response?.strategy || '',
+      title: response?.title || fallbackTitle,
+      subtitle: response?.subtitle || response?.explanation || '',
+      products: results.map((item: any, index: number) => {
+        const product = item?.product || item?.product_data || {};
+        const currentPrice = Number(product.currentPrice || product.prix || product.price || 0);
+        const originalPrice = Number(product.prix || product.price || currentPrice);
+        return {
+          id: Number(product.id || item.product_id || 0),
+          reference: product.reference || product.sku || '',
+          name: product.nom || product.name || `Produit #${product.id || item.product_id}`,
+          price: currentPrice,
+          originalPrice: originalPrice > currentPrice ? originalPrice : undefined,
+          discountPercent: originalPrice > currentPrice && currentPrice > 0
+            ? Math.round((1 - currentPrice / originalPrice) * 100)
+            : undefined,
+          image: this.ensureAbsoluteUrl(product.image),
+          secondImage: product.secondImage ? this.ensureAbsoluteUrl(product.secondImage) : undefined,
+          url: product.url || `/produit/${product.id || item.product_id}`,
+          family: product.famille || product.family || 'UNISEX',
+          category: product.category || '',
+          colors: Array.isArray(product.colors) ? product.colors : [],
+          styleProfile: product.styleProfile || '',
+          score: Number(item.score || 0),
+          confidence: Number(item.confidence || item.score || 0),
+          position: Number(item.position ?? index),
+          strategy: item.strategy || response?.strategy || '',
+          reasonKey: item.reasonKey || item.reason_key || '',
+          reasonText: item.reasonText || item.reason || '',
+          recommendationId: item.recommendationId || `${response?.strategy || 'rec'}-${product.id || item.product_id}-${index}`,
+          experimentVariant: item.experimentVariant,
+        };
+      }),
+      metadata: {
+        totalCandidates: Number(response?.total_candidates || response?.count || results.length || 0),
+        executionTimeMs: Number(response?.metadata?.executionTimeMs || 0),
+        cacheHit: Boolean(response?.metadata?.cacheHit),
+        experimentId: response?.metadata?.experimentId,
+      }
+    };
+  }
+
   private emptyResponse(strategy: string, title: string): RecommendationResponse {
     return {
       strategy,
@@ -244,6 +329,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/similar/${productId}`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Dans le même style')),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('similar', false);
@@ -271,6 +357,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/complementary/${productId}`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Pour compléter ce look')),
       tap(response => {
         this.setCache(cacheKey, response, 'complementary');
         this.setLoading('complementary', false);
@@ -296,6 +383,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/complete-look/${productId}`,
       { headers: this.getHeaders(), params: new HttpParams().set('limit', limit.toString()) }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Le look complet')),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('complete_the_look', false);
@@ -321,6 +409,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/frequently-bought-together/${productId}`,
       { headers: this.getHeaders(), params: new HttpParams().set('limit', limit.toString()) }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Souvent achetés ensemble')),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('frequently_bought_together', false);
@@ -346,6 +435,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/premium-alternatives/${productId}`,
       { headers: this.getHeaders(), params: new HttpParams().set('limit', limit.toString()) }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Version premium')),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('premium_alternative', false);
@@ -371,6 +461,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/affordable-alternatives/${productId}`,
       { headers: this.getHeaders(), params: new HttpParams().set('limit', limit.toString()) }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Alternatives accessibles')),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('affordable_alternative', false);
@@ -403,6 +494,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/trending`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Tendances Barsha')),
       tap(response => {
         this.setCache(cacheKey, response, 'trending');
         this.setLoading('trending', false);
@@ -430,6 +522,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/new-arrivals`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Nouveautés')),
       tap(response => {
         this.setCache(cacheKey, response, 'new_arrivals');
         this.setLoading('new_arrivals', false);
@@ -457,6 +550,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/seasonal`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Sélection de saison')),
       tap(response => {
         this.setCache(cacheKey, response, 'seasonal');
         this.setLoading('seasonal', false);
@@ -482,6 +576,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/editorial`,
       { headers: this.getHeaders(), params: new HttpParams().set('limit', limit.toString()) }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Sélection éditoriale')),
       tap(response => {
         this.setCache(cacheKey, response, 'editorial');
         this.setLoading('editorial', false);
@@ -509,6 +604,7 @@ export class NextGenRecommendationsService {
       `${this.apiUrl}/style/${style}`,
       { headers: this.getHeaders(), params }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, `Style ${style}`)),
       tap(response => {
         this.setCache(cacheKey, response, 'similar');
         this.setLoading('style_discovery', false);
@@ -545,6 +641,7 @@ export class NextGenRecommendationsService {
       body,
       { headers: this.getHeaders() }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Sélectionné pour vous')),
       tap(() => this.setLoading('personalized', false)),
       catchError(error => {
         console.error('Error fetching personalized:', error);
@@ -562,6 +659,7 @@ export class NextGenRecommendationsService {
       { viewed_product_ids: viewedIds },
       { headers: this.getHeaders() }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Car vous avez consulté')),
       tap(() => this.setLoading('because_you_viewed', false)),
       catchError(error => {
         console.error('Error fetching because you viewed:', error);
@@ -579,6 +677,7 @@ export class NextGenRecommendationsService {
       { product_ids: productIds },
       { headers: this.getHeaders() }
     ).pipe(
+      map(response => this.normalizeRecommendationResponse(response, 'Les clients ont aussi aimé')),
       tap(() => this.setLoading('customers_also_liked', false)),
       catchError(error => {
         console.error('Error fetching customers also liked:', error);
@@ -621,6 +720,7 @@ export class NextGenRecommendationsService {
           { headers: this.getHeaders() }
         );
       }),
+      map(response => this.normalizeRecommendationResponse(response, 'Sélectionné pour vous')),
       tap(() => this.setLoading('personalized', false)),
       catchError(error => {
         console.error('Error fetching personalized with context:', error);
@@ -684,6 +784,7 @@ export class NextGenRecommendationsService {
           { headers: this.getHeaders(), params }
         );
       }),
+      map(response => this.normalizeRecommendationResponse(response, 'Vos couleurs')),
       tap(() => this.setLoading('color_matched', false)),
       catchError(error => {
         console.error('Error fetching color-matched:', error);
@@ -705,14 +806,27 @@ export class NextGenRecommendationsService {
   // ========================================================================
 
   getCartRecommendations(cartProductIds: number[], limit: number = 4): Observable<RecommendationResponse> {
+    const normalizedIds = Array.from(
+      new Set((cartProductIds || []).filter((id): id is number => Number.isFinite(id)))
+    ).sort((left, right) => left - right);
+    const cacheKey = this.getCacheKey('cart_complement', { cartProductIds: normalizedIds, limit });
+    const cached = this.getFromCache<RecommendationResponse>(cacheKey);
+    if (cached) {
+      return of({ ...cached, metadata: { ...cached.metadata, cacheHit: true } });
+    }
+
     this.setLoading('cart_complement', true);
 
     return this.http.post<RecommendationResponse>(
       `${this.apiUrl}/cart-recommendations`,
-      { cart_product_ids: cartProductIds },
+      { cart_product_ids: normalizedIds, limit },
       { headers: this.getHeaders() }
     ).pipe(
-      tap(() => this.setLoading('cart_complement', false)),
+      map(response => this.normalizeRecommendationResponse(response, 'Pour compléter votre commande')),
+      tap((response) => {
+        this.setCache(cacheKey, response, 'default');
+        this.setLoading('cart_complement', false);
+      }),
       catchError(error => {
         console.error('Error fetching cart recommendations:', error);
         this.setLoading('cart_complement', false);
@@ -783,6 +897,14 @@ export class NextGenRecommendationsService {
   // ========================================================================
 
   trackImpression(product: RecommendedProduct): void {
+    if (!this.analyticsEnabled) return;
+
+    const impressionKey = `${product.recommendationId}:${product.id}:${product.position}`;
+    if (this.trackedImpressions.has(impressionKey)) {
+      return;
+    }
+
+    this.trackedImpressions.add(impressionKey);
     this.analyticsBuffer.push({
       eventType: 'impression',
       recommendationId: product.recommendationId,
@@ -796,6 +918,7 @@ export class NextGenRecommendationsService {
   }
 
   trackClick(product: RecommendedProduct): void {
+    if (!this.analyticsEnabled) return;
     this.analyticsBuffer.push({
       eventType: 'click',
       recommendationId: product.recommendationId,
@@ -809,6 +932,7 @@ export class NextGenRecommendationsService {
   }
 
   trackAddToCart(product: RecommendedProduct): void {
+    if (!this.analyticsEnabled) return;
     this.analyticsBuffer.push({
       eventType: 'add_to_cart',
       recommendationId: product.recommendationId,
@@ -822,6 +946,7 @@ export class NextGenRecommendationsService {
   }
 
   trackPurchase(product: RecommendedProduct): void {
+    if (!this.analyticsEnabled) return;
     this.analyticsBuffer.push({
       eventType: 'purchase',
       recommendationId: product.recommendationId,
@@ -835,24 +960,36 @@ export class NextGenRecommendationsService {
   }
 
   private flushAnalytics(): void {
+    if (!this.analyticsEnabled) return;
     if (this.analyticsBuffer.length === 0) return;
 
     const events = [...this.analyticsBuffer];
     this.analyticsBuffer = [];
 
-    // Send each event (in production, batch these)
+    const eventTypeMap: Record<AnalyticsEvent['eventType'], string> = {
+      impression: 'recommendation_impression',
+      click: 'recommendation_click',
+      add_to_cart: 'recommendation_add_to_cart',
+      purchase: 'recommendation_purchase',
+    };
+
     events.forEach(event => {
       this.http.post(
-        `${this.apiUrl}/track`,
+        `${this.analyticsApiUrl}/event`,
         {
-          event_type: event.eventType,
-          recommendation_id: event.recommendationId,
+          event_type: eventTypeMap[event.eventType],
           product_id: event.productId,
-          strategy: event.strategy,
-          position: event.position,
           session_id: event.sessionId,
-          user_id: event.userId,
-          timestamp: new Date().toISOString()
+          recommendation_type: event.strategy,
+          recommendation_position: event.position,
+          recommendation_source: 'next_gen_recommendations',
+          event_data: {
+            recommendation_id: event.recommendationId,
+            strategy: event.strategy,
+            original_event_type: event.eventType,
+            tracked_user_id: event.userId,
+            timestamp: new Date().toISOString(),
+          }
         },
         { headers: this.getHeaders() }
       ).subscribe({
@@ -871,7 +1008,18 @@ export class NextGenRecommendationsService {
   }
 
   private getUserId(): string | undefined {
-    return localStorage.getItem('userId') || undefined;
+    const direct = localStorage.getItem('userId');
+    if (direct) return direct;
+
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return undefined;
+
+    try {
+      const user = JSON.parse(userStr);
+      return user?.id ? String(user.id) : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   // ========================================================================

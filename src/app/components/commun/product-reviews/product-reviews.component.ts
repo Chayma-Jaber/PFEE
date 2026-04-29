@@ -1040,6 +1040,18 @@ export class ProductReviewsComponent implements OnInit, OnChanges {
     { value: 'large', label: 'Taille grand' }
   ];
 
+  private getEmptyStats(): ProductRatingStats {
+    return {
+      productId: this.productId || 0,
+      averageRating: 0,
+      totalReviews: 0,
+      ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
+      verifiedReviews: 0,
+      recommendationRate: 0,
+      fitDistribution: { small: 0, trueToSize: 0, large: 0 }
+    };
+  }
+
   constructor(public reviewService: ProductReviewService) {}
 
   ngOnInit(): void {
@@ -1063,12 +1075,12 @@ export class ProductReviewsComponent implements OnInit, OnChanges {
     // Load stats
     this.reviewService.getProductStats(this.productId).subscribe({
       next: (stats) => {
-        this.stats = stats || { productId: 0, averageRating: 0, totalReviews: 0, ratingDistribution: {}, recommendationRate: 0, verifiedReviews: 0, fitDistribution: {} } as any;
+        this.stats = stats || this.getEmptyStats();
         this.isLoadingStats = false;
         this.loadReviews();
       },
       error: () => {
-        this.stats = { productId: 0, averageRating: 0, totalReviews: 0, ratingDistribution: {}, recommendationRate: 0, verifiedReviews: 0, fitDistribution: {} } as any;
+        this.stats = this.getEmptyStats();
         this.isLoadingStats = false;
       }
     });
@@ -1093,8 +1105,12 @@ export class ProductReviewsComponent implements OnInit, OnChanges {
       rating: this.filterRating || undefined,
       verifiedOnly: this.verifiedOnly
     }).subscribe(response => {
-      this.reviews = response.reviews || [];
-      this.totalPages = response.pagination.pages;
+      this.reviews = response?.reviews || [];
+      this.totalPages = response?.pagination?.pages || 0;
+      this.isLoadingReviews = false;
+    }, () => {
+      this.reviews = [];
+      this.totalPages = 0;
       this.isLoadingReviews = false;
     });
   }
@@ -1106,8 +1122,9 @@ export class ProductReviewsComponent implements OnInit, OnChanges {
   }
 
   getRatingCount(rating: number): number {
-    if (!this.stats) return 0;
-    return this.stats.ratingDistribution[rating.toString() as keyof typeof this.stats.ratingDistribution] || 0;
+    if (!this.stats?.ratingDistribution) return 0;
+    const key = rating.toString() as keyof typeof this.stats.ratingDistribution;
+    return this.stats.ratingDistribution[key] || 0;
   }
 
   getRatingText(rating: number): string {
@@ -1170,7 +1187,7 @@ export class ProductReviewsComponent implements OnInit, OnChanges {
           this.showReviewForm = false;
           // Refresh stats
           this.reviewService.getProductStats(this.productId, true).subscribe(stats => {
-            this.stats = stats;
+            this.stats = stats || this.getEmptyStats();
           });
         }, 2000);
       }

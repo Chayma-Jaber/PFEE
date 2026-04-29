@@ -391,6 +391,7 @@ export class CartRecommendationsNextGenComponent implements OnInit, OnChanges {
 
   recommendations: RecommendedProduct[] = [];
   isLoading: boolean = false;
+  private lastRequestKey: string | null = null;
 
   constructor(private recommendationsService: NextGenRecommendationsService) {}
 
@@ -405,14 +406,26 @@ export class CartRecommendationsNextGenComponent implements OnInit, OnChanges {
   }
 
   private loadRecommendations(): void {
-    if (!this.cartProductIds || this.cartProductIds.length === 0) {
+    const normalizedIds = Array.from(
+      new Set((this.cartProductIds || []).filter((id): id is number => Number.isFinite(id)))
+    ).sort((left, right) => left - right);
+
+    if (normalizedIds.length === 0) {
       this.recommendations = [];
+      this.lastRequestKey = null;
       return;
     }
 
+    const requestKey = `${normalizedIds.join(',')}::${this.limit}`;
+    if (this.lastRequestKey === requestKey) {
+      return;
+    }
+
+    this.lastRequestKey = requestKey;
+
     this.isLoading = true;
 
-    this.recommendationsService.getCartRecommendations(this.cartProductIds, this.limit).subscribe({
+    this.recommendationsService.getCartRecommendations(normalizedIds, this.limit).subscribe({
       next: (response) => {
         this.recommendations = response.products || [];
         this.isLoading = false;
@@ -428,6 +441,7 @@ export class CartRecommendationsNextGenComponent implements OnInit, OnChanges {
         console.error('Error loading cart recommendations:', err);
         this.recommendations = [];
         this.isLoading = false;
+        this.lastRequestKey = null;
       }
     });
   }

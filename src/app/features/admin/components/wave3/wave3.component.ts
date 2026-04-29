@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 
 type Tab = 'blocks' | 'abtests' | 'segments' | 'merchandising' | 'shipments';
 
 @Component({
   selector: 'app-admin-wave3',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   templateUrl: './wave3.component.html',
   styleUrls: ['./wave3.component.scss']
 })

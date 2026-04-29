@@ -33,7 +33,7 @@ const rollbackId = rollbackIdx >= 0 ? args[rollbackIdx + 1] : null;
 // reads exactly the same env vars as the live app, without dragging in the rest
 // of the NestJS module graph (so this script compiles to plain JS for prod hosts
 // that don't ship ts-node).
-const dbType = ((process.env.DB_TYPE as any) || 'mssql') as 'mssql' | 'postgres' | 'sqlite';
+const dbType = ((process.env['DB_TYPE'] as any) || 'mssql') as 'mssql' | 'postgres' | 'sqlite';
 // Resolve `backend/migrations/` regardless of whether we're running from
 // scripts/ (ts-node) or dist/scripts/ (compiled prod). The convention is
 // that all npm scripts run with cwd=backend, so cwd-relative is unambiguous.
@@ -51,11 +51,11 @@ function getDataSource(): DataSource {
   if (dbType === 'mssql') {
     return new DataSource({
       type: 'mssql',
-      host: process.env.DB_HOST || 'DESKTOP-KOR5QAB',
-      port: parseInt(process.env.DB_PORT || '1433', 10),
-      username: process.env.DB_USERNAME || 'admin',
-      password: process.env.DB_PASSWORD || 'admin123',
-      database: process.env.DB_NAME || 'barsha',
+      host: process.env['DB_HOST'] || 'DESKTOP-KOR5QAB',
+      port: parseInt(process.env['DB_PORT'] || '1433', 10),
+      username: process.env['DB_USERNAME'] || 'admin',
+      password: process.env['DB_PASSWORD'] || 'admin123',
+      database: process.env['DB_NAME'] || 'barsha',
       options: { encrypt: false, trustServerCertificate: true },
       extra: { trustServerCertificate: true },
       synchronize: false,
@@ -65,14 +65,14 @@ function getDataSource(): DataSource {
   if (dbType === 'postgres') {
     return new DataSource({
       type: 'postgres',
-      url: process.env.DATABASE_URL || '',
+      url: process.env['DATABASE_URL'] || '',
       synchronize: false,
       logging: false,
     });
   }
   // sqlite default — same resolution as database.module.ts
-  const sqliteUrl = process.env.DATABASE_URL || '';
-  const dbName = process.env.DB_NAME || 'barsha';
+  const sqliteUrl = process.env['DATABASE_URL'] || '';
+  const dbName = process.env['DB_NAME'] || 'barsha';
   const sqlitePath = sqliteUrl.startsWith('sqlite:///')
     ? sqliteUrl.replace(/^sqlite:\/\/\//, '')
     : (dbName !== 'barsha' ? dbName : 'barsha.db');

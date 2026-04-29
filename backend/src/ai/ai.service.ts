@@ -1,6 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChatMessageDto, UserContextDto } from './dto/ai.dto';
+import { SearchService } from '../search/search.service';
 
 // Intent mapping for query cleaning (French fashion context)
 const INTENT_MAP: Record<string, string[]> = {
@@ -32,7 +33,10 @@ export class AiService {
   private readonly cloudTimeout: number;
   private readonly maxTokens: number;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly searchService: SearchService,
+  ) {
     this.aiServiceUrl = this.configService.get<string>('ai.aiServiceUrl', 'http://localhost:8001');
     this.ollamaUrl = this.configService.get<string>('ai.ollamaUrl', 'http://localhost:11434');
     this.ollamaModel = this.configService.get<string>('ai.ollamaModel', 'qwen2.5:7b');
@@ -49,9 +53,15 @@ export class AiService {
     messages: ChatMessageDto[],
     userContext?: UserContextDto,
   ): Promise<{ text: string; products: any[] }> {
+    const fallbackProducts = await this.findCatalogFallbackProducts(messages);
+
     // 1. Try the local Python AI service (primary)
     try {
-      return await this.callPythonAiService(messages, userContext);
+      const result = await this.callPythonAiService(messages, userContext);
+      return {
+        text: result.text,
+        products: result.products.length > 0 ? result.products : fallbackProducts,
+      };
     } catch (pythonError) {
       this.logger.warn(`Python AI service failed: ${pythonError.message}`);
     }
@@ -59,7 +69,7 @@ export class AiService {
     // 2. Fallback: call Ollama directly from NestJS
     try {
       const text = await this.callOllamaDirectly(messages);
-      return { text, products: [] };
+      return { text, products: fallbackProducts };
     } catch (ollamaError) {
       this.logger.warn(`Direct Ollama fallback failed: ${ollamaError.message}`);
     }
@@ -68,7 +78,7 @@ export class AiService {
     if (this.geminiApiKey) {
       try {
         const text = await this.callGemini(messages);
-        return { text, products: [] };
+        return { text, products: fallbackProducts };
       } catch (geminiError) {
         this.logger.error(`Gemini last-resort fallback failed: ${geminiError.message}`);
       }
@@ -77,7 +87,7 @@ export class AiService {
     // 4. All providers failed — return a static fallback
     return {
       text: this.getFallbackResponse(messages),
-      products: [],
+      products: fallbackProducts,
     };
   }
 
@@ -114,17 +124,52 @@ export class AiService {
         data.text ||
         'Désolé, je n\'ai pas pu générer de réponse.';
 
-      const products = (data.catalog_hits || data.products || []).map((p: any) => ({
-        id: p.id,
-        title: p.nom || p.title,
-        price: p.prix || p.price,
-        image: p.image,
-        url: p.url || p.slug,
-      }));
+      const products = (data.catalog_hits || data.products || []).map((p: any) =>
+        this.normalizeProductCard(p),
+      );
 
       return { text, products };
     } finally {
       clearTimeout(timeoutId);
+    }
+  }
+
+  private normalizeProductCard(product: any): any {
+    const id = Number(product?.id ?? product?.product_id ?? 0);
+    const name = product?.nom || product?.title || product?.name || 'Produit';
+    const rawPrice = product?.prix || product?.currentPrice || product?.price || '';
+    const image = product?.image || product?.firstImageUrl || product?.firstImg?.url || '';
+    const url = product?.url || product?.slug || `/produit/${id}`;
+
+    return {
+      id,
+      reference: product?.reference || product?.sku || `ID:${id}`,
+      nom: name,
+      prix: typeof rawPrice === 'string' && rawPrice.toUpperCase().includes('TND')
+        ? rawPrice
+        : `${rawPrice} TND`,
+      url,
+      image,
+      color: product?.color || '',
+      size: product?.size || '',
+    };
+  }
+
+  private async findCatalogFallbackProducts(messages: ChatMessageDto[]): Promise<any[]> {
+    const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+    const query = this.cleanSearchQuery(lastUserMessage?.content || '').trim();
+
+    if (!query) {
+      return [];
+    }
+
+    try {
+      const result = await this.searchService.searchProducts(query, undefined, undefined, 6, 0);
+      const hits = Array.isArray(result?.hits) ? result.hits : [];
+      return hits.slice(0, 6).map((hit: any) => this.normalizeProductCard(hit));
+    } catch (error: any) {
+      this.logger.warn(`Catalog fallback search failed: ${error?.message || error}`);
+      return [];
     }
   }
 

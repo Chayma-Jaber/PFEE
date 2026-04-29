@@ -25,6 +25,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-checkout',
+  standalone: true,
   imports: [RouterModule, CommonModule, ToastModule, FormsModule, CouponToastComponent, CartRecommendationsNextGenComponent, CheckoutRewardsComponent, PremiumCheckoutOptionsComponent],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss'],
@@ -46,6 +47,7 @@ export class CheckoutComponent implements OnInit {
   selectedStore: any;
   filteredStores: any[] = [];
   cartItems: any[] = [];
+  cartRecommendationProductIds: number[] = [];
   deliveryCost: number = 0;
   subtotal: number = 0;
   total: number = 0;
@@ -147,6 +149,23 @@ export class CheckoutComponent implements OnInit {
     ).subscribe({ next: () => {}, error: (e) => console.warn('premium-options attach failed', e) });
   }
 
+  private normalizeSelectedAddress(address: any): any {
+    if (!address || typeof address !== 'object') {
+      return null;
+    }
+
+    return {
+      ...address,
+      firstName: address.firstName || address.first_name || '',
+      lastName: address.lastName || address.last_name || '',
+      address: address.address || address.street || '',
+      street: address.street || address.address || '',
+      defaultAddress: Boolean(address.defaultAddress ?? address.is_default),
+      postalCode: address.postalCode || address.postal_code || address.codepost || '',
+      codepost: address.codepost || address.postalCode || address.postal_code || '',
+    };
+  }
+
 
   ngOnInit() {
     this.titleService.setSpecificTitle('Finaliser ma commande');
@@ -166,7 +185,7 @@ export class CheckoutComponent implements OnInit {
       this.currentStep = state.currentStep || 1;
       this.deliveryMethod = state.deliveryMethod || 'home'; // Set default to home delivery
       this.selectedPaymentMethod = state.selectedPaymentMethod || '';
-      this.selectedAddress = state.selectedAddress || null;
+      this.selectedAddress = this.normalizeSelectedAddress(state.selectedAddress);
       this.selectedStore = state.selectedStore || null;
       // Restore coupon state
       this.appliedCoupon = state.appliedCoupon || null;
@@ -325,7 +344,9 @@ export class CheckoutComponent implements OnInit {
     modalRef.result.then(
       (result) => {
         // console.log('Modal closed:', result);
-        this.selectedAddress = result;
+        this.selectedAddress = this.normalizeSelectedAddress(result);
+        this.calculateTotals();
+        this.saveState();
       },
       (reason: any) => {
         // console.log('Modal dismissed:', reason);
@@ -343,7 +364,7 @@ export class CheckoutComponent implements OnInit {
 
           // If a default address exists and no address is currently selected, select it
           if (defaultAddress && !this.selectedAddress) {
-            this.selectedAddress = defaultAddress;
+            this.selectedAddress = this.normalizeSelectedAddress(defaultAddress);
             this.calculateTotals(); // Recalculate totals with the selected address
             this.saveState(); // Save the state with the selected address
           }
@@ -364,7 +385,9 @@ export class CheckoutComponent implements OnInit {
     modalRef.result.then(
       (result: any) => {
         // console.log('Modal closed:', result);
-        this.selectedAddress = result;
+        this.selectedAddress = this.normalizeSelectedAddress(result);
+        this.calculateTotals();
+        this.saveState();
       },
       (reason) => {
         // console.log('Modal dismissed:', reason);
@@ -475,6 +498,13 @@ export class CheckoutComponent implements OnInit {
   loadCartItems() {
     this.cartService.cartItems$.subscribe((items: any) => {
       this.cartItems = items;
+      this.cartRecommendationProductIds = Array.from(
+        new Set(
+          items
+            .map((item: any) => item.product?.id)
+            .filter((id: number) => id != null)
+        )
+      );
 
       // Vérifier les promotions si des articles sont présents
       if (items.length > 0) {
@@ -483,13 +513,6 @@ export class CheckoutComponent implements OnInit {
         this.calculateTotals();
       }
     });
-  }
-
-  // Get cart product IDs for recommendations
-  get cartProductIds(): number[] {
-    return this.cartItems
-      .map((item: any) => item.product?.id)
-      .filter((id: number) => id != null);
   }
 
   // Format cart items for the checkCartOffers API
@@ -672,10 +695,12 @@ export class CheckoutComponent implements OnInit {
       const orderResponse: any = await this.orderService.placeOrder(payload).toPromise();
 
       if (orderResponse.status === 200) {
+        const createdOrderId = Number(orderResponse?.data?.id || 0) || null;
+
         this.messageService.add({
           severity: 'success',
-          summary: 'Commande confirmée',
-          detail: 'Votre commande a été passée avec succès',
+          summary: 'Commande confirm?e',
+          detail: 'Votre commande a ?t? pass?e avec succ?s',
           life: 5000
         });
 
@@ -683,28 +708,13 @@ export class CheckoutComponent implements OnInit {
         sessionStorage.removeItem('checkoutState');
 
         // Wave 4: persist premium options on the NestJS order row (fire-and-forget)
-        if (orderResponse?.data?.id) {
-          this.persistPremiumOptions(orderResponse.data.id);
+        if (createdOrderId) {
+          this.persistPremiumOptions(createdOrderId);
         }
 
-        if (this.selectedPaymentMethod === 'CBE') {
-          // Include orderId in redirect URL for payment verification
-          const orderId = orderResponse.data.id;
-          const redirectUrl = `${environementDev.redirectUrlLocal}/${orderId}`;
-          const ctpResponse = await this.orderService.getCTPTransaction(orderId, redirectUrl).toPromise();
-
-          if (ctpResponse.status === 200) {
-            window.location.href = ctpResponse.data.url;
-            return;
-          } else {
             throw new Error('Échec création transaction CBE');
-          }
-        } else {
-          // Cash on delivery - redirect to order confirmation
-          this.router.navigate(['/checkout/order-confirmation', orderResponse.data.id]);
-        }
-
         // Ajout événement GA4 validation finale commande
+        // Ajout ?v?nement GA4 validation finale commande
         this.analyticsService.validateOrder({
           montant_total: this.total,
           nombre_articles: this.cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -723,6 +733,39 @@ export class CheckoutComponent implements OnInit {
           total: this.total,
           frais_livraison: this.deliveryCost
         });
+
+        if (this.selectedPaymentMethod === 'CBE') {
+          if (!createdOrderId) {
+            throw new Error('Commande cr??e mais identifiant introuvable pour le paiement CBE');
+          }
+
+          const orderIdForPayment = Number(createdOrderId);
+          const redirectUrl = `${environementDev.redirectUrlLocal}/${orderIdForPayment}`;
+          const ctpResponse = await this.orderService
+            .getCTPTransaction(orderIdForPayment, redirectUrl)
+            .toPromise()
+            .catch(() => null);
+
+          if (ctpResponse?.status === 200 && ctpResponse?.data?.url) {
+            window.location.href = ctpResponse.data.url;
+            return;
+          }
+
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Paiement bancaire indisponible',
+            detail: 'Votre commande est bien enregistr?e, mais la redirection CBE a ?chou?.',
+            life: 6000
+          });
+
+          this.router.navigate(['/checkout/order-confirmation', orderIdForPayment], {
+            queryParams: { payment: 'pending' }
+          });
+          return;
+        }
+
+        this.router.navigate(['/checkout/order-confirmation', createdOrderId]);
+        return;
       } else {
         throw new Error(orderResponse.message || "Erreur serveur inconnue");
       }
@@ -732,6 +775,7 @@ export class CheckoutComponent implements OnInit {
       this.confirmingOrder = false;
     }
   }
+
   private handleOrderError(error: any): void {
     console.error('Full error:', error);
 
@@ -807,6 +851,9 @@ export class CheckoutComponent implements OnInit {
       },
       products: (this.hasActivePromotion && this.cartItemsWithPromo.length > 0)
         ? this.cartItemsWithPromo.map((line: any) => ({
+          sku: line.product?.sku,
+          title: line.product?.title,
+          image: line.image,
           ean13: line.ean13,
           quantity: line.quantity,
           unitPrice: parseFloat(line.unitPrice.toFixed(3)),
@@ -814,6 +861,9 @@ export class CheckoutComponent implements OnInit {
           discountDesc: ''
         }))
         : this.cartItems.map(item => ({
+          sku: item.product?.sku,
+          title: item.product?.title,
+          image: item.image,
           ean13: item.ean13,
           quantity: item.quantity,
           unitPrice: parseFloat(item.product.currentPrice.toFixed(3)),
@@ -823,9 +873,9 @@ export class CheckoutComponent implements OnInit {
     };
 
     if (!isStorePickup) {
-      payload.orderData.shippingAddress = this.selectedAddress.id;
+      payload.orderData.shippingAddress = this.selectedAddress;
     } else {
-      payload.orderData.shippingStore = this.selectedStore.id;
+      payload.orderData.shippingStore = this.selectedStore;
     }
 
     // Ajouter l'ID du coupon si un coupon est appliqué

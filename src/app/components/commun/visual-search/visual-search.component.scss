@@ -24,7 +24,7 @@
 
 .modal-header {
   position: relative;
-  padding: 24px 24px 16px;
+  padding: 24px 72px 16px 24px;
   border-bottom: 1px solid #e5e5e5;
 
   h2 {
@@ -39,6 +39,7 @@
     font-size: 14px;
     color: #666;
     margin: 0;
+    line-height: 1.5;
   }
 
   .close-btn {
@@ -54,6 +55,18 @@
 
     &:hover {
       color: #000;
+    }
+  }
+
+  @media (max-width: 640px) {
+    padding-right: 56px;
+
+    h2 {
+      font-size: 18px;
+    }
+
+    .subtitle {
+      font-size: 13px;
     }
   }
 }

@@ -145,6 +145,7 @@ interface TryOnPosition {
 
                   <!-- Product Overlay -->
                   <div
+                    *ngIf="canRenderOverlay"
                     class="product-overlay"
                     [style.top]="productPosition.top"
                     [style.left]="productPosition.left"
@@ -153,11 +154,25 @@ interface TryOnPosition {
                   >
                     <img [src]="productImage" [alt]="'Produit - Essayage virtuel'" class="product-image">
                   </div>
+
+                  <div class="preview-fallback-badge" *ngIf="!canRenderOverlay">
+                    Apercu demo
+                  </div>
                 </div>
               </div>
 
+              <div class="preview-fallback-panel" *ngIf="!canRenderOverlay">
+                <div class="fallback-product-card">
+                  <img [src]="productImage" alt="Produit" class="fallback-product-image">
+                </div>
+                <p>
+                  Cette photo produit contient deja un mannequin ou un decor.
+                  On evite donc un faux collage et on garde un apercu propre.
+                </p>
+              </div>
+
               <!-- Adjustment Controls -->
-              <div class="adjustment-controls">
+              <div class="adjustment-controls" *ngIf="canRenderOverlay">
                 <h4>Ajuster la taille</h4>
                 <div class="slider-container">
                   <span class="slider-label">Petit</span>
@@ -200,6 +215,7 @@ interface TryOnPosition {
                     [class.silhouette]="!userImage"
                   >
                   <div
+                    *ngIf="canRenderOverlay"
                     class="product-overlay"
                     [style.top]="productPosition.top"
                     [style.left]="productPosition.left"
@@ -208,7 +224,20 @@ interface TryOnPosition {
                   >
                     <img [src]="productImage" alt="Produit" class="product-image">
                   </div>
+
+                  <div class="preview-fallback-badge" *ngIf="!canRenderOverlay">
+                    Apercu demo
+                  </div>
                 </div>
+              </div>
+
+              <div class="preview-fallback-panel" *ngIf="!canRenderOverlay">
+                <div class="fallback-product-card">
+                  <img [src]="productImage" alt="Produit" class="fallback-product-image">
+                </div>
+                <p>
+                  Resultat non fusionne: une image produit detouree est necessaire pour un essayage credible.
+                </p>
               </div>
 
               <!-- Result Actions -->
@@ -712,6 +741,57 @@ interface TryOnPosition {
       filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
     }
 
+    .preview-fallback-badge {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid rgba(94, 129, 244, 0.35);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+
+    .preview-fallback-panel {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 0 auto 24px;
+      max-width: 520px;
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+    }
+
+    .preview-fallback-panel p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .fallback-product-card {
+      flex: 0 0 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .fallback-product-image {
+      width: 100%;
+      max-height: 110px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
     /* Adjustment Controls */
     .adjustment-controls {
       background: rgba(255, 255, 255, 0.05);
@@ -974,7 +1054,8 @@ interface TryOnPosition {
 
       .step-actions,
       .final-actions,
-      .result-actions {
+      .result-actions,
+      .preview-fallback-panel {
         flex-direction: column;
       }
 
@@ -1035,6 +1116,10 @@ export class VirtualTryOnComponent {
     return this.categoryPositions[category] || this.categoryPositions['other'];
   }
 
+  get canRenderOverlay(): boolean {
+    return this.isOverlayFriendlyImage(this.productImage);
+  }
+
   open(): void {
     this.isOpen = true;
     this.showComingSoon = true;
@@ -1056,6 +1141,29 @@ export class VirtualTryOnComponent {
 
   dismissComingSoon(): void {
     this.showComingSoon = false;
+  }
+
+  private isOverlayFriendlyImage(imageUrl: string): boolean {
+    if (!imageUrl) {
+      return false;
+    }
+
+    const normalizedUrl = imageUrl.toLowerCase();
+    const overlayHints = [
+      'transparent',
+      'detoure',
+      'detouree',
+      'cutout',
+      'isolated',
+      'ghost',
+      'packshot',
+      'flat',
+      'overlay'
+    ];
+
+    return normalizedUrl.endsWith('.png') ||
+      normalizedUrl.startsWith('data:image/png') ||
+      overlayHints.some((hint) => normalizedUrl.includes(hint));
   }
 
   private normalizeCategory(category: string): TryOnCategory {

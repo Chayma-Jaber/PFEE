@@ -4,15 +4,48 @@
  * loyalty, gift cards, outfits, promotions, newsletter, notifications
  */
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const sql = require('mssql');
 
+function loadLocalEnv() {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (!fs.existsSync(envPath)) {
+    return;
+  }
+
+  const lines = fs.readFileSync(envPath, 'utf-8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) {
+      continue;
+    }
+
+    const equalIndex = trimmed.indexOf('=');
+    if (equalIndex === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, equalIndex).trim();
+    const value = trimmed.slice(equalIndex + 1).trim();
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadLocalEnv();
+
 const CONFIG = {
-  server: 'DESKTOP-KOR5QAB',
-  user: 'admin',
-  password: 'admin123',
+  server: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USERNAME || 'admin',
+  password: process.env.DB_PASSWORD || 'admin123',
   database: 'barsha',
   options: { encrypt: false, trustServerCertificate: true },
+  ...(process.env.DB_PORT
+    ? { port: parseInt(process.env.DB_PORT, 10) }
+    : { instanceName: process.env.DB_INSTANCE_NAME || 'SQLEXPRESS' }),
 };
 
 function esc(s: string): string {
@@ -54,14 +87,14 @@ async function seed() {
     const hash = await bcrypt.hash('Customer123!', 10);
     for (const c of customers) {
       await q(`INSERT INTO users (email, phone, password_hash, first_name, last_name, gender, role, is_active, is_verified)
-               VALUES ('${c.email}', '${c.phone}', '${hash}', N'${c.first}', N'${c.last}', '${c.gender}', 'customer', 1, 1)`);
+               VALUES ('${c.email}', '${c.phone}', '${hash}', N'${c.first}', N'${c.last}', '${c.gender}', 'CUSTOMER', 1, 1)`);
     }
     console.log(`  ${customers.length} customers created`);
   }
 
   // Get user IDs
-  const users = (await q("SELECT id, email FROM users WHERE role='customer'")).recordset;
-  const adminUser = (await q("SELECT id FROM users WHERE role='super_admin'")).recordset[0];
+  const users = (await q("SELECT id, email FROM users WHERE UPPER(role)='CUSTOMER'")).recordset;
+  const adminUser = (await q("SELECT TOP 1 id FROM users WHERE UPPER(role)='SUPER_ADMIN'")).recordset[0];
 
   // ─── ADDRESSES ───
   if ((await count('addresses')) === 0) {

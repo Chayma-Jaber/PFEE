@@ -158,17 +158,23 @@ export class FeaturedProductsService {
   private mapProducts(hits: any[], markAsNew: boolean): FeaturedProduct[] {
     return (hits || []).map((product: any) => ({
       id: product.id,
-      title: product.title || '',
-      price: product.price || 0,
-      currentPrice: product.currentPrice || product.prix || product.price || 0,
-      discount: product.discount || false,
-      discountValue: product.discountValue || 0,
+      title: product.title || product.nom || product.name || '',
+      price: Number(product.price || product.prix || product.currentPrice || 0),
+      currentPrice: Number(product.currentPrice || product.prix || product.price || 0),
+      discount: Boolean(product.discount || (product.discountValue || 0) > 0 || (product.price && product.currentPrice && product.price > product.currentPrice)),
+      discountValue: Number(
+        product.discountValue ||
+        product.discount_value ||
+        ((product.price && product.currentPrice && product.price > product.currentPrice)
+          ? Math.round((1 - Number(product.currentPrice) / Number(product.price)) * 100)
+          : 0)
+      ),
       // Handle multiple possible image field formats
-      image: product.firstImageUrl || product.firstImg?.url || product.image?.url || product.declinaisons?.[0]?.images?.[0]?.url || '/assets/images/placeholder.png',
+      image: product.firstImageUrl || product.firstImg?.url || product.image?.url || product.image || product.declinaisons?.[0]?.images?.[0]?.url || '/assets/images/placeholder.png',
       secondImage: product.secondImageUrl || product.secondImg?.url || product.declinaisons?.[0]?.images?.[1]?.url || '',
-      colors: (product.declinaisons || product.variants || []).map((d: any) => ({
-        name: d.libellet || d.color || d.name || '',
-        textureImage: d.texture?.url || d.textureImage || ''
+      colors: (product.colors || product.declinaisons || product.variants || []).map((d: any) => ({
+        name: d.name || d.libellet || d.couleur || d.color || '',
+        textureImage: d.texture?.url || d.textureImage || d.texture_image || ''
       })),
       isNew: markAsNew
     }));

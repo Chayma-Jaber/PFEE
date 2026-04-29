@@ -543,6 +543,7 @@ export class AIAnalyticsComponent implements OnInit {
   isLoading = true;
 
   private apiUrl = environementDev.api;
+  private readonly useLocalMode = (environementDev as any).enableAnalytics === false;
 
   constructor(private http: HttpClient) {}
 
@@ -554,26 +555,41 @@ export class AIAnalyticsComponent implements OnInit {
     this.selectedPeriod = days;
     this.isLoading = true;
 
+    if (this.useLocalMode) {
+      this.aiStats = this.getEmptyStats(days);
+      this.recommendationPerformance = [];
+      this.trendingProducts = [];
+      this.isLoading = false;
+      return;
+    }
+
     this.http.get<any>(`${this.apiUrl}/api/admin/analytics/ai-dashboard?days=${days}`).subscribe({
       next: (data) => {
-        this.aiStats = data.ai_stats;
+        this.aiStats = data.ai_stats || this.getEmptyStats(days);
         this.recommendationPerformance = data.recommendation_performance || [];
         this.trendingProducts = data.trending_products || [];
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Error loading AI analytics:', err);
-        // Set default empty stats
-        this.aiStats = {
-          period_days: days,
-          assistant: { sessions: 0, messages: 0, product_clicks: 0, add_to_carts: 0, click_rate: 0 },
-          visual_search: { uploads: 0, result_clicks: 0, add_to_carts: 0, click_rate: 0 },
-          recommendations: { impressions: 0, clicks: 0, add_to_carts: 0, click_rate: 0, cart_rate: 0 },
-          total_events: 0
-        };
+        if (![401, 404].includes(err?.status)) {
+          console.error('Error loading AI analytics:', err);
+        }
+        this.aiStats = this.getEmptyStats(days);
+        this.recommendationPerformance = [];
+        this.trendingProducts = [];
         this.isLoading = false;
       }
     });
+  }
+
+  private getEmptyStats(days: number): AIStats {
+    return {
+      period_days: days,
+      assistant: { sessions: 0, messages: 0, product_clicks: 0, add_to_carts: 0, click_rate: 0 },
+      visual_search: { uploads: 0, result_clicks: 0, add_to_carts: 0, click_rate: 0 },
+      recommendations: { impressions: 0, clicks: 0, add_to_carts: 0, click_rate: 0, cart_rate: 0 },
+      total_events: 0
+    };
   }
 
   formatTypeName(type: string): string {

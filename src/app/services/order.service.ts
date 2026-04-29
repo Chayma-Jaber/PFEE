@@ -28,8 +28,106 @@ export class OrderService {
     return this.http.get(`${environementDev.api}/api/getOrders`, { headers: this.getHeaders() });
   }
 
-  placeOrder(orderRequest: { orderData: any, products: any[] }): Observable<any> {
-    return this.http.post(`${environementDev.api}/api/placeOrder`, orderRequest, { headers: this.getHeaders() });
+  private normalizePaymentMethod(paymentMethod: any): string {
+    if (paymentMethod === 'CBE' || paymentMethod === 2 || paymentMethod === '2') {
+      return 'CBE';
+    }
+    return 'COD';
+  }
+
+  private normalizeShippingMethod(shippingMethod: any): string {
+    if (shippingMethod === 2 || shippingMethod === '2' || shippingMethod === 'store') {
+      return 'store';
+    }
+    return 'home';
+  }
+
+  private normalizeShippingAddress(address: any): any {
+    if (!address || typeof address !== 'object') {
+      return {
+        street: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'Tunisia',
+        phone: '',
+      };
+    }
+
+    return {
+      street: address.address || address.street || address.line1 || '',
+      city: address.city || '',
+      state: address.state || address.governorate || '',
+      postal_code: address.postalCode || address.postal_code || address.zipCode || '',
+      country: address.country || 'Tunisia',
+      phone: address.phone || '',
+    };
+  }
+
+  private normalizeStorePickupAddress(store: any): any {
+    if (!store || typeof store !== 'object') {
+      return this.normalizeShippingAddress(null);
+    }
+
+    return {
+      street: store.address || store.name || '',
+      city: store.city || '',
+      state: store.state || '',
+      postal_code: store.postalCode || store.postal_code || '',
+      country: store.country || 'Tunisia',
+      phone: store.phone || '',
+    };
+  }
+
+  private normalizeLegacyOrderPayload(orderRequest: any): any {
+    if (!orderRequest?.orderData || !Array.isArray(orderRequest?.products)) {
+      return orderRequest;
+    }
+
+    const shippingMethod = this.normalizeShippingMethod(orderRequest.orderData.shippingMethod);
+    const paymentMethod = this.normalizePaymentMethod(orderRequest.orderData.paymentMethod);
+
+    return {
+      items: orderRequest.products.map((product: any) => ({
+        sku: product.sku || product.reference || '',
+        title: product.title || product.name || product.ean13 || 'Produit',
+        ean13: product.ean13 || '',
+        unit_price: Number(product.unitPrice ?? product.unit_price ?? 0),
+        quantity: Number(product.quantity ?? 1),
+        variant_info: product.variant_info || null,
+        image_url: product.image || product.image_url || null,
+      })),
+      shipping_address: shippingMethod === 'store'
+        ? this.normalizeStorePickupAddress(orderRequest.orderData.shippingStore)
+        : this.normalizeShippingAddress(orderRequest.orderData.shippingAddress),
+      shipping_method: shippingMethod,
+      payment_method: paymentMethod,
+      coupon_code: orderRequest.orderData.coupon || orderRequest.orderData.couponCode || null,
+      notes: orderRequest.orderData.notes || null,
+    };
+  }
+
+  private normalizeOrderResponse(response: any): any {
+    if (response?.status === 200 && response?.data?.id) {
+      return response;
+    }
+
+    if (response?.order?.id) {
+      return {
+        status: 200,
+        message: response.message || 'Order created successfully',
+        data: response.order,
+      };
+    }
+
+    return response;
+  }
+
+  placeOrder(orderRequest: { orderData: any, products: any[] } | any): Observable<any> {
+    const payload = this.normalizeLegacyOrderPayload(orderRequest);
+    return this.http.post(`${environementDev.api}/api/orders/create`, payload, { headers: this.getHeaders() }).pipe(
+      map((response) => this.normalizeOrderResponse(response))
+    );
   }
 
   private calculateSubtotal(products: any[]): number {
@@ -50,7 +148,25 @@ export class OrderService {
       orderId: orderId,
       redirectTo: redirectUrl
     };
-    return this.http.post(`${environementDev.api}/api/generateCTPTransaction`, body, { headers: headers });
+    return this.http.post(`${environementDev.api}/api/generateCTPTransaction`, body, { headers: headers }).pipe(
+      map((response: any) => {
+        if (response?.status === 200 && response?.data?.url) {
+          return response;
+        }
+
+        if (response?.paymentUrl) {
+          return {
+            status: 200,
+            data: {
+              url: response.paymentUrl,
+              transactionId: response.transactionId || null
+            }
+          };
+        }
+
+        return response;
+      })
+    );
   }
 
   checkCTPTransaction(orderId: number): Observable<any> {

@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 
 type Tab = 'trending' | 'reorder' | 'images' | 'funnel' | 'canned' | 'synonyms' | 'featured' | 'autocancel' | 'aidesc' | 'tags' | 'scheduled';
 
 @Component({
   selector: 'app-admin-wave2',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   templateUrl: './wave2.component.html',
   styleUrls: ['./wave2.component.scss']
 })

@@ -81,7 +81,9 @@ export class CategorieComponent implements OnInit {
             relatedTo: id,
             bannerUrl: categoryData.bannerUrl,
             imageUrl: categoryData.imageUrl,
-            description: categoryData.description
+            description: categoryData.description,
+            heroSections: [],
+            collections: []
           };
 
           this.titleService.setSpecificTitle(categoryData.name);
@@ -179,7 +181,9 @@ export class CategorieComponent implements OnInit {
             this.selectedPage = {
               title: cat.name,
               relatedTo: this.categoryId,
-              categories: []
+              categories: [],
+              heroSections: [],
+              collections: []
             };
           }
         }
@@ -235,7 +239,9 @@ export class CategorieComponent implements OnInit {
             relatedTo: this.categoryId,
             bannerUrl: category.bannerUrl,
             imageUrl: category.imageUrl,
-            description: category.htmlDescription || category.metaDescription
+            description: category.htmlDescription || category.metaDescription,
+            heroSections: [],
+            collections: []
           };
 
           this.titleService.setSpecificTitle(this.selectedPage.title);

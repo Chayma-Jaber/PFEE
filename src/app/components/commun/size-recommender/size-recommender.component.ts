@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../environements/environementDev';
+import { ProductService } from '../../../services/product.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface SizeRecommendation {
   recommendedSize: string | null;
@@ -113,6 +116,7 @@ interface SizeProfile {
 })
 export class SizeRecommenderComponent implements OnChanges {
   @Input() productId!: number;
+  private readonly localProfileKey = 'size_profile_local';
 
   reco: SizeRecommendation | null = null;
   showWizard = false;
@@ -126,7 +130,10 @@ export class SizeRecommenderComponent implements OnChanges {
 
   get jwt(): boolean { return !!localStorage.getItem('jwt'); }
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private productService: ProductService
+  ) {}
 
   ngOnChanges(ch: SimpleChanges) {
     if (ch['productId'] && this.productId && this.jwt) {
@@ -141,6 +148,11 @@ export class SizeRecommenderComponent implements OnChanges {
   }
 
   loadProfile() {
+    if ((environementDev as any).useLocalAuth) {
+      this.loadLocalProfile();
+      return;
+    }
+
     this.http.get<{ profile: SizeProfile | null }>(
       `${environementDev.api}/api/storefront/sizing/profile`,
       { headers: this.authHeaders() }
@@ -151,6 +163,11 @@ export class SizeRecommenderComponent implements OnChanges {
   }
 
   loadReco() {
+    if ((environementDev as any).useLocalAuth) {
+      this.loadLocalRecommendation();
+      return;
+    }
+
     this.http.get<SizeRecommendation>(
       `${environementDev.api}/api/storefront/sizing/recommend/${this.productId}`,
       { headers: this.authHeaders() }
@@ -163,6 +180,15 @@ export class SizeRecommenderComponent implements OnChanges {
   openWizard() { this.showWizard = true; }
 
   save() {
+    if ((environementDev as any).useLocalAuth) {
+      this.saving = true;
+      localStorage.setItem(this.localProfileKey, JSON.stringify(this.form));
+      this.saving = false;
+      this.showWizard = false;
+      this.loadLocalRecommendation();
+      return;
+    }
+
     this.saving = true;
     this.http.put<{ profile: SizeProfile }>(
       `${environementDev.api}/api/storefront/sizing/profile`,
@@ -171,6 +197,51 @@ export class SizeRecommenderComponent implements OnChanges {
     ).subscribe({
       next: () => { this.saving = false; this.showWizard = false; this.loadReco(); },
       error: () => { this.saving = false; }
+    });
+  }
+
+  private loadLocalProfile(): void {
+    try {
+      const raw = localStorage.getItem(this.localProfileKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      this.form = { ...this.form, ...parsed };
+    } catch {
+      // Ignore malformed local profile and keep defaults.
+    }
+  }
+
+  private loadLocalRecommendation(): void {
+    this.productService.getProductById(this.productId).pipe(
+      catchError(() => of(null))
+    ).subscribe((product: any) => {
+      if (!product) {
+        this.reco = null;
+        return;
+      }
+
+      const famille = String(product?.Famille || '').toLowerCase();
+      const isBottom =
+        famille.includes('pantalon') ||
+        famille.includes('jean') ||
+        famille.includes('short') ||
+        famille.includes('jupe') ||
+        famille.includes('bas');
+
+      const recommendedSize = isBottom
+        ? this.form.usual_size_bottom
+        : this.form.usual_size_top;
+
+      this.reco = {
+        recommendedSize: recommendedSize || null,
+        confidence: recommendedSize ? 0.55 : 0.15,
+        alternatives: [],
+        reason: recommendedSize
+          ? 'Recommandation basee sur votre taille habituelle en mode local'
+          : 'Renseignez votre taille habituelle pour obtenir une recommandation locale',
+        usedMeasurements: recommendedSize ? ['usual_size'] : [],
+        fallback: true
+      };
     });
   }
 }

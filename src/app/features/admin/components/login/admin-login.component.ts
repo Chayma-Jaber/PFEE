@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environementDev } from '../../../../../environements/environementDev';
 
 @Component({
   selector: 'app-admin-login',
@@ -457,6 +458,7 @@ import { HttpClient } from '@angular/common/http';
   `]
 })
 export class AdminLoginComponent implements OnInit {
+  private readonly apiUrl = environementDev.api;
   email = '';
   password = '';
   loading = false;
@@ -482,7 +484,7 @@ export class AdminLoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.http.post<any>('http://localhost:8000/api/auth/admin/login', {
+    this.http.post<any>(`${this.apiUrl}/api/auth/admin/login`, {
       email: this.email,
       password: this.password
     }).subscribe({

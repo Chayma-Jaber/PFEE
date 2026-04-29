@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { VisualSearchService, ParsedProduct } from '../../../services/visual-search.service';
+import { VisualSearchService, ParsedProduct, VisualSearchResult } from '../../../services/visual-search.service';
 
 @Component({
   selector: 'app-visual-search',
@@ -19,7 +19,7 @@ export class VisualSearchComponent {
   errorMessage = '';
   previewImage: string | null = null;
   searchResults: ParsedProduct[] = [];
-  detectedInfo: any = null;
+  detectedInfo: VisualSearchResult['detected'] | null = null;
   isDragOver = false;
 
   constructor(private visualSearchService: VisualSearchService) {}
@@ -59,12 +59,12 @@ export class VisualSearchComponent {
 
   private processFile(file: File): void {
     if (!file.type.startsWith('image/')) {
-      this.errorMessage = 'Veuillez sélectionner une image valide.';
+      this.errorMessage = 'Veuillez s\u00e9lectionner une image valide.';
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      this.errorMessage = 'L\'image ne doit pas dépasser 10 Mo.';
+      this.errorMessage = 'L\'image ne doit pas d\u00e9passer 10 Mo.';
       return;
     }
 
@@ -88,19 +88,32 @@ export class VisualSearchComponent {
     this.visualSearchService.searchByImage(imageBase64).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.detectedInfo = response.detected;
+        this.detectedInfo = this.hasUsableDetection(response.detected) ? response.detected : null;
         this.searchResults = this.visualSearchService.parseAllProducts(response.similaires || []);
 
-        if (this.searchResults.length === 0) {
-          this.errorMessage = 'Aucun article similaire trouvé. Essayez avec une autre image.';
+        if (response.error) {
+          this.errorMessage = response.error;
+          this.searchResults = [];
+          this.detectedInfo = null;
+        } else if (this.searchResults.length === 0) {
+          this.errorMessage = 'Aucun article similaire trouv\u00e9. Essayez avec une autre image.';
         }
       },
       error: (err) => {
         this.isLoading = false;
         console.error('Visual search error:', err);
-        this.errorMessage = 'Erreur lors de la recherche. Veuillez réessayer.';
+        this.errorMessage = 'Erreur lors de la recherche. Veuillez r\u00e9essayer.';
       }
     });
+  }
+
+  private hasUsableDetection(detected: VisualSearchResult['detected'] | null): boolean {
+    if (!detected) {
+      return false;
+    }
+
+    const titleGuess = (detected.title_guess || '').trim().toUpperCase();
+    return !!titleGuess && !['AUCUN', 'ERREUR', 'SERVICE_UNAVAILABLE'].includes(titleGuess);
   }
 
   resetSearch(): void {
@@ -118,9 +131,9 @@ export class VisualSearchComponent {
   }
 
   getConfidenceLabel(confidence: number): string {
-    if (confidence >= 0.8) return 'Très confiant';
+    if (confidence >= 0.8) return 'Tr\u00e8s confiant';
     if (confidence >= 0.6) return 'Confiant';
-    if (confidence >= 0.4) return 'Modéré';
+    if (confidence >= 0.4) return 'Mod\u00e9r\u00e9';
     return 'Faible';
   }
 

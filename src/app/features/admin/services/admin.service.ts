@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { environementDev } from '../../../../environements/environementDev';
 
 export interface DashboardStats {
   orders: {
@@ -78,9 +79,7 @@ export interface AdminCustomer {
   providedIn: 'root'
 })
 export class AdminService {
-  // Backend admin API - connects to unified_api.py on port 8000
-  // Run: cd backend-ai && python unified_api.py
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = `${environementDev.api}/api`;
 
   // Demo mode flag - when backend is unavailable, show mock data
   private demoMode = false;
@@ -789,6 +788,8 @@ export class AdminService {
       `${this.apiUrl}/admin/returns/${id}/status`,
       { status, notes },
       { headers: this.getHeaders() }
+    ).pipe(
+      catchError(() => of({ id, status, notes, localFallback: true }))
     );
   }
 

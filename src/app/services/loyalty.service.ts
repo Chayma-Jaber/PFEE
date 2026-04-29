@@ -156,6 +156,17 @@ export class LoyaltyService {
       `${this.apiUrl}/account`,
       { headers: this.getHeaders() }
     ).pipe(
+      map((account: any) => ({
+        userId: account?.userId ?? account?.user_id ?? 0,
+        totalPointsEarned: Number(account?.totalPointsEarned ?? account?.totalPoints ?? account?.lifetimePoints ?? 0),
+        availablePoints: Number(account?.availablePoints ?? account?.available_points ?? 0),
+        currentTier: String(account?.currentTier ?? account?.tier ?? 'bronze').toLowerCase() as LoyaltyTier,
+        tierUpdatedAt: account?.tierUpdatedAt ?? account?.tier_updated_at ?? new Date().toISOString(),
+        pointsToNextTier: Number(account?.pointsToNextTier ?? 0),
+        nextTier: account?.nextTier ? String(account.nextTier).toLowerCase() as LoyaltyTier : null,
+        tierProgress: Number(account?.tierProgress ?? 0),
+        createdAt: account?.createdAt ?? account?.created_at ?? new Date().toISOString()
+      })),
       tap(account => this.accountSubject.next(account)),
       catchError(err => {
         console.error('Error fetching loyalty account:', err);
@@ -186,6 +197,15 @@ export class LoyaltyService {
       `${this.apiUrl}/history`,
       { params, headers: this.getHeaders() }
     ).pipe(
+      map((response: any) => ({
+        transactions: response?.transactions || [],
+        pagination: {
+          page: response?.pagination?.page ?? response?.page ?? 1,
+          limit: response?.pagination?.limit ?? response?.limit ?? 20,
+          total: response?.pagination?.total ?? response?.total ?? 0,
+          pages: response?.pagination?.pages ?? response?.totalPages ?? 0
+        }
+      })),
       catchError(err => {
         console.error('Error fetching points history:', err);
         return of({

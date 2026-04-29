@@ -23,6 +23,16 @@ export class ProductsService {
     private readonly categoryRepo: Repository<Category>,
   ) {}
 
+  private normalizeVariantKey(value?: string | null): string {
+    return (value || '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '');
+  }
+
   async findAll(filters?: {
     famille?: string;
     isActive?: boolean;
@@ -188,8 +198,38 @@ export class ProductsService {
   async checkStock(
     ean13: string,
     quantity: number,
-  ): Promise<{ inStock: boolean; availableStock: number }> {
-    const variant = await this.variantRepo.findOne({ where: { ean13 } });
+    fallback?: { productId?: number; color?: string; size?: string },
+  ): Promise<{
+    inStock: boolean;
+    availableStock: number;
+    ean13?: string | null;
+    productId?: number;
+    color?: string | null;
+    size?: string | null;
+  }> {
+    let variant = ean13
+      ? await this.variantRepo.findOne({ where: { ean13 } })
+      : null;
+
+    if (!variant && fallback?.productId) {
+      const variants = await this.variantRepo.find({
+        where: { productId: fallback.productId },
+        order: { position: 'ASC' },
+      });
+      const targetSize = this.normalizeVariantKey(fallback.size);
+      const targetColor = this.normalizeVariantKey(fallback.color);
+
+      variant =
+        variants.find(
+          (item) =>
+            this.normalizeVariantKey(item.taille) === targetSize &&
+            this.normalizeVariantKey(item.couleur) === targetColor,
+        ) ||
+        variants.find((item) => this.normalizeVariantKey(item.taille) === targetSize) ||
+        variants.find((item) => this.normalizeVariantKey(item.couleur) === targetColor) ||
+        variants[0] ||
+        null;
+    }
 
     if (!variant) {
       this.logger.warn(`Variant with EAN13 "${ean13}" not found`);
@@ -199,6 +239,10 @@ export class ProductsService {
     return {
       inStock: variant.stock >= quantity,
       availableStock: variant.stock,
+      ean13: variant.ean13,
+      productId: variant.productId,
+      color: variant.couleur,
+      size: variant.taille,
     };
   }
 
@@ -206,9 +250,37 @@ export class ProductsService {
    * Get variant (declinaison) stock info for a product.
    * Returns all variants with their stock, color, size, ean13.
    */
-  async getDeclinaisonStock(productId: number): Promise<ProductVariant[]> {
+  async getDeclinaisonStock(productIdOrVariantId: number): Promise<ProductVariant[]> {
+    const directVariants = await this.variantRepo.find({
+      where: { productId: productIdOrVariantId },
+      order: { position: 'ASC' },
+    });
+
+    if (directVariants.length > 0) {
+      return directVariants;
+    }
+
+    const productByExternalId = await this.productRepo.findOne({
+      where: { externalId: String(productIdOrVariantId) },
+    });
+
+    if (productByExternalId) {
+      return this.variantRepo.find({
+        where: { productId: productByExternalId.id },
+        order: { position: 'ASC' },
+      });
+    }
+
+    const matchedVariant = await this.variantRepo.findOne({
+      where: { id: productIdOrVariantId },
+    });
+
+    if (!matchedVariant) {
+      return [];
+    }
+
     return this.variantRepo.find({
-      where: { productId },
+      where: { productId: matchedVariant.productId },
       order: { position: 'ASC' },
     });
   }

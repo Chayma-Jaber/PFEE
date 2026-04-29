@@ -1,17 +1,14 @@
 <div class="visual-search-overlay" (click)="close()">
   <div class="visual-search-modal" (click)="$event.stopPropagation()">
-    <!-- Header -->
     <div class="modal-header">
       <h2>Recherche visuelle</h2>
-      <p class="subtitle">Trouvez des articles similaires à partir d'une photo</p>
+      <p class="subtitle">Trouvez des articles similaires &agrave; partir d'une photo</p>
       <button class="close-btn" (click)="close()">
         <i class="fa fa-times"></i>
       </button>
     </div>
 
-    <!-- Content -->
     <div class="modal-content">
-      <!-- Upload Zone (when no image is selected) -->
       <div class="upload-zone"
            *ngIf="!previewImage && !isLoading"
            #dropZone
@@ -23,9 +20,9 @@
         <div class="upload-icon">
           <i class="fa fa-camera"></i>
         </div>
-        <h3>Téléchargez une photo</h3>
-        <p>Glissez-déposez une image ici ou cliquez pour sélectionner</p>
-        <p class="hint">Formats acceptés : JPG, PNG, WebP (max 10 Mo)</p>
+        <h3>T&eacute;l&eacute;chargez une photo</h3>
+        <p>Glissez-d&eacute;posez une image ici ou cliquez pour s&eacute;lectionner</p>
+        <p class="hint">Formats accept&eacute;s : JPG, PNG, WebP (max 10 Mo)</p>
         <input type="file"
                #fileInput
                accept="image/*"
@@ -33,32 +30,29 @@
                hidden>
       </div>
 
-      <!-- Loading State -->
       <div class="loading-state" *ngIf="isLoading">
         <div class="spinner"></div>
         <p>Analyse de l'image en cours...</p>
         <p class="hint">Notre IA recherche des articles similaires</p>
       </div>
 
-      <!-- Results Section -->
       <div class="results-section" *ngIf="previewImage && !isLoading">
-        <!-- Preview and Detection Info -->
         <div class="preview-section">
           <div class="preview-image">
-            <img [src]="previewImage" alt="Image recherchée">
+            <img [src]="previewImage" alt="Image recherch&eacute;e">
             <button class="change-image-btn" (click)="resetSearch()">
               <i class="fa fa-refresh"></i> Changer d'image
             </button>
           </div>
 
-          <div class="detection-info" *ngIf="detectedInfo">
-            <h4>Détection IA</h4>
+          <div class="detection-info" *ngIf="detectedInfo && !errorMessage">
+            <h4>D&eacute;tection IA</h4>
             <div class="info-row">
-              <span class="label">Type détecté</span>
+              <span class="label">Type d&eacute;tect&eacute;</span>
               <span class="value">{{ detectedInfo.title_guess || 'Article' }}</span>
             </div>
             <div class="info-row" *ngIf="detectedInfo.famille">
-              <span class="label">Catégorie</span>
+              <span class="label">Cat&eacute;gorie</span>
               <span class="value">{{ detectedInfo.famille }}</span>
             </div>
             <div class="info-row" *ngIf="detectedInfo.colors?.length">
@@ -77,13 +71,11 @@
           </div>
         </div>
 
-        <!-- Error Message -->
         <div class="error-message" *ngIf="errorMessage">
           <i class="fa fa-exclamation-circle"></i>
           {{ errorMessage }}
         </div>
 
-        <!-- Similar Products -->
         <div class="products-grid" *ngIf="searchResults.length > 0">
           <h3>Articles similaires</h3>
           <div class="grid">
@@ -100,7 +92,7 @@
               <div class="product-info">
                 <h4>{{ product.name }}</h4>
                 <p class="price">{{ product.price }}</p>
-                <p class="reference" *ngIf="product.reference">Réf: {{ product.reference }}</p>
+                <p class="reference" *ngIf="product.reference">R&eacute;f: {{ product.reference }}</p>
               </div>
             </a>
           </div>

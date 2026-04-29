@@ -137,7 +137,7 @@ interface VariantPick {
                 </div>
                 <div *ngIf="showBundleHint()" class="hint">
                   <i class="fas fa-info-circle"></i>
-                  Complétez les {{ price?.missingSlots?.length || 0 }} étape(s) requise(s) pour activer la remise -{{ data?.configurator?.bundle_discount_pct || 0 }}%.
+                  Complétez les {{ price?.missingSlots?.length || 0 }} étape(s) requise(s) pour activer la remise -{{ data.configurator.bundle_discount_pct || 0 }}%.
                 </div>
                 <button class="btn-cta" (click)="addAllToCart()" [disabled]="!price?.lineItems?.length || addingToCart">
                   <i class="fas fa-shopping-bag"></i>

@@ -77,9 +77,9 @@ import { StockAlertService, StockAlert, MyAlertsResponse } from '../../../servic
           <!-- Product Image -->
           <div class="alert-image" (click)="navigateToProduct(alert.product_id)">
             <img
-              [src]="alert.product_image || 'assets/images/placeholder-product.jpg'"
+              [src]="alert.product_image || 'assets/images/placeholder.jpg'"
               [alt]="alert.product_name || 'Produit'"
-              onerror="this.src='assets/images/placeholder-product.jpg'">
+              onerror="this.src='assets/images/placeholder.jpg'">
             <div class="image-overlay">
               <i class="fa fa-eye"></i>
             </div>
@@ -851,9 +851,9 @@ export class StockAlertsListComponent implements OnInit {
 
     this.stockAlertService.getMyAlerts(page, 20, false).subscribe({
       next: (response) => {
-        this.alerts = response.alerts;
-        this.stats = response.stats;
-        this.pagination = response.pagination;
+        this.alerts = response?.alerts || [];
+        this.stats = response?.stats || { active: 0, notified: 0, total: 0 };
+        this.pagination = response?.pagination || { page: 1, limit: 20, total: 0, pages: 0 };
         this.isLoading = false;
       },
       error: (err) => {

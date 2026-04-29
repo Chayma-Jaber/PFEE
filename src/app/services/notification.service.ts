@@ -76,6 +76,10 @@ export class NotificationService {
    * Initialize polling for notifications
    */
   initPolling(): void {
+    if (this.pollingSubscription) {
+      return;
+    }
+
     // Only poll if user is logged in
     if (!localStorage.getItem('jwt')) return;
 
@@ -96,6 +100,7 @@ export class NotificationService {
   stopPolling(): void {
     if (this.pollingSubscription) {
       this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = null;
     }
   }
 

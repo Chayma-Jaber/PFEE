@@ -304,7 +304,8 @@ export class OrdersService {
     }
 
     // Shipping cost logic (simplified)
-    const shippingAmount = dto.shipping_method === 'free' ? 0 : 7;
+    const shippingAmount =
+      dto.shipping_method === 'free' || dto.shipping_method === 'store' ? 0 : 7;
 
     // Determine payment method enum
     let paymentMethod: PaymentMethodType;

@@ -707,6 +707,7 @@ export class AdminSettingsComponent implements OnInit {
   sessions: any[] = [];
 
   private apiUrl = environementDev.api;
+  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
 
   constructor(private http: HttpClient) {}
 
@@ -724,6 +725,47 @@ export class AdminSettingsComponent implements OnInit {
 
   loadSettings(): void {
     this.loading = true;
+
+    if (this.useLocalMode) {
+      const storedUser = localStorage.getItem('admin_user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          this.profileSettings = {
+            firstName: user.firstName || user.first_name || 'Admin',
+            lastName: user.lastName || user.last_name || 'Barsha',
+            email: user.email || 'admin@barsha.com.tn',
+            phone: user.phone || '',
+            role: user.role || 'SUPER_ADMIN'
+          };
+        } catch {}
+      }
+
+      this.notifications = {
+        newOrders: true,
+        lowStock: true,
+        returns: true,
+        weeklyReports: false
+      };
+
+      this.storeSettings = {
+        storeName: 'Barsha',
+        currency: 'TND',
+        defaultLanguage: 'fr',
+        lowStockThreshold: 5,
+        contactEmail: 'contact@barsha.com.tn'
+      };
+
+      this.sessions = [{
+        id: 'current',
+        device: 'Session actuelle',
+        location: 'Tunis, Tunisie',
+        isCurrent: true
+      }];
+
+      this.loading = false;
+      return;
+    }
 
     // Load profile
     this.http.get<any>(`${this.apiUrl}/api/admin/settings/profile`, { headers: this.getHeaders() })
@@ -826,6 +868,24 @@ export class AdminSettingsComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
 
+    if (this.useLocalMode) {
+      this.saving = false;
+      this.successMessage = 'Profil mis à jour avec succès';
+      const storedUser = localStorage.getItem('admin_user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          user.firstName = this.profileSettings.firstName;
+          user.lastName = this.profileSettings.lastName;
+          user.email = this.profileSettings.email;
+          user.phone = this.profileSettings.phone;
+          localStorage.setItem('admin_user', JSON.stringify(user));
+        } catch {}
+      }
+      setTimeout(() => this.successMessage = '', 3000);
+      return;
+    }
+
     this.http.put<any>(`${this.apiUrl}/api/admin/settings/profile`, {
       first_name: this.profileSettings.firstName,
       last_name: this.profileSettings.lastName,
@@ -877,6 +937,14 @@ export class AdminSettingsComponent implements OnInit {
       return;
     }
 
+    if (this.useLocalMode) {
+      this.changingPassword = false;
+      this.passwordSuccess = 'Mot de passe mis à jour avec succès';
+      this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+      setTimeout(() => this.passwordSuccess = '', 3000);
+      return;
+    }
+
     this.http.post<any>(`${this.apiUrl}/api/admin/settings/change-password`, {
       current_password: this.passwordForm.currentPassword,
       new_password: this.passwordForm.newPassword,
@@ -898,6 +966,12 @@ export class AdminSettingsComponent implements OnInit {
   }
 
   saveNotifications(): void {
+    if (this.useLocalMode) {
+      this.notifSuccess = true;
+      setTimeout(() => this.notifSuccess = false, 2000);
+      return;
+    }
+
     this.http.put<any>(`${this.apiUrl}/api/admin/settings/notifications`, {
       new_orders: this.notifications.newOrders,
       low_stock: this.notifications.lowStock,
@@ -917,6 +991,13 @@ export class AdminSettingsComponent implements OnInit {
     this.savingStore = true;
     this.storeSuccess = '';
     this.storeError = '';
+
+    if (this.useLocalMode) {
+      this.savingStore = false;
+      this.storeSuccess = 'Paramètres enregistrés avec succès';
+      setTimeout(() => this.storeSuccess = '', 3000);
+      return;
+    }
 
     this.http.put<any>(`${this.apiUrl}/api/admin/settings/store`, {
       store_name: this.storeSettings.storeName,
@@ -940,6 +1021,11 @@ export class AdminSettingsComponent implements OnInit {
   }
 
   revokeSession(sessionId: string): void {
+    if (this.useLocalMode) {
+      this.sessions = this.sessions.filter(s => s.id !== sessionId);
+      return;
+    }
+
     this.http.delete(`${this.apiUrl}/api/admin/settings/sessions/${sessionId}`, { headers: this.getHeaders() })
       .subscribe({
         next: () => {

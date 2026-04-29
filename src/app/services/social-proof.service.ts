@@ -1,6 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, interval, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environementDev } from '../../environements/environementDev';
 
 export type ActivityType = 'purchase' | 'review' | 'wishlist' | 'viewing';
 
@@ -59,10 +61,11 @@ export class SocialProofService implements OnDestroy {
 
   // Sample product images (placeholder paths)
   private readonly productImages = [
-    '/assets/images/products/placeholder1.jpg',
-    '/assets/images/products/placeholder2.jpg',
-    '/assets/images/products/placeholder3.jpg'
+    '/assets/images/placeholder.jpg',
+    '/assets/images/placeholder.png',
+    '/assets/images/placeholder.jpg'
   ];
+  private readonly realProducts: Array<{ id: number; name: string; image: string }> = [];
 
   // Activity messages in French
   private readonly activityMessages = {
@@ -92,9 +95,10 @@ export class SocialProofService implements OnDestroy {
   private feedIntervalMs = 30000; // 30 seconds between activities
   private viewerUpdateIntervalMs = 15000; // 15 seconds for viewer count updates
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.loadPreferences();
     this.initializeActivities();
+    this.loadRealProducts();
   }
 
   ngOnDestroy(): void {
@@ -136,17 +140,63 @@ export class SocialProofService implements OnDestroy {
     const type = types[Math.floor(Math.random() * types.length)];
     const minutesAgo = Math.floor(Math.random() * 30) + index;
 
+    const realProduct = this.getRandomRealProduct();
     return {
       id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type,
       userName: this.getRandomItem(this.firstNames),
       userCity: this.getRandomItem(this.tunisianCities),
-      productName: this.getRandomItem(this.productNames),
-      productImage: this.getRandomItem(this.productImages),
-      productId: Math.floor(Math.random() * 1000) + 1,
+      productName: realProduct?.name || this.getRandomItem(this.productNames),
+      productImage: realProduct?.image || this.getRandomItem(this.productImages),
+      productId: realProduct?.id || Math.floor(Math.random() * 1000) + 1,
       timestamp: new Date(Date.now() - minutesAgo * 60000),
       rating: type === 'review' ? Math.floor(Math.random() * 2) + 4 : undefined // 4 or 5 stars
     };
+  }
+
+  private loadRealProducts(): void {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${environementDev.tokenSearchDev}`,
+      'Content-Type': 'application/json'
+    });
+    const body = {
+      q: '',
+      filter: 'disponible = true',
+      sort: ['id:desc'],
+      limit: 20
+    };
+
+    this.http.post<any>(`${environementDev.apiSearchDev}/indexes/products/search`, body, { headers }).subscribe({
+      next: (response) => {
+        const hits = Array.isArray(response?.hits) ? response.hits : [];
+        this.realProducts.splice(
+          0,
+          this.realProducts.length,
+          ...hits
+            .map((product: any) => ({
+              id: Number(product.id),
+              name: product.nom || product.title || product.name || `Produit #${product.id}`,
+              image: product.firstImageUrl || product.firstImg?.url || product.image?.url || product.image || '/assets/images/placeholder.jpg'
+            }))
+            .filter((product: any) => product.id)
+        );
+
+        if (this.realProducts.length > 0) {
+          const refreshedActivities = Array.from({ length: 10 }, (_, index) => this.generateRandomActivity(index));
+          this.activitiesSubject.next(refreshedActivities);
+        }
+      },
+      error: () => {
+        // Keep mock fallback silently in local dev
+      }
+    });
+  }
+
+  private getRandomRealProduct(): { id: number; name: string; image: string } | null {
+    if (this.realProducts.length === 0) {
+      return null;
+    }
+    return this.getRandomItem(this.realProducts);
   }
 
   /**

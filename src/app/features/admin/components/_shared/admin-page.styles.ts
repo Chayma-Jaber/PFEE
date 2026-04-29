@@ -37,6 +37,18 @@ export const ADMIN_PAGE_STYLES = `
   .badge.idle { background: #e5e7eb; color: #4b5563; }
   .badge.indigo { background: #eef2ff; color: #4f46e5; }
   .badge.pink { background: #fce7f3; color: #9d174d; }
+  .module-context { margin-bottom: 20px; }
+  .module-context__head { margin-bottom: 10px; }
+  .module-context__eyebrow { display: inline-block; margin-bottom: 6px; padding: 4px 8px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+  .module-context__head h2 { margin: 0; font-size: 18px; color: #111827; }
+  .module-context__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .module-context__card { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; }
+  .module-context__card--full { margin-top: 0; }
+  .module-context__card h3 { margin: 0 0 8px; font-size: 14px; color: #111827; }
+  .module-context__card p { margin: 0; color: #4b5563; font-size: 13px; line-height: 1.55; }
+  .module-context__card ul { margin: 0; padding-left: 18px; color: #4b5563; font-size: 13px; line-height: 1.55; }
+  .module-context__card li + li { margin-top: 4px; }
+  @media (max-width: 900px) { .module-context__grid { grid-template-columns: 1fr; } }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table th { text-align: left; background: #f9fafb; padding: 8px; font-weight: 600; color: #374151; font-size: 11px; text-transform: uppercase; }
   table td { padding: 9px 8px; border-bottom: 1px solid #f3f4f6; color: #111827; }

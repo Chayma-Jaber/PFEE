@@ -19,6 +19,7 @@ import { AdminAdvancedController } from './admin-advanced.controller';
 import { AdminQaController } from './admin-qa.controller';
 import { AdminWave2Controller } from './admin-wave2.controller';
 import { AdminWave3Controller } from './admin-wave3.controller';
+import { AdminAIAnalyticsController } from './admin-ai-analytics.controller';
 
 // Entities
 import { Order } from '../orders/entities/order.entity';
@@ -55,6 +56,7 @@ import { SearchSynonym } from '../search/entities/search-synonym.entity';
 import { HomepageBlock } from './entities/homepage-block.entity';
 import { AbTest, AbTestEvent } from './entities/ab-test.entity';
 import { ProductPosition } from './entities/product-position.entity';
+import { UserEvent } from '../analytics/entities/user-event.entity';
 
 @Module({
   imports: [
@@ -96,6 +98,7 @@ import { ProductPosition } from './entities/product-position.entity';
       AbTest,
       AbTestEvent,
       ProductPosition,
+      UserEvent,
     ]),
   ],
   controllers: [
@@ -114,6 +117,7 @@ import { ProductPosition } from './entities/product-position.entity';
     AdminQaController,
     AdminWave2Controller,
     AdminWave3Controller,
+    AdminAIAnalyticsController,
   ],
   providers: [AdminService],
   exports: [AdminService],

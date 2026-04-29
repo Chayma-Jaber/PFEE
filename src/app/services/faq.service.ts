@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environementDev } from '../../environements/environementDev';
 
 export interface FAQCategory {
@@ -46,7 +47,7 @@ export class FAQService {
   constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('jwt');
+    const token = localStorage.getItem('admin_jwt') || localStorage.getItem('jwt');
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -128,6 +129,8 @@ export class FAQService {
     return this.http.get<{ categories: FAQCategory[] }>(
       `${this.apiUrl}/api/admin/faq/categories`,
       { headers: this.getHeaders() }
+    ).pipe(
+      catchError(() => of({ categories: [] }))
     );
   }
 
@@ -182,7 +185,9 @@ export class FAQService {
     if (categoryId) {
       url += `?category_id=${categoryId}`;
     }
-    return this.http.get<{ faqs: FAQ[] }>(url, { headers: this.getHeaders() });
+    return this.http.get<{ faqs: FAQ[] }>(url, { headers: this.getHeaders() }).pipe(
+      catchError(() => of({ faqs: [] }))
+    );
   }
 
   /**

@@ -54,8 +54,7 @@ export class FooterComponent implements OnInit {
           this.footerData = { widgets: [], brand: 'Barsha' };
         }
       },
-      error => {
-        console.error('Erreur lors de la récupération des données du footer :', error);
+      () => {
         this.footerData = { widgets: [], brand: 'Barsha' };
       }
     );
@@ -65,8 +64,7 @@ export class FooterComponent implements OnInit {
       data => {
         this.socialLinks = data?.hits?.[0]?.links || [];
       },
-      error => {
-        console.error('Erreur lors de la récupération des liens des réseaux sociaux :', error);
+      () => {
         this.socialLinks = [];
       }
     );

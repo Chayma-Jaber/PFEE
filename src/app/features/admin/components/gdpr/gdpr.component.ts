@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../../environements/environementDev';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.styles';
 
 @Component({
   selector: 'app-admin-gdpr',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   template: `
     <div class="admin-page">
       <div class="page-header">
@@ -17,6 +18,7 @@ import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.style
           <p>Demandes d'export, d'effacement et de rectification. Les commandes sont conservées 10 ans (obligation fiscale) avec PII anonymisées.</p>
         </div>
       </div>
+      <app-admin-module-context moduleKey="gdpr" />
       <div class="toast" [class.ok]="toastKind==='ok'" [class.err]="toastKind==='err'" *ngIf="toast">{{ toast }}</div>
 
       <div class="stats-grid" *ngIf="stats">

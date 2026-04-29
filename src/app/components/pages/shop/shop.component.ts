@@ -757,13 +757,16 @@ export class ShopComponent implements OnInit, AfterViewInit, OnDestroy {
       produit.colors[index].mainImage = produit.declinaisons[index].images[0].url;
     }
 
-    const declinaisonId = produit.declinaisons[index]?.id;
-    if (declinaisonId) {
-      this.productService.getDeclinaisonStock(declinaisonId).subscribe({
+    const productId = produit.id;
+    const selectedColor = produit.declinaisons[index]?.libellet || produit.colors[index]?.name;
+    if (productId) {
+      this.productService.getDeclinaisonStock(productId).subscribe({
         next: (stockData) => {
-          produit.tailles = stockData.data.map((item: any) => ({
+          const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+          produit.tailles = sizesForColor.map((item: any) => ({
             size: item.size,
             qte: item.qte,
+            ean13: item.ean13 || '',
           }));
         },
         error: (error) => {

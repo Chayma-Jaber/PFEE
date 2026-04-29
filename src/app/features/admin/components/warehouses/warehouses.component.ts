@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../../environements/environementDev';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 
 interface Warehouse {
   id: number;
@@ -58,7 +59,7 @@ interface ProductStockSummary {
 @Component({
   selector: 'app-admin-warehouses',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   template: `
     <div class="warehouses-page">
       <div class="page-header">
@@ -67,6 +68,8 @@ interface ProductStockSummary {
           <p>Gérez plusieurs emplacements, les quantités par site et les seuils de rupture.</p>
         </div>
       </div>
+
+      <app-admin-module-context moduleKey="warehouses" />
 
       <div class="alert alert-success" *ngIf="toast && toastKind==='ok'"><i class="fas fa-check"></i> {{ toast }}</div>
       <div class="alert alert-error" *ngIf="toast && toastKind==='err'"><i class="fas fa-exclamation"></i> {{ toast }}</div>

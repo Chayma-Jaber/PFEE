@@ -7,6 +7,9 @@ import { environementDev } from '../../environements/environementDev';
   providedIn: 'root'
 })
 export class CategorieService {
+  private readonly homePageFallback = {
+    hits: [{ ticker: { text: '', color: '#000' } }],
+  };
 
 
 
@@ -14,11 +17,17 @@ export class CategorieService {
   constructor(private http: HttpClient) { }
 
   getHomePageData(): Observable<any> {
+    if (environementDev.useMockSearchData) {
+      return of(this.homePageFallback);
+    }
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${environementDev.tokenSearchDev}`
     });
 
-    return this.http.get(environementDev.apiSearchDev+'/indexes/web-hp/search', { headers });
+    return this.http.get(environementDev.apiSearchDev+'/indexes/web-hp/search', { headers }).pipe(
+      catchError(() => of(this.homePageFallback))
+    );
   }
 
   getCategoryById(id: string): Observable<any> {

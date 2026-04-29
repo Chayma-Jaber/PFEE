@@ -14,8 +14,8 @@ export class LogoComponent implements OnInit {
   isLoading: boolean = true;
   @Input() inNavbar: boolean = false;
 
-  // Default fallback logo - use SVG for better quality
-  private readonly DEFAULT_LOGO = '/assets/images/logo.svg';
+  // Header/logo fallback asset
+  private readonly DEFAULT_LOGO = '/assets/images/logoBarsha.png';
   private readonly DEFAULT_ALT = 'BARSHA Logo';
 
   constructor(private homeService: HomeService) { }
@@ -27,8 +27,7 @@ export class LogoComponent implements OnInit {
         this.searchResults = data;
         this.isLoading = false;
       },
-      (error) => {
-        console.error('Erreur lors de la récupération des données', error);
+      () => {
         this.isLoading = false;
       }
     );
@@ -38,6 +37,10 @@ export class LogoComponent implements OnInit {
    * Get logo URL with proper fallbacks for different API response formats
    */
   get logoUrl(): string {
+    if (this.inNavbar) {
+      return this.DEFAULT_LOGO;
+    }
+
     if (!this.searchResults?.hits?.length) {
       return this.DEFAULT_LOGO;
     }

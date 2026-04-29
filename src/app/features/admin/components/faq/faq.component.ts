@@ -52,8 +52,8 @@ export class AdminFAQComponent implements OnInit {
         this.categories = response.categories || [];
         this.isLoading = false;
       },
-      error: (err) => {
-        this.showError('Erreur lors du chargement des catégories');
+      error: () => {
+        this.categories = [];
         this.isLoading = false;
       }
     });
@@ -151,7 +151,7 @@ export class AdminFAQComponent implements OnInit {
         this.isLoading = false;
       },
       error: () => {
-        this.showError('Erreur lors du chargement des FAQs');
+        this.faqs = [];
         this.isLoading = false;
       }
     });

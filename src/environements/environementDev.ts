@@ -39,24 +39,31 @@ const USE_LOCAL_BACKEND = true;
 
 export const environementDev = USE_LOCAL_BACKEND ? {
     // LOCAL DEVELOPMENT MODE
-    apiSearchDev: 'http://localhost:8000',
-    api: 'http://localhost:8000',
+    apiSearchDev: 'http://localhost:8002',
+    api: 'http://localhost:8002',
     tokenSearchDev: '',
+    useMockSearchData: true,
     redirectUrlLocal: 'http://localhost:4200/checkout/order-confirmation',
     googleAnalyticsId: '',
-    apiChatbot: 'http://localhost:8000/api/chat',
-    backendAiUrl: 'http://localhost:8000',
-    useLocalAuth: true
+    // Route all AI requests through the main Nest backend.
+    // The backend proxies /api/chat, /api/visual-search and /api/like-this to the AI service.
+    apiChatbot: 'http://localhost:8002/api/chat',
+    backendAiUrl: 'http://localhost:8001',
+    useLocalAuth: true,
+    enableAnalytics: true
 } : {
     // PRODUCTION MODE
     apiSearchDev: 'https://cache-data.barsha.com.tn',
     api: 'https://main.barsha.com.tn',
     tokenSearchDev: '660ac272a4c62f4138f96bc52d33f1d6de8a182712321c667f516312f2db200c',
+    useMockSearchData: false,
     redirectUrlLocal: 'https://barsha.com.tn/fr/checkout/order-confirmation',
     googleAnalyticsId: 'G-2P3LY9HVJ0',
-    apiChatbot: 'http://localhost:8000/api/chat',
+    // Production should also go through the main public backend, not localhost.
+    apiChatbot: 'https://main.barsha.com.tn/api/chat',
     backendAiUrl: 'https://ai.barsha.com.tn',
-    useLocalAuth: false
+    useLocalAuth: false,
+    enableAnalytics: true
 }
 
 // pour Builder popur sunevit:

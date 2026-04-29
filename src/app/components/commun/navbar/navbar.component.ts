@@ -42,9 +42,7 @@ export class NavbarComponent implements OnInit {
           this.homePageData = data;
         }
       },
-      (error) => {
-        console.error('Error fetching home page data:', error);
-      }
+      () => {}
     );
 
     // S'abonner aux changements du panier

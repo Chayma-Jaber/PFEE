@@ -29,8 +29,22 @@ export class NotificationsController {
     return this.notificationsService.getUserNotifications(userId, query);
   }
 
+  @Get('count')
+  async getUnreadCount(@CurrentUser('id') userId: number) {
+    const unreadCount = await this.notificationsService.getUnreadCount(userId);
+    return { unreadCount };
+  }
+
   @Patch(':id/read')
   async markAsRead(
+    @CurrentUser('id') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.notificationsService.markAsRead(id, userId);
+  }
+
+  @Post(':id/read')
+  async markAsReadLegacy(
     @CurrentUser('id') userId: number,
     @Param('id', ParseIntPipe) id: number,
   ) {
@@ -40,6 +54,12 @@ export class NotificationsController {
   @Post('mark-all-read')
   @HttpCode(HttpStatus.OK)
   async markAllAsRead(@CurrentUser('id') userId: number) {
+    return this.notificationsService.markAllAsRead(userId);
+  }
+
+  @Post('read-all')
+  @HttpCode(HttpStatus.OK)
+  async markAllAsReadLegacy(@CurrentUser('id') userId: number) {
     return this.notificationsService.markAllAsRead(userId);
   }
 

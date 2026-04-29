@@ -76,7 +76,8 @@ export interface ValidateCodeResponse {
   providedIn: 'root'
 })
 export class ReferralService {
-  private readonly apiUrl = `${environementDev.backendAiUrl}/api/referrals`;
+  private readonly apiUrl = `${environementDev.api}/api/referrals`;
+  private readonly useLocalAuth = !!(environementDev as any).useLocalAuth;
 
   // Observable for referral code
   private referralCodeSubject = new BehaviorSubject<ReferralCode | null>(null);
@@ -104,6 +105,13 @@ export class ReferralService {
       `${this.apiUrl}/my-code`,
       { headers: this.getHeaders() }
     ).pipe(
+      map((code: any) => ({
+        id: code?.id || 0,
+        code: code?.code || 'BARSHA',
+        isActive: code?.isActive ?? true,
+        shareUrl: code?.shareUrl || this.getShareUrl(code?.code || 'BARSHA'),
+        createdAt: code?.createdAt || new Date().toISOString()
+      })),
       tap(code => this.referralCodeSubject.next(code)),
       catchError(err => {
         console.error('Error fetching referral code:', err);
@@ -123,9 +131,17 @@ export class ReferralService {
    */
   getStats(): Observable<ReferralStats> {
     return this.http.get<ReferralStats>(
-      `${this.apiUrl}/stats`,
+      `${this.apiUrl}/earnings`,
       { headers: this.getHeaders() }
     ).pipe(
+      map((stats: any) => ({
+        totalReferred: Number(stats?.totalReferred ?? stats?.totalReferrals ?? 0),
+        pendingReferrals: Number(stats?.pendingReferrals ?? 0),
+        completedReferrals: Number(stats?.completedReferrals ?? 0),
+        totalPointsEarned: Number(stats?.totalPointsEarned ?? stats?.totalRewardsEarned ?? 0),
+        totalRewardsEarned: Number(stats?.totalRewardsEarned ?? stats?.totalPointsEarned ?? 0),
+        pendingRewards: Number(stats?.pendingRewards ?? 0)
+      })),
       tap(stats => this.statsSubject.next(stats)),
       catchError(err => {
         console.error('Error fetching referral stats:', err);
@@ -145,14 +161,36 @@ export class ReferralService {
    * Get referral history
    */
   getHistory(page = 1, perPage = 20): Observable<ReferralHistoryResponse> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('per_page', perPage.toString());
-
     return this.http.get<ReferralHistoryResponse>(
       `${this.apiUrl}/history`,
-      { params, headers: this.getHeaders() }
+      { headers: this.getHeaders() }
     ).pipe(
+      map((response: any) => {
+        const items = Array.isArray(response?.items)
+          ? response.items
+          : Array.isArray(response?.referrals)
+            ? response.referrals.map((item: any) => ({
+                id: item.id,
+                refereeFirstName: item.referredEmail?.split('@')[0] || 'Invite',
+                refereeEmail: item.referredEmail || '',
+                status: (item.status || 'pending').toLowerCase(),
+                rewardEarned: item.referrerRewardAmount || null,
+                createdAt: item.createdAt,
+                completedAt: item.completedAt || null
+              }))
+            : [];
+
+        const start = (page - 1) * perPage;
+        const pagedItems = items.slice(start, start + perPage);
+
+        return {
+          items: pagedItems,
+          total: items.length,
+          page,
+          pages: Math.ceil(items.length / perPage),
+          hasMore: start + perPage < items.length
+        };
+      }),
       catchError(err => {
         console.error('Error fetching referral history:', err);
         return of({
@@ -170,6 +208,10 @@ export class ReferralService {
    * Get pending rewards
    */
   getRewards(includeClaimed = false): Observable<{ rewards: ReferralReward[]; total: number }> {
+    if (this.useLocalAuth) {
+      return of({ rewards: [], total: 0 });
+    }
+
     const params = new HttpParams()
       .set('include_claimed', includeClaimed.toString());
 
@@ -177,6 +219,10 @@ export class ReferralService {
       `${this.apiUrl}/rewards`,
       { params, headers: this.getHeaders() }
     ).pipe(
+      map((response: any) => ({
+        rewards: Array.isArray(response?.rewards) ? response.rewards : [],
+        total: Number(response?.total ?? 0)
+      })),
       catchError(err => {
         console.error('Error fetching rewards:', err);
         return of({ rewards: [], total: 0 });

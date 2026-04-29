@@ -36,6 +36,7 @@ export interface TrackEvent {
 })
 export class BehaviorAnalyticsService {
   private apiUrl = `${environementDev.api}/api/analytics`;
+  private readonly analyticsEnabled = (environementDev as any).enableAnalytics !== false;
   private sessionId: string;
   private eventQueue: TrackEvent[] = [];
   private flushInterval: any;
@@ -44,6 +45,10 @@ export class BehaviorAnalyticsService {
 
   constructor(private http: HttpClient) {
     this.sessionId = this.getOrCreateSessionId();
+    if (!this.analyticsEnabled) {
+      return;
+    }
+
     this.startFlushInterval();
 
     // Flush on page unload
@@ -334,6 +339,8 @@ export class BehaviorAnalyticsService {
   // ─────────────────────────────────────────────────────────────
 
   private queueEvent(event: TrackEvent): void {
+    if (!this.analyticsEnabled) return;
+
     this.eventQueue.push(event);
 
     // Flush immediately if queue is full
@@ -354,6 +361,7 @@ export class BehaviorAnalyticsService {
    * Flush all queued events to the server
    */
   flush(): void {
+    if (!this.analyticsEnabled) return;
     if (this.eventQueue.length === 0) return;
 
     const events = [...this.eventQueue];

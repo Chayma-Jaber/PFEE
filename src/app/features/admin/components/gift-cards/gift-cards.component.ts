@@ -68,7 +68,7 @@ interface GiftCardStats {
             <i class="fas fa-wallet"></i>
           </div>
           <div class="stat-content">
-            <span class="stat-value">{{ stats.totalValueOutstanding.toFixed(3) }} TND</span>
+            <span class="stat-value">{{ (stats.totalValueOutstanding || 0).toFixed(3) }} TND</span>
             <span class="stat-label">Valeur en circulation</span>
           </div>
         </div>
@@ -144,10 +144,10 @@ interface GiftCardStats {
                   {{ card.isPromotional ? 'Promo' : 'Achat' }}
                 </span>
               </td>
-              <td>{{ card.initialValue.toFixed(3) }} TND</td>
+              <td>{{ (card.initialValue || 0).toFixed(3) }} TND</td>
               <td>
-                <span class="balance" [class.low]="card.balance < card.initialValue * 0.2">
-                  {{ card.balance.toFixed(3) }} TND
+                <span class="balance" [class.low]="(card.balance || 0) < (card.initialValue || 0) * 0.2">
+                  {{ (card.balance || 0).toFixed(3) }} TND
                 </span>
               </td>
               <td>
@@ -261,7 +261,7 @@ interface GiftCardStats {
                 <div class="gift-card-preview" [class]="selectedCard.isPromotional ? 'promo' : 'purchased'">
                   <div class="card-brand">BARSHA</div>
                   <div class="card-code-display">{{ selectedCard.code }}</div>
-                  <div class="card-balance-display">{{ selectedCard.balance.toFixed(3) }} TND</div>
+                  <div class="card-balance-display">{{ (selectedCard.balance || 0).toFixed(3) }} TND</div>
                 </div>
               </div>
 
@@ -276,11 +276,11 @@ interface GiftCardStats {
                 </div>
                 <div class="info-item">
                   <span class="info-label">Valeur initiale</span>
-                  <span class="info-value">{{ selectedCard.initialValue.toFixed(3) }} TND</span>
+                  <span class="info-value">{{ (selectedCard.initialValue || 0).toFixed(3) }} TND</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Solde actuel</span>
-                  <span class="info-value highlight">{{ selectedCard.balance.toFixed(3) }} TND</span>
+                  <span class="info-value highlight">{{ (selectedCard.balance || 0).toFixed(3) }} TND</span>
                 </div>
                 <div class="info-item">
                   <span class="info-label">Statut</span>
@@ -325,10 +325,10 @@ interface GiftCardStats {
                     <span class="tx-by" *ngIf="tx.createdBy">par {{ tx.createdBy }}</span>
                   </div>
                   <div class="tx-amount" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
-                    {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount.toFixed(3) }} TND
+                    {{ tx.amount > 0 ? '+' : '' }}{{ (tx.amount || 0).toFixed(3) }} TND
                   </div>
                   <div class="tx-balance">
-                    Solde: {{ tx.balanceAfter.toFixed(3) }} TND
+                    Solde: {{ (tx.balanceAfter || 0).toFixed(3) }} TND
                   </div>
                 </div>
               </div>
@@ -620,7 +620,7 @@ export class AdminGiftCardsComponent implements OnInit {
 
     this.adminService.getGiftCards(params).subscribe({
       next: (response) => {
-        this.giftCards = response.items;
+        this.giftCards = (response.items || []).map(card => this.normalizeGiftCard(card));
         this.totalPages = response.pages || 1;
         this.isLoading = false;
       },
@@ -634,7 +634,7 @@ export class AdminGiftCardsComponent implements OnInit {
   loadStats(): void {
     this.adminService.getGiftCardStats().subscribe({
       next: (stats) => {
-        this.stats = stats;
+        this.stats = this.normalizeStats(stats);
       },
       error: () => {
         this.stats = this.getMockStats();
@@ -681,7 +681,7 @@ export class AdminGiftCardsComponent implements OnInit {
     this.adminService.getGiftCardTransactions(cardId).subscribe({
       next: (transactions) => {
         if (this.selectedCard) {
-          this.selectedCard.transactions = transactions;
+          this.selectedCard.transactions = (transactions || []).map(tx => this.normalizeTransaction(tx));
         }
       },
       error: () => {
@@ -840,6 +840,53 @@ export class AdminGiftCardsComponent implements OnInit {
       type: 'add',
       amount: null,
       reason: ''
+    };
+  }
+
+  private normalizeGiftCard(card: any): GiftCard {
+    return {
+      id: Number(card?.id || 0),
+      code: card?.code || '',
+      initialValue: Number(card?.initialValue ?? card?.initial_value ?? 0),
+      balance: Number(card?.balance ?? 0),
+      status: card?.status || 'active',
+      isPromotional: Boolean(card?.isPromotional ?? card?.is_promotional),
+      recipientEmail: card?.recipientEmail || card?.recipient_email || '',
+      purchasedAt: card?.purchasedAt || card?.purchased_at || '',
+      expiresAt: card?.expiresAt || card?.expires_at || '',
+      adminNotes: card?.adminNotes || card?.admin_notes || '',
+      transactions: Array.isArray(card?.transactions)
+        ? card.transactions.map((tx: any) => this.normalizeTransaction(tx))
+        : []
+    };
+  }
+
+  private normalizeTransaction(tx: any): GiftCardTransaction {
+    return {
+      id: Number(tx?.id || 0),
+      type: tx?.type || 'adjustment',
+      amount: Number(tx?.amount || 0),
+      balanceAfter: Number(tx?.balanceAfter ?? tx?.balance_after ?? 0),
+      description: tx?.description || '',
+      orderId: tx?.orderId || tx?.order_id,
+      createdAt: tx?.createdAt || tx?.created_at || '',
+      createdBy: tx?.createdBy || tx?.created_by || ''
+    };
+  }
+
+  private normalizeStats(stats: any): GiftCardStats {
+    const source = stats?.stats || stats?.data || stats || {};
+    const byStatus = source.byStatus || source.by_status || {};
+
+    return {
+      totalCards: Number(source.totalCards ?? source.total_cards ?? 0),
+      totalValueOutstanding: Number(source.totalValueOutstanding ?? source.total_value_outstanding ?? 0),
+      byStatus: {
+        active: Number(byStatus.active || 0),
+        redeemed: Number(byStatus.redeemed || 0),
+        expired: Number(byStatus.expired || 0),
+        cancelled: Number(byStatus.cancelled || 0)
+      }
     };
   }
 

@@ -370,15 +370,18 @@
   padding: 20px;
 }
 
-.modal {
+.category-modal {
   background: #fff;
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
+  display: block;
+  position: relative;
+  z-index: 1001;
 
-  &.modal-large {
+  &.category-modal-large {
     max-width: 700px;
   }
 }

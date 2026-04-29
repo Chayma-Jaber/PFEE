@@ -1277,6 +1277,9 @@ export class SignComponent {
         total: parseFloat(this.total.toFixed(3))
       },
       products: this.cartItems.map(item => ({
+        sku: item.product?.sku,
+        title: item.product?.title,
+        image: item.image,
         ean13: item.ean13,
         quantity: item.quantity,
         unitPrice: parseFloat(item.product.currentPrice.toFixed(3)),
@@ -1286,9 +1289,9 @@ export class SignComponent {
     };
 
     if (!isStorePickup) {
-      payload.orderData.shippingAddress = this.selectedAddress.id;
+      payload.orderData.shippingAddress = this.selectedAddress;
     } else {
-      payload.orderData.shippingStore = this.selectedStore.id;
+      payload.orderData.shippingStore = this.selectedStore;
     }
 
     // Add coupon ID to the order payload if a coupon is applied

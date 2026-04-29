@@ -5,6 +5,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { environementDev } from '../../../../../environements/environementDev';
 
 // Interfaces
 export interface AlertStats {
@@ -245,7 +246,7 @@ export interface AlertsResponse {
 })
 export class AdminAlertsComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = `${environementDev.api}/api`;
 
   // Statistics
   stats: AlertStats = {

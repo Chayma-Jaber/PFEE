@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { environementDev } from '../../../../../environements/environementDev';
 
 interface AdminUser {
   firstName: string;
@@ -19,6 +20,7 @@ interface AdminUser {
   styleUrl: './admin-layout.component.scss'
 })
 export class AdminLayoutComponent implements OnInit {
+  private readonly apiUrl = environementDev.api;
   sidebarCollapsed = false;
   currentUser: AdminUser | null = null;
   currentTime = '';
@@ -125,7 +127,7 @@ export class AdminLayoutComponent implements OnInit {
     const token = localStorage.getItem('admin_jwt') || localStorage.getItem('jwt');
     if (!token) return;
 
-    this.http.get<any>('http://localhost:8000/api/admin/dashboard/stats', {
+    this.http.get<any>(`${this.apiUrl}/api/admin/dashboard/stats`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).subscribe({
       next: (stats) => {

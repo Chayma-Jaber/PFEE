@@ -73,19 +73,26 @@ import {
                 required
                 minlength="10"
                 maxlength="1000"
+                [readonly]="submitSuccess"
                 class="question-textarea"></textarea>
               <span class="char-count">{{ newQuestionText.length }}/1000</span>
             </div>
             <div class="form-actions">
-              <button type="button" class="btn-cancel" (click)="closeQuestionForm()">Annuler</button>
-              <button type="submit" class="btn-submit" [disabled]="newQuestionText.length < 10 || isSubmitting">
-                <span *ngIf="!isSubmitting">
+              <button type="button" class="btn-cancel" (click)="closeQuestionForm()">
+                {{ submitSuccess ? 'Fermer' : 'Annuler' }}
+              </button>
+              <button type="submit" class="btn-submit" [disabled]="newQuestionText.length < 10 || isSubmitting || submitSuccess">
+                <span *ngIf="!isSubmitting && !submitSuccess">
                   <i class="fas fa-paper-plane"></i>
                   Soumettre
                 </span>
                 <span *ngIf="isSubmitting">
                   <i class="fas fa-spinner fa-spin"></i>
                   Envoi...
+                </span>
+                <span *ngIf="submitSuccess">
+                  <i class="fas fa-check"></i>
+                  Envoyee
                 </span>
               </button>
             </div>
@@ -999,22 +1006,16 @@ export class ProductQAComponent implements OnInit, OnChanges {
   }
 
   submitQuestion(): void {
-    if (this.newQuestionText.length < 10) return;
+    const normalizedQuestion = this.newQuestionText.trim();
+    if (normalizedQuestion.length < 10 || this.submitSuccess) return;
 
     this.isSubmitting = true;
     this.submitMessage = '';
 
-    this.qaService.askQuestion(this.productId, this.newQuestionText).subscribe(result => {
+    this.qaService.askQuestion(this.productId, normalizedQuestion).subscribe(result => {
       this.isSubmitting = false;
       this.submitMessage = result.message;
       this.submitSuccess = result.success;
-
-      if (result.success) {
-        setTimeout(() => {
-          this.closeQuestionForm();
-          // Note: Question won't appear immediately as it needs moderation
-        }, 2000);
-      }
     });
   }
 

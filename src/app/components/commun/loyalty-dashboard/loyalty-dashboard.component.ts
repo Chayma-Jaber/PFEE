@@ -816,21 +816,21 @@ export class LoyaltyDashboardComponent implements OnInit, OnDestroy {
   }
 
   get currentTierInfo(): TierInfo {
-    return this.account
-      ? TIER_INFO[this.account.currentTier]
-      : TIER_INFO['bronze'];
+    const tierName = String(this.account?.currentTier || 'bronze').toLowerCase() as LoyaltyTier;
+    return TIER_INFO[tierName] || TIER_INFO.bronze;
   }
 
   getNextTierInfo(): TierInfo | null {
     if (!this.account?.nextTier) return null;
-    return TIER_INFO[this.account.nextTier];
+    const tierName = String(this.account.nextTier).toLowerCase() as LoyaltyTier;
+    return TIER_INFO[tierName] || null;
   }
 
   isTierAchieved(tierName: string): boolean {
     if (!this.account) return false;
     const tierOrder: LoyaltyTier[] = ['bronze', 'silver', 'gold', 'platinum'];
-    const currentIndex = tierOrder.indexOf(this.account.currentTier);
-    const tierIndex = tierOrder.indexOf(tierName as LoyaltyTier);
+    const currentIndex = tierOrder.indexOf(String(this.account.currentTier).toLowerCase() as LoyaltyTier);
+    const tierIndex = tierOrder.indexOf(String(tierName).toLowerCase() as LoyaltyTier);
     return tierIndex <= currentIndex;
   }
 

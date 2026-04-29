@@ -790,11 +790,11 @@ export class DetailProduitComponent implements OnInit {
     const firstSize = sizes[0].size;
 
     // Case 1: Accessories/Fragrances (Single size "TU" or "STD")
-    // User requirement: "ajout direct sans afficher la case de selection"
+    // Keep the size visible in the UI, while auto-selecting it.
     if (sizes.length === 1 && (firstSize.toUpperCase() === 'TU' || firstSize.toUpperCase() === 'STD')) {
-      this.isSizeSelectionRequired = false;
+      this.isSizeSelectionRequired = true;
       this.selectedSize = firstSize; // Auto-select TU or STD
-      this.sizeLabel = ''; // Not needed
+      this.sizeLabel = 'LA TAILLE';
       this.sizeGuideCategory = 'accessoires';
       return;
     }
@@ -922,6 +922,29 @@ export class DetailProduitComponent implements OnInit {
     return 'other';
   }
 
+  getVirtualTryOnImage(): string {
+    const candidates = [
+      ...this.images,
+      this.product?.colors?.[this.product?.selectedColorIndex || 0]?.mainImage,
+      this.product?.firstImg?.url,
+      this.product?.secondImg?.url
+    ].filter((image): image is string => !!image);
+
+    if (candidates.length === 0) {
+      return '/assets/images/placeholder.png';
+    }
+
+    const preferredImage = candidates.find((image) => this.isVirtualTryOnFriendlyImage(image));
+    return preferredImage || candidates[0];
+  }
+
+  private isVirtualTryOnFriendlyImage(imageUrl: string): boolean {
+    const normalizedUrl = imageUrl.toLowerCase();
+    const hints = ['transparent', 'detoure', 'detouree', 'cutout', 'isolated', 'ghost', 'packshot', 'flat', 'overlay'];
+
+    return normalizedUrl.endsWith('.png') || hints.some((hint) => normalizedUrl.includes(hint));
+  }
+
   toggleDetails(): void {
     this.showDetails = !this.showDetails;
   }
@@ -936,7 +959,7 @@ export class DetailProduitComponent implements OnInit {
 
   selectColor(index: number): void {
     this.product.selectedColorIndex = index;
-    this.images = this.product.declinaisons[index].images.map((img: any) => img.url);
+    this.images = this.getImagesForColor(index);
     this.activeThumbnail = 0;
     this.loadStockForColor(index);
   }
@@ -1458,46 +1481,172 @@ export class DetailProduitComponent implements OnInit {
       })),
       selectedColorIndex: 0,
       isInWishlist: false,
-      articlesSimilaires: []
+      articlesSimilaires: [],
+      firstImg: apiProduct.firstImg,
+      secondImg: apiProduct.secondImg
     };
   }
 
   private initializeProductDetails(): void {
-    // Ensure we have declinaisons before accessing them
-    if (this.product.declinaisons && this.product.declinaisons.length > 0) {
-      this.images = this.product.declinaisons[0]?.images?.map((img: any) => img.url) || [];
-      this.activeThumbnail = 0;
-      this.loadStockForColor(0);
-    } else {
-      console.warn('Product has no declinaisons available');
+    const productId = this.product?.id;
+    if (!productId) {
       this.images = [];
       this.activeThumbnail = 0;
-      // Initialize empty tailles array if no declinaisons
       this.product.tailles = [];
+      return;
     }
+
+    this.productService.getDeclinaisonStock(productId).subscribe({
+      next: (stockData) => {
+        const stockItems = Array.isArray(stockData?.data) ? stockData.data : [];
+
+        if ((!this.product.declinaisons || this.product.declinaisons.length === 0) && stockItems.length > 0) {
+          const fallbackDeclinaisons = this.buildFallbackDeclinaisonsFromStock(stockItems);
+          this.product.declinaisons = fallbackDeclinaisons;
+          this.product.colors = fallbackDeclinaisons.map((declinaison) => ({
+            name: declinaison.libellet || declinaison.couleur || 'Couleur unique',
+            textureImage: declinaison.texture?.url || '',
+            mainImage: declinaison.images?.[0]?.url || this.getFallbackImageUrls()[0] || ''
+          }));
+          this.product.selectedColorIndex = 0;
+        }
+
+        if (this.product.declinaisons && this.product.declinaisons.length > 0) {
+          this.images = this.getImagesForColor(0);
+          this.activeThumbnail = 0;
+          this.loadStockForColor(0, stockData);
+          return;
+        }
+
+        console.warn('Product has no declinaisons available');
+        this.images = this.getFallbackImageUrls();
+        this.activeThumbnail = 0;
+        this.product.tailles = this.buildDisplaySizes(stockItems);
+        this.detectProductTypeAndSetupUI();
+      },
+      error: (err) => {
+        console.error('Error loading initial stock:', err);
+        this.images = this.getFallbackImageUrls();
+        this.activeThumbnail = 0;
+        this.product.tailles = [];
+      }
+    });
   }
 
-  private loadStockForColor(index: number): void {
-    const declinaisonId = this.product.declinaisons[index]?.id;
-    if (declinaisonId) {
-      this.productService.getDeclinaisonStock(declinaisonId).subscribe({
-        next: (stockData) => {
-          this.product.tailles = stockData.data.map((item: any) => ({
-            size: item.size,
-            qte: item.qte,
-            state: this.getSizeState(item.qte),
-            ean13: item.ean13
-          }));
+  private loadStockForColor(index: number, preloadedStockData?: any): void {
+    const productId = this.product?.id;
+    const selectedDeclinaison = this.product?.declinaisons?.[index];
+    if (!productId || !selectedDeclinaison) {
+      return;
+    }
 
-          // Sélectionner automatiquement la taille si il n'y a qu'un seul élément
-          if (this.product.tailles.length === 1 && this.product.tailles[0].state !== 'Rupture de stock') {
-            this.selectSize(this.product.tailles[0].size);
-          }
-          this.detectProductTypeAndSetupUI();
-        },
-        error: (err) => console.error('Error loading stock:', err)
+    const applyStockData = (stockData: any) => {
+      const sizesForColor = this.productService.extractSizesForColor(
+        stockData,
+        selectedDeclinaison.libellet || selectedDeclinaison.couleur || this.product.colors?.[index]?.name
+      );
+
+      this.product.tailles = this.buildDisplaySizes(sizesForColor);
+
+      if (this.selectedSize && !this.product.tailles.some((taille) => taille.size === this.selectedSize && taille.qte > 0)) {
+        this.selectedSize = null;
+      }
+
+      if (this.product.tailles.length === 1 && this.product.tailles[0].state !== 'Rupture de stock') {
+        this.selectSize(this.product.tailles[0].size);
+      }
+
+      this.detectProductTypeAndSetupUI();
+    };
+
+    if (preloadedStockData) {
+      applyStockData(preloadedStockData);
+      return;
+    }
+
+    this.productService.getDeclinaisonStock(productId).subscribe({
+      next: (stockData) => applyStockData(stockData),
+      error: (err) => console.error('Error loading stock:', err)
+    });
+  }
+
+  private getFallbackImageUrls(): string[] {
+    const urls = [
+      this.product?.firstImg?.url,
+      this.product?.secondImg?.url
+    ].filter((url): url is string => !!url);
+
+    return urls.length > 0 ? urls : ['/assets/images/placeholder.png'];
+  }
+
+  private getImagesForColor(index: number): string[] {
+    const declinaisonImages = this.product?.declinaisons?.[index]?.images?.map((img: any) => img.url) || [];
+    return declinaisonImages.length > 0 ? declinaisonImages : this.getFallbackImageUrls();
+  }
+
+  private buildFallbackDeclinaisonsFromStock(stockItems: Array<{ color?: string }>): Product['declinaisons'] {
+    const uniqueColors = Array.from(
+      new Set(
+        stockItems
+          .map((item) => (item.color || '').trim())
+          .filter((color) => color.length > 0)
+      )
+    );
+
+    const fallbackColors = uniqueColors.length > 0 ? uniqueColors : ['Couleur unique'];
+    const fallbackImages = this.getFallbackImageUrls().map((url, imageIndex) => ({
+      url,
+      ext: url.split('.').pop() || 'jpg',
+      name: `fallback-${imageIndex + 1}`,
+      width: 0,
+      height: 0
+    }));
+
+    return fallbackColors.map((color, colorIndex) => ({
+      id: colorIndex + 1,
+      libellet: color,
+      couleur: color,
+      active: colorIndex === 0,
+      images: fallbackImages
+    }));
+  }
+
+  private buildDisplaySizes(stockItems: Array<{ size?: string; qte?: number; ean13?: string }>): Array<{
+    size: string;
+    qte: number;
+    state: string;
+    ean13: string;
+  }> {
+    const mergedSizes = new Map<string, { size: string; qte: number; ean13: string }>();
+
+    for (const item of stockItems || []) {
+      const rawSize = String(item?.size || 'TU').trim();
+      const sizeKey = rawSize.toUpperCase();
+      const qte = Number(item?.qte ?? 0);
+      const ean13 = item?.ean13 || '';
+      const existing = mergedSizes.get(sizeKey);
+
+      if (existing) {
+        existing.qte += qte;
+        if (!existing.ean13 && ean13) {
+          existing.ean13 = ean13;
+        }
+        continue;
+      }
+
+      mergedSizes.set(sizeKey, {
+        size: rawSize,
+        qte,
+        ean13
       });
     }
+
+    return Array.from(mergedSizes.values()).map((item) => ({
+      size: item.size,
+      qte: item.qte,
+      state: this.getSizeState(item.qte),
+      ean13: item.ean13
+    }));
   }
 
   private getSizeState(qte: number): string {
@@ -1747,3 +1896,4 @@ export class DetailProduitComponent implements OnInit {
     return this.authService.isAuthenticated();
   }
 }
+

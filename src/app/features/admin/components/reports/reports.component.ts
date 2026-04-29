@@ -1001,11 +1001,13 @@ export class AdminReportsComponent implements OnInit {
 
   downloadReport(type: string, format: string): void {
     const url = `${this.apiUrl}/api/admin/reports/export/${type}?period=${this.selectedPeriod}&format=${format}`;
-    window.open(url, '_blank');
+    this.downloadAuthenticatedFile(url, `${type}-${this.selectedPeriod}.${format}`);
   }
 
   downloadFromUrl(url: string): void {
-    window.open(`${this.apiUrl}${url}`, '_blank');
+    const absoluteUrl = `${this.apiUrl}${url}`;
+    const extension = url.includes('format=pdf') ? 'pdf' : 'csv';
+    this.downloadAuthenticatedFile(absoluteUrl, `report.${extension}`);
   }
 
   exportAll(): void {
@@ -1020,6 +1022,27 @@ export class AdminReportsComponent implements OnInit {
           this.exporting = false;
         }
       }, index * 500);
+    });
+  }
+
+  private downloadAuthenticatedFile(url: string, filename: string): void {
+    this.http.get(url, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = filename;
+        anchor.click();
+        window.URL.revokeObjectURL(objectUrl);
+      },
+      error: (err) => {
+        if (![401, 404].includes(err?.status)) {
+          console.error('Error exporting report:', err);
+        }
+      }
     });
   }
 

@@ -532,6 +532,6 @@ export class CompleteTheLookComponent implements OnInit, OnChanges {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/images/placeholder-outfit.jpg';
+    img.src = 'assets/images/placeholder.jpg';
   }
 }

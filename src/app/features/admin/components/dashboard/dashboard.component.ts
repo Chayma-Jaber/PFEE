@@ -246,10 +246,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   formatPrice(price: number): string {
-    return price.toFixed(3) + ' TND';
+    return (Number(price) || 0).toFixed(3) + ' TND';
   }
 
   formatCompactPrice(price: number): string {
+    price = Number(price) || 0;
     if (price >= 1000) {
       return (price / 1000).toFixed(1) + 'K TND';
     }
@@ -269,7 +270,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   formatPercentage(value: number): string {
-    return value.toFixed(1) + '%';
+    return (Number(value) || 0).toFixed(1) + '%';
   }
 
   getMaxSalesTrend(): number {

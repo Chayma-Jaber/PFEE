@@ -13,14 +13,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { NextGenRecommendationsService, RecommendedProduct, UserContext } from '../../../services/next-gen-recommendations.service';
+import { ProductService } from '../../../services/product.service';
 
 @Component({
   selector: 'app-account-recommendations',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="account-recs-container" *ngIf="hasRecommendations">
+    <div class="account-recs-container" *ngIf="hasRecommendations || isLoading">
       <!-- Your Style Edit Section -->
       <section class="account-recs-section style-edit" *ngIf="styleEditProducts.length > 0">
         <header class="section-header">
@@ -500,7 +503,10 @@ export class AccountRecommendationsComponent implements OnInit {
   wishlistBasedProducts: RecommendedProduct[] = [];
   isLoading: boolean = true;
 
-  constructor(private recommendationsService: NextGenRecommendationsService) {}
+  constructor(
+    private recommendationsService: NextGenRecommendationsService,
+    private productService: ProductService
+  ) {}
 
   ngOnInit(): void {
     this.loadAllRecommendations();
@@ -521,10 +527,20 @@ export class AccountRecommendationsComponent implements OnInit {
     // Load personalized style edit
     this.recommendationsService.getPersonalized(userContext, 4).subscribe({
       next: (response: any) => {
-        this.styleEditProducts = response.products || [];
-        this.trackImpressions(this.styleEditProducts, 'personalized');
+        const products = response.products || [];
+        if (products.length === 0) {
+          this.loadTrendingFallback();
+          return;
+        }
+        this.hydrateProducts(products, (hydrated) => {
+          this.styleEditProducts = hydrated;
+          this.trackImpressions(this.styleEditProducts, 'personalized');
+        });
       },
-      error: () => this.styleEditProducts = []
+      error: () => {
+        this.styleEditProducts = [];
+        this.loadTrendingFallback();
+      }
     });
 
     // Load recently viewed recovery
@@ -532,8 +548,10 @@ export class AccountRecommendationsComponent implements OnInit {
     if (viewedIds.length > 0) {
       this.recommendationsService.getBecauseYouViewed(viewedIds, 8).subscribe({
         next: (response: any) => {
-          this.recentlyViewedProducts = response.products || [];
-          this.trackImpressions(this.recentlyViewedProducts, 'because_you_viewed');
+          this.hydrateProducts(response.products || [], (hydrated) => {
+            this.recentlyViewedProducts = hydrated;
+            this.trackImpressions(this.recentlyViewedProducts, 'because_you_viewed');
+          });
         },
         error: () => this.recentlyViewedProducts = []
       });
@@ -544,8 +562,10 @@ export class AccountRecommendationsComponent implements OnInit {
     if (wishlistIds.length > 0) {
       this.recommendationsService.getCustomersAlsoLiked(wishlistIds, 6).subscribe({
         next: (response: any) => {
-          this.wishlistBasedProducts = response.products || [];
-          this.trackImpressions(this.wishlistBasedProducts, 'customers_also_liked');
+          this.hydrateProducts(response.products || [], (hydrated) => {
+            this.wishlistBasedProducts = hydrated;
+            this.trackImpressions(this.wishlistBasedProducts, 'customers_also_liked');
+          });
         },
         error: () => this.wishlistBasedProducts = []
       });
@@ -605,6 +625,24 @@ export class AccountRecommendationsComponent implements OnInit {
     });
   }
 
+  private loadTrendingFallback(): void {
+    if (this.styleEditProducts.length > 0) {
+      return;
+    }
+
+    this.recommendationsService.getTrending(4).subscribe({
+      next: (response: any) => {
+        this.hydrateProducts(response.products || [], (hydrated) => {
+          this.styleEditProducts = hydrated;
+          this.trackImpressions(this.styleEditProducts, 'trending');
+        });
+      },
+      error: () => {
+        this.styleEditProducts = [];
+      }
+    });
+  }
+
   trackClick(product: RecommendedProduct, _position: number, _strategy: string): void {
     this.recommendationsService.trackClick(product);
   }
@@ -616,5 +654,54 @@ export class AccountRecommendationsComponent implements OnInit {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private hydrateProducts(
+    products: RecommendedProduct[],
+    assign: (products: RecommendedProduct[]) => void
+  ): void {
+    if (!products.length) {
+      assign([]);
+      return;
+    }
+
+    forkJoin(
+      products.map((product) => {
+        if (product.name && product.image && Number(product.price) > 0) {
+          return of(this.normalizeDisplayedProduct(product));
+        }
+
+        return this.productService.getProductById(product.id).pipe(
+          map((fullProduct: any) => this.normalizeDisplayedProduct(product, fullProduct)),
+          catchError(() => of(this.normalizeDisplayedProduct(product)))
+        );
+      })
+    ).subscribe(assign);
+  }
+
+  private normalizeDisplayedProduct(product: RecommendedProduct, fullProduct?: any): RecommendedProduct {
+    const fallbackImage =
+      fullProduct?.firstImg?.url ||
+      fullProduct?.declinaisons?.[0]?.images?.[0]?.url ||
+      fullProduct?.image?.url ||
+      product.image ||
+      'assets/images/placeholder.png';
+
+    const displayName = fullProduct?.title || product.name || `Produit #${product.id}`;
+    const displayPrice = Number(
+      fullProduct?.currentPrice ??
+      fullProduct?.price ??
+      product.price ??
+      0
+    );
+
+    return {
+      ...product,
+      name: displayName,
+      image: fallbackImage,
+      price: displayPrice > 0 ? displayPrice : product.price,
+      originalPrice: Number(fullProduct?.price ?? product.originalPrice ?? product.price ?? 0),
+      url: product.url || fullProduct?.slug || ''
+    };
   }
 }

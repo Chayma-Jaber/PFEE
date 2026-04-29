@@ -30,6 +30,7 @@ import { SavedPaymentsComponent } from '../../commun/saved-payments';
 import { StyleQuizModalComponent } from '../../commun/style-quiz-modal/style-quiz-modal.component';
 import { ShipmentTrackingComponent } from '../../commun/shipment-tracking/shipment-tracking.component';
 import { TierProgressWidgetComponent } from '../../commun/tier-progress-widget/tier-progress-widget.component';
+import { environementDev } from '../../../../environements/environementDev';
 
 @Component({
   selector: 'app-compte',
@@ -43,6 +44,42 @@ import { TierProgressWidgetComponent } from '../../commun/tier-progress-widget/t
 export class CompteComponent implements OnInit, AfterViewInit  {
   // Wave 2: style quiz modal flag
   openStyleQuiz = false;
+
+  accountNavSections: Array<{ id: string; label: string; items: Array<{ key: string; title: string; subtitle: string; icon: string; accent: string }> }> = [
+    {
+      id: 'inspiration',
+      label: 'Inspiration',
+      items: [
+        { key: 'pourvous', title: 'Pour vous', subtitle: 'Selections personnalisees', icon: 'fa-compass', accent: 'soft-gold' },
+        { key: 'monstyle', title: 'Mon Style', subtitle: 'Preferences et profil mode', icon: 'fa-palette', accent: 'soft-rose' },
+        { key: 'favoris', title: 'Favoris', subtitle: 'Vos envies en un coup d oeil', icon: 'fa-heart', accent: 'soft-blush' }
+      ]
+    },
+    {
+      id: 'achats',
+      label: 'Achats',
+      items: [
+        { key: 'achat', title: 'Achats', subtitle: 'Commandes et suivi', icon: 'fa-shopping-bag', accent: 'ink' },
+        { key: 'coupon', title: 'Coupons', subtitle: 'Offres et avantages', icon: 'fa-ticket-alt', accent: 'soft-sand' },
+        { key: 'retour', title: 'Retours', subtitle: 'Demandes et statuts', icon: 'fa-undo', accent: 'soft-stone' },
+        { key: 'points', title: 'Fidelite', subtitle: 'Points et recompenses', icon: 'fa-star', accent: 'soft-gold' },
+        { key: 'giftcards', title: 'Cartes cadeaux', subtitle: 'Credits et e-cartes', icon: 'fa-gift', accent: 'soft-rose' },
+        { key: 'referrals', title: 'Parrainage', subtitle: 'Invitations et bonus', icon: 'fa-users', accent: 'soft-blush' }
+      ]
+    },
+    {
+      id: 'compte',
+      label: 'Mon compte',
+      items: [
+        { key: 'profil', title: 'Profil', subtitle: 'Informations personnelles', icon: 'fa-user', accent: 'soft-stone' },
+        { key: 'adresses', title: 'Mes adresses', subtitle: 'Livraison et facturation', icon: 'fa-map-marker-alt', accent: 'soft-sand' },
+        { key: 'paiements', title: 'Mes paiements', subtitle: 'Cartes et moyens de paiement', icon: 'fa-credit-card', accent: 'soft-stone' },
+        { key: 'alertes', title: 'Mes alertes', subtitle: 'Produits suivis', icon: 'fa-bell', accent: 'soft-rose' },
+        { key: 'stock-alertes', title: 'Alertes stock', subtitle: 'Disponibilite des tailles', icon: 'fa-box', accent: 'soft-sand' }
+      ]
+    }
+  ];
+  expandedNavSections: string[] = [];
 
   produits: any[] = []; // Liste des produits dans la wishlist
   isLoading: boolean = true; // Indicateur de chargement
@@ -77,7 +114,7 @@ export class CompteComponent implements OnInit, AfterViewInit  {
   isDeletingAlert: boolean = false;
 
   // Wishlist Collections
-  useCollectionsView: boolean = true; // Enable Pinterest-style collections
+  useCollectionsView: boolean = !(environementDev as any).useLocalAuth; // Fallback to legacy cards in local mode
 
   // Stock Alerts properties
   stockAlerts: StockAlertModel[] = [];
@@ -360,6 +397,26 @@ export class CompteComponent implements OnInit, AfterViewInit  {
    // Method to change the selected tab
   selectTab(tab: string): void {
     this.selectedTab = tab;
+    const parentSection = this.accountNavSections.find(section =>
+      section.items.some(item => item.key === tab)
+    );
+
+    if (parentSection && !this.expandedNavSections.includes(parentSection.id)) {
+      this.expandedNavSections = [...this.expandedNavSections, parentSection.id];
+    }
+  }
+
+  toggleNavSection(sectionId: string): void {
+    if (this.expandedNavSections.includes(sectionId)) {
+      this.expandedNavSections = this.expandedNavSections.filter(id => id !== sectionId);
+      return;
+    }
+
+    this.expandedNavSections = [...this.expandedNavSections, sectionId];
+  }
+
+  isNavSectionExpanded(sectionId: string): boolean {
+    return this.expandedNavSections.includes(sectionId);
   }
 
   onStyleProfileSaved(profile: any): void {
@@ -378,14 +435,14 @@ export class CompteComponent implements OnInit, AfterViewInit  {
 
   fetchWishlist(): void {
     this.isLoading = true;
-    this.productService.getWishlist().subscribe(
-      (response) => {
-        this.produits = this.mapApiDataToProducts(response.data);
+    this.productService.getWishlistProducts().subscribe(
+      (products) => {
+        this.produits = this.mapApiDataToProducts(products);
         this.fetchStockForProducts(); // Récupérer le stock pour chaque produit
         this.isLoading = false;
       },
       (error) => {
-        console.error('Erreur lors de la récupération de la wishlist:', error);
+        console.error('Erreur lors de la récupération de la wishlist:', error); this.produits = [];
         this.isLoading = false;
       }
     );
@@ -393,18 +450,18 @@ export class CompteComponent implements OnInit, AfterViewInit  {
 
   // Mapper les données de l'API aux produits affichés
   mapApiDataToProducts(apiData: any[]): any[] {
-    return apiData.map((item) => ({
+    return (Array.isArray(apiData) ? apiData : []).map((item) => ({
       id: item.id,
       image: item.firstImg?.url || 'assets/default-image.jpg', // Utiliser une image par défaut si aucune image n'est disponible
-      nom: item.title,
-      prix: `${item.currentPrice.toFixed(3)} TND`,
+      nom: item.title || '',
+      prix: `${(Number.isFinite(Number(item.currentPrice ?? item.price)) ? Number(item.currentPrice ?? item.price) : 0).toFixed(3)} TND`,
       isInWishlist: true, // Tous les produits de la wishlist sont dans la wishlist
-      colors: item.declinaisons.map((declinaison: any) => ({
-        name: declinaison.libellet,
-        textureImage: declinaison.texture?.url || 'assets/default-texture.jpg',
-        mainImage: declinaison.images[0]?.url || item.firstImg?.url,
+      colors: (item.declinaisons && item.declinaisons.length ? item.declinaisons : [null]).map((declinaison: any) => ({
+        name: declinaison?.libellet || 'Default',
+        textureImage: declinaison?.texture?.url || 'assets/default-texture.jpg',
+        mainImage: declinaison?.images?.[0]?.url || item.firstImg?.url || 'assets/default-image.jpg',
       })),
-      declinaisons: item.declinaisons,
+      declinaisons: item.declinaisons || [],
       selectedColorIndex: 0, // Index de la couleur sélectionnée
       tailles: [], // Stock des tailles
       activeImageIndex: 0, // Index de l'image active
@@ -415,13 +472,16 @@ export class CompteComponent implements OnInit, AfterViewInit  {
   // Récupérer le stock pour chaque produit
   fetchStockForProducts(): void {
     this.produits.forEach((produit) => {
-      const declinaisonId = produit.declinaisons[produit.selectedColorIndex]?.id;
-      if (declinaisonId) {
-        this.productService.getDeclinaisonStock(declinaisonId).subscribe(
+      const productId = produit.id;
+      const selectedColor = produit.declinaisons[produit.selectedColorIndex]?.libellet || produit.colors[produit.selectedColorIndex]?.name;
+      if (productId) {
+        this.productService.getDeclinaisonStock(productId).subscribe(
           (stockData) => {
-            produit.tailles = stockData.data.map((item: any) => ({
+            const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+            produit.tailles = sizesForColor.map((item: any) => ({
               size: item.size,
               qte: item.qte,
+              ean13: item.ean13 || '',
             }));
           },
           (error) => {
@@ -442,13 +502,16 @@ export class CompteComponent implements OnInit, AfterViewInit  {
 
   // Récupérer le stock pour un produit spécifique
   fetchStockForProduct(produit: any): void {
-    const declinaisonId = produit.declinaisons[produit.selectedColorIndex]?.id;
-    if (declinaisonId) {
-      this.productService.getDeclinaisonStock(declinaisonId).subscribe(
+    const productId = produit.id;
+    const selectedColor = produit.declinaisons[produit.selectedColorIndex]?.libellet || produit.colors[produit.selectedColorIndex]?.name;
+    if (productId) {
+      this.productService.getDeclinaisonStock(productId).subscribe(
         (stockData) => {
-          produit.tailles = stockData.data.map((item: any) => ({
+          const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+          produit.tailles = sizesForColor.map((item: any) => ({
             size: item.size,
             qte: item.qte,
+            ean13: item.ean13 || '',
           }));
         },
         (error) => {
@@ -523,12 +586,12 @@ export class CompteComponent implements OnInit, AfterViewInit  {
       next: (profile: any) => {
         this.userProfile = {
           ...this.userProfile,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email,
-          phone: profile.phone,
-          birthday: profile.birthday,
-          gender: profile.gender
+          firstName: profile?.firstName || profile?.first_name || '',
+          lastName: profile?.lastName || profile?.last_name || '',
+          email: profile?.email || '',
+          phone: profile?.phone || '',
+          birthday: profile?.birthday || '',
+          gender: profile?.gender || ''
         };
       },
       error: (err: any) => console.error('Erreur de chargement du profil', err)
@@ -540,13 +603,10 @@ export class CompteComponent implements OnInit, AfterViewInit  {
 
     this.orderService.getOrders().subscribe({
       next: (response) => {
-        if (response.status === 200) {
-          this.orders = response.data.map((order: any) => {
-            return {
-              ...order,
-              createdAt: new Date(order.createdAt)
-            };
-          });
+        const rawOrders = this.extractOrders(response);
+
+        if (Array.isArray(rawOrders)) {
+          this.orders = rawOrders.map((order: any) => this.normalizeOrderForDisplay(order));
         } else {
           this.orderError = 'Erreur lors du chargement des commandes';
         }
@@ -558,6 +618,138 @@ export class CompteComponent implements OnInit, AfterViewInit  {
         this.isLoadingOrders = false;
       }
     });
+  }
+
+  private extractOrders(response: any): any[] {
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (Array.isArray(response?.data)) {
+      return response.data;
+    }
+
+    if (Array.isArray(response?.orders)) {
+      return response.orders;
+    }
+
+    return [];
+  }
+
+  private normalizeOrderForDisplay(order: any): any {
+    const products = Array.isArray(order?.products)
+      ? order.products
+      : Array.isArray(order?.items)
+        ? order.items.map((item: any) => this.normalizeOrderItem(item))
+        : [];
+
+    const coupon = order?.coupon || (order?.coupon_code ? { code: order.coupon_code } : null);
+    const shippingAddress = order?.shippingAddress || this.normalizeShippingAddress(order?.shipping_address);
+    const createdAt = order?.createdAt || order?.created_at || new Date();
+    const status = this.formatOrderStatus(order?.status);
+    const paymentStatus = String(order?.payment_status || order?.paymentStatus || '').toUpperCase();
+
+    return {
+      ...order,
+      slug: order?.slug || order?.reference || `CMD-${order?.id ?? ''}`,
+      status,
+      createdAt: new Date(createdAt),
+      products,
+      shippingMethod: order?.shippingMethod || this.formatShippingMethod(order?.shipping_method),
+      paymentMethod: order?.paymentMethod || this.formatPaymentMethod(order?.payment_method),
+      shippingAddress,
+      subTotal: Number(order?.subTotal ?? order?.subtotal ?? 0),
+      shippingCost: Number(order?.shippingCost ?? order?.shipping_amount ?? 0),
+      total: Number(order?.total ?? order?.total_amount ?? 0),
+      coupon,
+      statusId: order?.statusId ?? this.mapStatusToLegacyId(order?.status),
+      paymentStatusId: order?.paymentStatusId ?? this.mapPaymentStatusToLegacyId(paymentStatus)
+    };
+  }
+
+  private normalizeOrderItem(item: any): any {
+    const variantInfo = item?.variant_info || item?.variantInfo || {};
+
+    return {
+      ...item,
+      image: item?.image || item?.image_url || 'assets/images/placeholder.png',
+      title: item?.title || 'Produit',
+      color: variantInfo?.color || variantInfo?.couleur || '-',
+      size: variantInfo?.size || variantInfo?.taille || '-',
+      unitPrice: Number(item?.unitPrice ?? item?.unit_price ?? 0),
+      quantity: Number(item?.quantity ?? 1)
+    };
+  }
+
+  private normalizeShippingAddress(address: any): any {
+    if (!address || typeof address !== 'object') {
+      return null;
+    }
+
+    return {
+      ...address,
+      address: address.address || address.street || address.line1 || '',
+      city: address.city || ''
+    };
+  }
+
+  private formatOrderStatus(status: any): string {
+    const normalized = String(status || '').toUpperCase();
+    const labels: Record<string, string> = {
+      PENDING: 'En attente',
+      PAYMENT_PENDING: 'Paiement en attente',
+      CONFIRMED: 'Confirmee',
+      PROCESSING: 'En preparation',
+      READY: 'Prete',
+      SHIPPED: 'Expediee',
+      IN_TRANSIT: 'En transit',
+      OUT_FOR_DELIVERY: 'En cours de livraison',
+      DELIVERED: 'Livree',
+      COMPLETED: 'Terminee',
+      CANCELLED: 'Annulee',
+      RETURNED: 'Retournee',
+      REFUNDED: 'Remboursee',
+      FAILED: 'Echouee'
+    };
+
+    return labels[normalized] || status || 'En attente';
+  }
+
+  private formatShippingMethod(method: any): string {
+    const normalized = String(method || '').toLowerCase();
+    if (normalized === 'store') {
+      return 'Retrait en magasin';
+    }
+    if (normalized === 'free') {
+      return 'Livraison gratuite';
+    }
+    return 'Livraison a domicile';
+  }
+
+  private formatPaymentMethod(method: any): string {
+    const normalized = String(method || '').toLowerCase();
+    if (normalized === 'ctp' || normalized === 'cbe') {
+      return 'Carte bancaire';
+    }
+    if (normalized === 'cod') {
+      return 'Paiement a la livraison';
+    }
+    return method || 'Paiement';
+  }
+
+  private mapStatusToLegacyId(status: any): number {
+    const normalized = String(status || '').toUpperCase();
+    if (normalized === 'PENDING') {
+      return 1;
+    }
+    if (normalized === 'PAYMENT_PENDING') {
+      return 2;
+    }
+    return 0;
+  }
+
+  private mapPaymentStatusToLegacyId(status: string): number {
+    return status === 'FAILED' ? 10 : 0;
   }
 
 deleteAccount(): void {

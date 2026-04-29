@@ -1035,8 +1035,8 @@ export class ReferralDashboardComponent implements OnInit, OnDestroy {
     this.referralService.getHistory(this.currentPage, 10)
       .pipe(takeUntil(this.destroy$))
       .subscribe(response => {
-        this.history = response.items;
-        this.hasMoreHistory = response.hasMore;
+        this.history = response?.items || [];
+        this.hasMoreHistory = !!response?.hasMore;
       });
   }
 
@@ -1044,7 +1044,7 @@ export class ReferralDashboardComponent implements OnInit, OnDestroy {
     this.referralService.getRewards(false)
       .pipe(takeUntil(this.destroy$))
       .subscribe(response => {
-        this.pendingRewards = response.rewards;
+        this.pendingRewards = response?.rewards || [];
       });
   }
 
@@ -1057,8 +1057,8 @@ export class ReferralDashboardComponent implements OnInit, OnDestroy {
     this.referralService.getHistory(this.currentPage, 10)
       .pipe(takeUntil(this.destroy$))
       .subscribe(response => {
-        this.history = [...this.history, ...response.items];
-        this.hasMoreHistory = response.hasMore;
+        this.history = [...this.history, ...(response?.items || [])];
+        this.hasMoreHistory = !!response?.hasMore;
         this.loadingMoreHistory = false;
       });
   }

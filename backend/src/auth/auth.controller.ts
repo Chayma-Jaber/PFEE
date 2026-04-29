@@ -32,9 +32,10 @@ export class AuthController {
   @Post('admin/login')
   async adminLogin(@Body() dto: LoginDto) {
     const result = await this.authService.login(dto);
-    // Verify user has admin role
-    const adminRoles = ['super_admin', 'admin', 'catalog_manager', 'order_manager', 'marketing_manager', 'support_agent'];
-    if (!adminRoles.includes(result.user?.role)) {
+    // Accept the enum values stored in the database regardless of case.
+    const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'CATALOG_MANAGER', 'ORDER_MANAGER', 'MARKETING_MANAGER', 'SUPPORT_AGENT'];
+    const normalizedRole = String(result.user?.role || '').toUpperCase();
+    if (!adminRoles.includes(normalizedRole)) {
       throw new ForbiddenException('Access denied. Admin role required.');
     }
     return result;

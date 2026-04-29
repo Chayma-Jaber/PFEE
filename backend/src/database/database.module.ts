@@ -14,10 +14,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
         // SQL Server (MSSQL) - Primary for local development
         if (dbType === 'mssql') {
+          const dbHost = configService.get<string>('database.host', 'localhost');
+          const dbPort = configService.get<number>('database.port', 1433);
+          const hasExplicitPort = typeof process.env.DB_PORT !== 'undefined';
+          const dbInstanceName = hasExplicitPort
+            ? ''
+            : configService.get<string>('database.instanceName', 'SQLEXPRESS');
+
           return {
             type: 'mssql' as const,
-            host: configService.get<string>('database.host', 'DESKTOP-KOR5QAB'),
-            port: configService.get<number>('database.port', 1433),
+            host: dbHost,
+            ...(dbInstanceName ? {} : { port: dbPort }),
             username: configService.get<string>('database.username', 'admin'),
             password: configService.get<string>('database.password', 'admin123'),
             database: configService.get<string>('database.name', 'barsha'),
@@ -28,6 +35,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             options: {
               encrypt: false,
               trustServerCertificate: true,
+              ...(dbInstanceName ? { instanceName: dbInstanceName } : {}),
             },
             extra: {
               trustServerCertificate: true,

@@ -71,6 +71,7 @@ export class UserPreferencesService {
   private readonly apiUrl = `${environementDev.backendAiUrl}/api/preferences`;
   private readonly LOCAL_STORAGE_KEY = 'barsha_style_profile';
   private readonly SESSION_ID_KEY = 'barsha_session_id';
+  private readonly useLocalOnly = !!(environementDev as any).useLocalAuth;
 
   private profileSubject = new BehaviorSubject<UserStyleProfile | null>(null);
   public profile$ = this.profileSubject.asObservable();
@@ -114,6 +115,12 @@ export class UserPreferencesService {
    * Falls back to localStorage if backend unavailable.
    */
   getProfile(): Observable<UserStyleProfile> {
+    if (this.useLocalOnly) {
+      const profile = this.getFromLocalStorage();
+      this.profileSubject.next(profile);
+      return of(profile);
+    }
+
     return this.http.get<ProfileResponse>(
       `${this.apiUrl}/profile`,
       { headers: this.getHeaders() }
@@ -138,6 +145,14 @@ export class UserPreferencesService {
    * Also saves to localStorage as backup.
    */
   updateProfile(profile: Partial<UserStyleProfile>): Observable<UserStyleProfile> {
+    if (this.useLocalOnly) {
+      const localProfile = this.getFromLocalStorage();
+      const updatedProfile = { ...localProfile, ...profile, updated_at: new Date().toISOString() };
+      this.saveToLocalStorage(updatedProfile);
+      this.profileSubject.next(updatedProfile);
+      return of(updatedProfile);
+    }
+
     const payload = {
       styles: profile.preferred_styles,
       colors: profile.preferred_colors,
@@ -181,6 +196,12 @@ export class UserPreferencesService {
    * Call this after user login.
    */
   mergeSessionToUser(): Observable<UserStyleProfile> {
+    if (this.useLocalOnly) {
+      const profile = this.getFromLocalStorage();
+      this.profileSubject.next(profile);
+      return of(profile);
+    }
+
     const sessionId = this.ensureSessionId();
 
     return this.http.post<ProfileResponse>(
@@ -207,6 +228,11 @@ export class UserPreferencesService {
    * Get recommendation context optimized for the recommendation engine.
    */
   getRecommendationContext(): Observable<RecommendationContext> {
+    if (this.useLocalOnly) {
+      const profile = this.getFromLocalStorage();
+      return of(this.buildContextFromProfile(profile));
+    }
+
     return this.http.get<ContextResponse>(
       `${this.apiUrl}/context`,
       { headers: this.getHeaders() }
@@ -230,6 +256,10 @@ export class UserPreferencesService {
    * Refresh behavior-inferred preferences from recent activity.
    */
   refreshInferredPreferences(lookbackDays: number = 30): Observable<any> {
+    if (this.useLocalOnly) {
+      return of({ success: true, local: true });
+    }
+
     return this.http.post(
       `${this.apiUrl}/refresh-inferred?lookback_days=${lookbackDays}`,
       {},

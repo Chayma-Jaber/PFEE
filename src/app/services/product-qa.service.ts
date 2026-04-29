@@ -6,7 +6,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environementDev } from '../../environements/environementDev';
 
 export interface QAUser {
@@ -69,6 +69,76 @@ export class ProductQAService {
 
   constructor(private http: HttpClient) {}
 
+  private getEmptyQuestionsResponse(): QuestionsResponse {
+    return {
+      questions: [],
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 0,
+        pages: 0,
+      },
+    };
+  }
+
+  private normalizeUser(user: any): QAUser | undefined {
+    if (!user) {
+      return undefined;
+    }
+
+    const firstName = user.firstName ?? user.first_name ?? '';
+    const lastName = user.lastName ?? user.last_name ?? '';
+
+    return {
+      id: Number(user.id ?? 0),
+      firstName,
+      lastInitial: (user.lastInitial ?? lastName?.charAt(0) ?? '').toUpperCase(),
+    };
+  }
+
+  private normalizeQuestionsResponse(response: any): QuestionsResponse {
+    const rawQuestions = Array.isArray(response?.questions) ? response.questions : [];
+    const page = Number(response?.pagination?.page ?? response?.page ?? 1);
+    const limit = Number(response?.pagination?.limit ?? response?.limit ?? 10);
+    const total = Number(response?.pagination?.total ?? response?.total ?? rawQuestions.length);
+    const pages = Number(response?.pagination?.pages ?? response?.totalPages ?? Math.ceil(total / Math.max(limit, 1)));
+
+    return {
+      questions: rawQuestions.map((question: any) => {
+        const normalizedAnswer = question?.answer
+          ? [{
+              id: Number(question.id ?? 0),
+              questionId: Number(question.id ?? 0),
+              answerText: question.answer,
+              isStaff: true,
+              helpfulCount: Number(question.helpful_count ?? question.helpfulCount ?? 0),
+              isPublished: true,
+              createdAt: question.answered_at ?? question.answeredAt ?? question.created_at ?? question.createdAt ?? '',
+              user: this.normalizeUser(question.answered_by),
+              hasVoted: false,
+            }]
+          : [];
+
+        return {
+          id: Number(question?.id ?? 0),
+          productId: String(question?.productId ?? question?.product_id ?? ''),
+          questionText: question?.questionText ?? question?.question ?? '',
+          isPublished: question?.isPublished ?? question?.is_published ?? true,
+          createdAt: question?.createdAt ?? question?.created_at ?? '',
+          answerCount: question?.answerCount ?? normalizedAnswer.length,
+          user: this.normalizeUser(question?.user),
+          answers: Array.isArray(question?.answers) ? question.answers : normalizedAnswer,
+        };
+      }),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages,
+      },
+    };
+  }
+
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('jwt');
     if (token) {
@@ -112,13 +182,14 @@ export class ProductQAService {
       `${this.apiUrl}/${pid}/questions`,
       { params, headers: this.getHeaders() }
     ).pipe(
+      map(response => this.normalizeQuestionsResponse(response)),
       tap(response => {
         this.questionsCache.set(cacheKey, response);
         this.questionsCacheTime.set(cacheKey, Date.now());
       }),
       catchError(err => {
         console.error('Error fetching questions:', err);
-        return of({ questions: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
+        return of(this.getEmptyQuestionsResponse());
       })
     );
   }
@@ -128,10 +199,14 @@ export class ProductQAService {
    */
   askQuestion(productId: string | number, questionText: string): Observable<{ success: boolean; question?: ProductQuestion; message: string }> {
     const pid = productId.toString();
+    const normalizedQuestion = questionText.trim();
 
     return this.http.post<{ success: boolean; question?: ProductQuestion; message: string }>(
       `${this.apiUrl}/${pid}/questions`,
-      { questionText },
+      {
+        question: normalizedQuestion,
+        questionText: normalizedQuestion,
+      },
       { headers: this.getHeaders() }
     ).pipe(
       tap(() => {
@@ -140,7 +215,7 @@ export class ProductQAService {
       }),
       catchError(err => {
         console.error('Error asking question:', err);
-        const message = err.error?.detail || 'Impossible de soumettre votre question';
+        const message = err.error?.detail || err.error?.message || 'Impossible de soumettre votre question';
         return of({ success: false, message });
       })
     );
@@ -195,9 +270,10 @@ export class ProductQAService {
         headers: this.getHeaders()
       }
     ).pipe(
+      map(response => this.normalizeQuestionsResponse(response)),
       catchError(err => {
         console.error('Error fetching user questions:', err);
-        return of({ questions: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
+        return of(this.getEmptyQuestionsResponse());
       })
     );
   }

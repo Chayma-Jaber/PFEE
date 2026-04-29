@@ -3,11 +3,12 @@
  * Use this for local testing with the FastAPI backend
  */
 export const environementLocal = {
-    // Local FastAPI backend
-    api: 'http://localhost:8000',
+    // Local Nest backend
+    api: 'http://localhost:8002',
 
     // Search API (Meilisearch or local)
-    apiSearchDev: 'http://localhost:8000',
+    apiSearchDev: 'http://localhost:8002',
+    useMockSearchData: true,
 
     // Token for search (not needed locally)
     tokenSearchDev: '',
@@ -19,7 +20,7 @@ export const environementLocal = {
     googleAnalyticsId: '',
 
     // AI Chatbot endpoint
-    apiChatbot: 'http://localhost:8000/api/chat',
+    apiChatbot: 'http://localhost:8002/api/chat',
 
     // Feature flags
     useLocalAuth: true,

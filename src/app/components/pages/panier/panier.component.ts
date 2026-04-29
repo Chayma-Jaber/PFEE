@@ -277,9 +277,13 @@ export class PanierComponent implements OnInit {
 
     if (nextQuantity <= 10) {
       // Vérifie d'abord si le stock est suffisant AVANT d'incrémenter
-      this.productService.checkStock(item.ean13, nextQuantity).subscribe(
+      this.productService.checkStock(item.ean13, nextQuantity, {
+        productId: item.product?.id,
+        color: item.selectedColor,
+        size: item.selectedSize,
+      }).subscribe(
         (response: any) => {
-          if (response.data.inStock) {
+          if (response?.data?.inStock ?? response?.inStock) {
             this.updateQuantity(item, nextQuantity);
           } else {
             this.messageService.add({
@@ -432,9 +436,13 @@ export class PanierComponent implements OnInit {
       setTimeout(() => { try { window.location.reload(); } catch (e) { } }, 60);
     } else {
       // Check stock before updating
-      this.productService.checkStock(line.ean13, newQuantity).subscribe(
+      this.productService.checkStock(line.ean13, newQuantity, {
+        productId: src.product?.id,
+        color: src.selectedColor,
+        size: src.selectedSize,
+      }).subscribe(
         (response: any) => {
-          if (response.data.inStock) {
+          if (response?.data?.inStock ?? response?.inStock) {
             this.cartService.updateQuantity(src.product.id, src.selectedColor, src.selectedSize, newQuantity);
           } else {
             this.messageService.add({

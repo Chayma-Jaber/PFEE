@@ -117,11 +117,13 @@ export class QuickViewService {
    * Loads stock information for a specific color
    */
   loadStockForColor(product: Product, colorIndex: number): void {
-    const declinaisonId = product.declinaisons[colorIndex]?.id;
-    if (declinaisonId) {
-      this.productService.getDeclinaisonStock(declinaisonId).subscribe({
+    const productId = product.id;
+    const selectedColor = product.declinaisons[colorIndex]?.libellet || product.colors[colorIndex]?.name;
+    if (productId) {
+      this.productService.getDeclinaisonStock(productId).subscribe({
         next: (stockData) => {
-          product.tailles = stockData.data.map((item: any) => ({
+          const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+          product.tailles = sizesForColor.map((item: any) => ({
             size: item.size,
             qte: item.qte,
             state: this.getSizeState(item.qte),

@@ -27,7 +27,7 @@ export class WishlistController {
 
   // ── Legacy endpoints ─────────────────────────────────────────
 
-  @Post('api/addWishListItem')
+  @Post('addWishListItem')
   @UseGuards(JwtAuthGuard)
   async addWishListItem(
     @CurrentUser('id') userId: number,
@@ -37,14 +37,22 @@ export class WishlistController {
     return { success: true, item };
   }
 
-  @Get('api/getWishListItems')
+  @Get('getWishListItems')
   @UseGuards(JwtAuthGuard)
   async getWishListItems(@CurrentUser('id') userId: number) {
     const items = await this.wishlistService.getItems(userId);
-    return { success: true, items };
+    return {
+      success: true,
+      items,
+      data: items.map((item) => ({
+        id: item.product_id,
+        product_id: item.product_id,
+        wishlist_item_id: item.id,
+      })),
+    };
   }
 
-  @Delete('api/removeWishListItem/:id')
+  @Delete('removeWishListItem/:id')
   @UseGuards(JwtAuthGuard)
   async removeWishListItem(
     @CurrentUser('id') userId: number,
@@ -56,7 +64,7 @@ export class WishlistController {
 
   // ── Collections endpoints ────────────────────────────────────
 
-  @Get('api/wishlist/collections')
+  @Get('wishlist/collections')
   @UseGuards(JwtAuthGuard)
   async listCollections(
     @CurrentUser('id') userId: number,
@@ -70,7 +78,7 @@ export class WishlistController {
     return { success: true, collections };
   }
 
-  @Post('api/wishlist/collections')
+  @Post('wishlist/collections')
   @UseGuards(JwtAuthGuard)
   async createCollection(
     @CurrentUser('id') userId: number,
@@ -80,7 +88,7 @@ export class WishlistController {
     return { success: true, collection };
   }
 
-  @Get('api/wishlist/collections/items/all')
+  @Get('wishlist/collections/items/all')
   @UseGuards(JwtAuthGuard)
   async getAllItems(
     @CurrentUser('id') userId: number,
@@ -91,13 +99,13 @@ export class WishlistController {
     return { success: true, items };
   }
 
-  @Get('api/wishlist/collections/shared/:token')
+  @Get('wishlist/collections/shared/:token')
   async getSharedCollection(@Param('token') token: string) {
     const collection = await this.wishlistService.getSharedCollection(token);
     return { success: true, collection };
   }
 
-  @Get('api/wishlist/collections/:id')
+  @Get('wishlist/collections/:id')
   @UseGuards(JwtAuthGuard)
   async getCollection(
     @CurrentUser('id') userId: number,
@@ -107,7 +115,7 @@ export class WishlistController {
     return { success: true, collection };
   }
 
-  @Put('api/wishlist/collections/:id')
+  @Put('wishlist/collections/:id')
   @UseGuards(JwtAuthGuard)
   async updateCollection(
     @CurrentUser('id') userId: number,
@@ -122,7 +130,7 @@ export class WishlistController {
     return { success: true, collection };
   }
 
-  @Delete('api/wishlist/collections/:id')
+  @Delete('wishlist/collections/:id')
   @UseGuards(JwtAuthGuard)
   async deleteCollection(
     @CurrentUser('id') userId: number,
@@ -134,7 +142,7 @@ export class WishlistController {
     return { success: true, message: 'Collection deleted' };
   }
 
-  @Post('api/wishlist/collections/items/move')
+  @Post('wishlist/collections/items/move')
   @UseGuards(JwtAuthGuard)
   async moveItem(
     @CurrentUser('id') userId: number,
@@ -144,7 +152,7 @@ export class WishlistController {
     return { success: true, item };
   }
 
-  @Delete('api/wishlist/collections/items/:id')
+  @Delete('wishlist/collections/items/:id')
   @UseGuards(JwtAuthGuard)
   async removeCollectionItem(
     @CurrentUser('id') userId: number,
@@ -154,7 +162,7 @@ export class WishlistController {
     return { success: true, message: 'Item removed' };
   }
 
-  @Put('api/wishlist/collections/items/:id/notes')
+  @Put('wishlist/collections/items/:id/notes')
   @UseGuards(JwtAuthGuard)
   async updateItemNotes(
     @CurrentUser('id') userId: number,
@@ -169,7 +177,7 @@ export class WishlistController {
     return { success: true, item };
   }
 
-  @Post('api/wishlist/collections/:id/toggle-sharing')
+  @Post('wishlist/collections/:id/toggle-sharing')
   @UseGuards(JwtAuthGuard)
   async toggleSharing(
     @CurrentUser('id') userId: number,

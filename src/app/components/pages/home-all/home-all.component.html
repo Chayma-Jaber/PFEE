@@ -9,27 +9,31 @@
 
 <div class="main-content" *ngIf="!isLoading">
   <!-- Hero Banner Section -->
-  <picture class="hero-banner" *ngIf="searchResults?.hits?.[0]?.slides?.[0]">
+  <picture class="hero-banner" *ngIf="searchResults?.hits?.[0]?.slides?.[0]?.media?.url as desktopHero">
     <!-- Mobile Source -->
-    <source media="(max-width: 991px)" [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.medium?.url
+    <source media="(max-width: 991px)"
+      [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.medium?.url
         ? (searchResults.hits[0].slides[0].mob_media.medium.url + ' 501w, ' + searchResults.hits[0].slides[0].mob_media.url + ' 1200w')
-        : searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.url" sizes="100vw">
+        : (searchResults?.hits?.[0]?.slides?.[0]?.mob_media?.url || desktopHero)"
+      sizes="100vw">
 
     <!-- Desktop Source -->
-    <source media="(min-width: 992px)" [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.media?.medium?.url
-        ? (searchResults.hits[0].slides[0].media.medium.url + ' 750w, ' + searchResults.hits[0].slides[0].media.url + ' 1905w')
-        : searchResults?.hits?.[0]?.slides?.[0]?.media?.url" sizes="100vw">
+    <source media="(min-width: 992px)"
+      [srcset]="searchResults?.hits?.[0]?.slides?.[0]?.media?.medium?.url
+        ? (searchResults.hits[0].slides[0].media.medium.url + ' 750w, ' + desktopHero + ' 1905w')
+        : desktopHero"
+      sizes="100vw">
 
     <!-- Fallback Image -->
-    <img [src]="searchResults?.hits?.[0]?.slides?.[0]?.media?.url"
-      [alt]="searchResults?.hits?.[0]?.slides?.[0]?.media?.name || 'BARSHA Fashion Models'" class="img-fluid w-100"
+    <img [src]="desktopHero"
+      [alt]="searchResults?.hits?.[0]?.slides?.[0]?.media?.name || 'BARSHA Fashion'" class="img-fluid w-100"
       fetchpriority="high" loading="eager">
   </picture>
 
-  <div class="buttons" *ngIf="searchResults?.hits?.[0]?.navBtns">
-    <button *ngFor="let button of searchResults?.hits?.[0]?.navBtns"
+  <div class="buttons" *ngIf="searchResults?.hits?.[0]?.navBtns?.length">
+    <button *ngFor="let button of searchResults?.hits?.[0]?.navBtns" type="button"
       [ngClass]="{'btn-outline': button.bgColor === '#000000', 'btn-outline1': button.bgColor === '#ffffff'}"
-      [routerLink]="['/categorie', button.linkTo]" [title]="button.text || 'Catégorie ' + button.linkTo"
+       [title]="button.text || 'Categorie ' + button.linkTo"
       (click)="onGenderButtonClick(button)">
       {{button.text}}
     </button>
@@ -221,19 +225,19 @@
 </section>
 
 <!-- NEXT-GEN AI RECOMMENDATIONS -->
-<app-homepage-recommendations
+<!-- <app-homepage-recommendations
   *ngIf="!isLoading"
   [isAuthenticated]="isUserLoggedIn"
   [selectedFamily]="selectedGender"
   [viewedProductIds]="viewedProductIds"
   [showStyleDiscovery]="false">
-</app-homepage-recommendations>
+</app-homepage-recommendations> -->
 
 <!-- EDITORIAL / LIFESTYLE SECTION -->
-<section class="editorial-section" *ngIf="!isLoading">
+<!-- <section class="editorial-section" *ngIf="!isLoading">
   <div class="section-container">
     <div class="editorial-grid">
-      <div class="editorial-card large" routerLink="/tn/3-femme">
+      <div class="editorial-card large women-card" routerLink="/tn/3-femme">
         <div class="editorial-content">
           <span class="editorial-tag">Collection</span>
           <h3>Pour Elle</h3>
@@ -241,7 +245,7 @@
           <span class="editorial-cta">Explorer</span>
         </div>
       </div>
-      <div class="editorial-card" routerLink="/tn/4-homme">
+      <div class="editorial-card men-card" routerLink="/tn/4-homme">
         <div class="editorial-content">
           <span class="editorial-tag">Collection</span>
           <h3>Pour Lui</h3>
@@ -249,7 +253,7 @@
           <span class="editorial-cta">Explorer</span>
         </div>
       </div>
-      <div class="editorial-card" routerLink="/tn/5-accessoires">
+      <div class="editorial-card accessories-card" routerLink="/tn/5-accessoires">
         <div class="editorial-content">
           <span class="editorial-tag">Accessoires</span>
           <h3>Finitions</h3>
@@ -259,7 +263,7 @@
       </div>
     </div>
   </div>
-</section>
+</section> -->
 
 <!-- SERVICES SECTION -->
 <section class="services-section" *ngIf="!isLoading">
@@ -298,3 +302,4 @@
     </div>
   </div>
 </section>
+

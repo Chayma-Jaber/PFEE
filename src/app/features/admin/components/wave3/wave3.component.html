@@ -7,6 +7,8 @@
   <div class="alert ok" *ngIf="ok"><i class="fas fa-check"></i> {{ ok }}</div>
   <div class="alert err" *ngIf="err"><i class="fas fa-exclamation"></i> {{ err }}</div>
 
+  <app-admin-module-context moduleKey="wave3" />
+
   <div class="tabs">
     <button [class.active]="tab==='blocks'" (click)="switch('blocks')"><i class="fas fa-th-large"></i> Blocs d'accueil</button>
     <button [class.active]="tab==='abtests'" (click)="switch('abtests')"><i class="fas fa-flask"></i> A/B tests</button>

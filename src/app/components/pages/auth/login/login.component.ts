@@ -71,11 +71,8 @@ export class LoginComponent implements OnInit {
       
       },
       error: (error) => {
-        let errorMessage = 'Identifiant ou mot de passe incorrect';
-
-        if (error.status !== 400) {
-          errorMessage = 'Erreur serveur lors de la connexion';
-        }
+        const errorMessage =
+          error?.message?.trim() || 'Erreur serveur lors de la connexion';
 
         this.messageService.add({
           severity: 'error',

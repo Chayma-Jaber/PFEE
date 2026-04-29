@@ -64,7 +64,7 @@ import { AdminService } from '../../services/admin.service';
       </div>
 
       <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+        <div class="bundle-modal" (click)="$event.stopPropagation()">
           <h2>{{ editing ? 'Modifier le lot' : 'Nouveau lot' }}</h2>
           <div class="form-group">
             <label>Nom *</label>
@@ -159,8 +159,8 @@ import { AdminService } from '../../services/admin.service';
     .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
     .empty-state p { margin-bottom: 20px; }
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 24px; }
-    .modal h2 { margin: 0 0 20px 0; font-size: 20px; color: #111827; }
+    .bundle-modal { background: #fff; border-radius: 12px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 24px; display: block; position: relative; z-index: 1001; }
+    .bundle-modal h2 { margin: 0 0 20px 0; font-size: 20px; color: #111827; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151; }
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }

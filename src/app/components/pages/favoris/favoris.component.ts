@@ -52,14 +52,14 @@ export class FavorisComponent implements OnInit, OnDestroy {
   // Récupérer les produits de la wishlist
   fetchWishlist(): void {
     this.isLoading = true;
-    this.productService.getWishlist().subscribe(
-      (response) => {
-        this.produits = this.mapApiDataToProducts(response.data);
+    this.productService.getWishlistProducts().pipe(takeUntil(this.destroy$)).subscribe(
+      (products) => {
+        this.produits = this.mapApiDataToProducts(products);
         this.fetchStockForProducts(); // Récupérer le stock pour chaque produit
         this.isLoading = false;
       },
       (error) => {
-        console.error('Erreur lors de la récupération de la wishlist:', error);
+        console.error('Erreur lors de la récupération de la wishlist:', error); this.produits = [];
         this.isLoading = false;
       }
     );
@@ -67,18 +67,18 @@ export class FavorisComponent implements OnInit, OnDestroy {
 
   // Mapper les données de l'API aux produits affichés
   mapApiDataToProducts(apiData: any[]): any[] {
-    return apiData.map((item) => ({
+    return (Array.isArray(apiData) ? apiData : []).map((item) => ({
       id: item.id,
       image: item.firstImg?.url || 'assets/default-image.jpg', // Utiliser une image par défaut si aucune image n'est disponible
-      nom: item.title,
-      prix: `${item.currentPrice.toFixed(3)} TND`,
+      nom: item.title || '',
+      prix: `${(Number.isFinite(Number(item.currentPrice ?? item.price)) ? Number(item.currentPrice ?? item.price) : 0).toFixed(3)} TND`,
       isInWishlist: true, // Tous les produits de la wishlist sont dans la wishlist
-      colors: item.declinaisons.map((declinaison: any) => ({
-        name: declinaison.libellet,
-        textureImage: declinaison.texture?.url || 'assets/default-texture.jpg',
-        mainImage: declinaison.images[0]?.url || item.firstImg?.url,
+      colors: (item.declinaisons && item.declinaisons.length ? item.declinaisons : [null]).map((declinaison: any) => ({
+        name: declinaison?.libellet || 'Default',
+        textureImage: declinaison?.texture?.url || 'assets/default-texture.jpg',
+        mainImage: declinaison?.images?.[0]?.url || item.firstImg?.url || 'assets/default-image.jpg',
       })),
-      declinaisons: item.declinaisons,
+      declinaisons: item.declinaisons || [],
       selectedColorIndex: 0, // Index de la couleur sélectionnée
       tailles: [], // Stock des tailles
       activeImageIndex: 0, // Index de l'image active
@@ -94,13 +94,16 @@ export class FavorisComponent implements OnInit, OnDestroy {
   // Récupérer le stock pour chaque produit
   fetchStockForProducts(): void {
     this.produits.forEach((produit) => {
-      const declinaisonId = produit.declinaisons[produit.selectedColorIndex]?.id;
-      if (declinaisonId) {
-        this.productService.getDeclinaisonStock(declinaisonId).subscribe(
+      const productId = produit.id;
+      const selectedColor = produit.declinaisons[produit.selectedColorIndex]?.libellet || produit.colors[produit.selectedColorIndex]?.name;
+      if (productId) {
+        this.productService.getDeclinaisonStock(productId).subscribe(
           (stockData) => {
-            produit.tailles = stockData.data.map((item: any) => ({
+            const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+            produit.tailles = sizesForColor.map((item: any) => ({
               size: item.size,
               qte: item.qte,
+              ean13: item.ean13 || '',
             }));
           },
           (error) => {
@@ -121,13 +124,16 @@ export class FavorisComponent implements OnInit, OnDestroy {
 
   // Récupérer le stock pour un produit spécifique
   fetchStockForProduct(produit: any): void {
-    const declinaisonId = produit.declinaisons[produit.selectedColorIndex]?.id;
-    if (declinaisonId) {
-      this.productService.getDeclinaisonStock(declinaisonId).subscribe(
+    const productId = produit.id;
+    const selectedColor = produit.declinaisons[produit.selectedColorIndex]?.libellet || produit.colors[produit.selectedColorIndex]?.name;
+    if (productId) {
+      this.productService.getDeclinaisonStock(productId).subscribe(
         (stockData) => {
-          produit.tailles = stockData.data.map((item: any) => ({
+          const sizesForColor = this.productService.extractSizesForColor(stockData, selectedColor);
+          produit.tailles = sizesForColor.map((item: any) => ({
             size: item.size,
             qte: item.qte,
+            ean13: item.ean13 || '',
           }));
         },
         (error) => {

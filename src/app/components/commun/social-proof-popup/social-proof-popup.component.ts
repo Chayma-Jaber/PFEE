@@ -114,10 +114,11 @@ import { SocialProofService, SocialProofActivity } from '../../../services/socia
 
     .popup-content {
       display: flex;
-      padding: 16px;
+      padding: 16px 36px 16px 16px;
       text-decoration: none;
       color: inherit;
       gap: 12px;
+      align-items: flex-start;
     }
 
     .popup-content:hover {
@@ -165,6 +166,9 @@ import { SocialProofService, SocialProofActivity } from '../../../services/socia
       color: #444;
       line-height: 1.4;
       margin-bottom: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .user-name {
@@ -177,7 +181,7 @@ import { SocialProofService, SocialProofActivity } from '../../../services/socia
     }
 
     .action-text {
-      display: block;
+      display: inline;
       color: #555;
     }
 
@@ -186,9 +190,7 @@ import { SocialProofService, SocialProofActivity } from '../../../services/socia
       font-weight: 600;
       color: #111;
       margin-bottom: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: break-word;
     }
 
     .time-ago {
@@ -327,6 +329,6 @@ export class SocialProofPopupComponent implements OnInit, OnDestroy {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = '/assets/images/placeholder-product.jpg';
+    img.src = '/assets/images/placeholder.jpg';
   }
 }

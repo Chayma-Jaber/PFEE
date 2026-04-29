@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../../environements/environementDev';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.styles';
 
 @Component({
   selector: 'app-admin-fiscal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   template: `
     <div class="admin-page">
       <div class="page-header">
@@ -20,6 +21,7 @@ import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.style
           <i class="fas fa-redo"></i> {{ retrying ? '…' : 'Re-soumettre maintenant' }}
         </button>
       </div>
+      <app-admin-module-context moduleKey="fiscal" />
       <div class="toast" [class.ok]="toastKind==='ok'" [class.err]="toastKind==='err'" *ngIf="toast">{{ toast }}</div>
 
       <div class="stats-grid" *ngIf="stats">

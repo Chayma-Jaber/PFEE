@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 
 type Tab = 'customer360' | 'activity' | 'search' | 'abandoned' | 'stock' | 'csv' | 'campaigns' | 'segments' | 'seo' | 'pricing';
 
 @Component({
   selector: 'app-admin-advanced',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   templateUrl: './advanced.component.html',
   styleUrls: ['./advanced.component.scss']
 })

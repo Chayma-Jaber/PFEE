@@ -20,7 +20,7 @@ import { Outfit, OutfitService } from '../../../services/outfit.service';
         <!-- Cover Image -->
         <div class="outfit-image-wrapper">
           <img
-            [src]="outfit.coverImage || outfit.items?.[0]?.product?.firstImageUrl || 'assets/images/placeholder-outfit.jpg'"
+            [src]="outfit.coverImage || outfit.items?.[0]?.product?.firstImageUrl || 'assets/images/placeholder.jpg'"
             [alt]="outfit.title"
             class="outfit-cover"
             loading="lazy"
@@ -399,7 +399,7 @@ export class OutfitCardComponent {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/images/placeholder-outfit.jpg';
+    img.src = 'assets/images/placeholder.jpg';
   }
 
   onAddAllToCart(event: Event): void {

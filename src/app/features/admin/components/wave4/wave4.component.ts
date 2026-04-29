@@ -2,13 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 
 type Tab = 'crm' | 'tasks' | 'sla' | 'signals' | 'deals' | 'ugc' | 'slots' | 'pickup' | 'insights' | 'export' | 'audit';
 
 @Component({
   selector: 'app-admin-wave4',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   template: `
 <div class="w4">
   <div class="head">
@@ -17,6 +18,8 @@ type Tab = 'crm' | 'tasks' | 'sla' | 'signals' | 'deals' | 'ugc' | 'slots' | 'pi
   </div>
   <div class="alert ok" *ngIf="ok"><i class="fas fa-check"></i> {{ ok }}</div>
   <div class="alert err" *ngIf="err"><i class="fas fa-exclamation"></i> {{ err }}</div>
+
+  <app-admin-module-context moduleKey="wave4" />
 
   <div class="tabs">
     <button [class.active]="tab==='crm'" (click)="switch('crm')">👥 CRM client</button>

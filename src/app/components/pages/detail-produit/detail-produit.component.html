@@ -132,7 +132,7 @@
             <div class="size-options d-flex justify-content-center">
 
               <div class="size-dropdown">
-                <button class="size-btn" (click)="toggleSizeTable()">
+                <button class="size-btn" type="button" (click)="toggleSizeTable()">
                   <ng-container *ngIf="selectedSize; else selectSizeText">
                     {{ sizeLabel }} SELECTIONNÉE EST <span class="taille">{{ selectedSize }}</span>
                   </ng-container>
@@ -142,6 +142,19 @@
                   </ng-template>
                 </button>
               </div>
+            </div>
+
+            <div class="size-pills-wrapper" *ngIf="product.tailles?.length">
+              <button
+                type="button"
+                class="size-pill"
+                *ngFor="let taille of product.tailles"
+                (click)="taille.state !== 'Rupture de stock' && selectSize(taille.size)"
+                [disabled]="taille.state === 'Rupture de stock'"
+                [ngClass]="{'selected-size': selectedSize === taille.size, 'out-of-stock': taille.state === 'Rupture de stock'}">
+                <span class="pill-size">{{ taille.size }}</span>
+                <span class="pill-state" *ngIf="taille.state">{{ taille.state }}</span>
+              </button>
             </div>
 
             <!-- Size Guide Link -->
@@ -501,7 +514,7 @@
   #virtualTryOn
   *ngIf="product?.id"
   [productId]="product.id"
-  [productImage]="images[activeThumbnail]"
+  [productImage]="getVirtualTryOnImage()"
   [productCategory]="getVirtualTryOnCategory()">
 </app-virtual-try-on>
 

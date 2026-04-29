@@ -33,7 +33,7 @@
         <div class="ai-orb" aria-hidden="true"><span></span></div>
         <div class="header-text">
           <h1>Votre Styliste Barsha</h1>
-          <p><span class="status-dot"></span> En ligne &bull; Pr\u00eat \u00e0 vous conseiller</p>
+          <p><span class="status-dot"></span> En ligne &bull; Prêt à vous conseiller</p>
         </div>
       </div>
       <div class="header-actions">
@@ -83,7 +83,7 @@
         <div *ngIf="!msg.loading && msg.products && msg.products.length > 0" class="results-container">
           <div class="results-header">
             <span class="header-icon">&#10024;</span>
-            <span>S\u00e9lection personnalis\u00e9e pour vous</span>
+            <span>Sélection personnalisée pour vous</span>
           </div>
           <div class="premium-gallery">
             <div *ngFor="let prod of msg.products" class="premium-card clickable">
@@ -120,7 +120,7 @@
         <div *ngIf="!msg.loading && msg.complementProducts && msg.complementProducts.length > 0" class="bonus-section">
           <div class="bonus-header">
              <span class="icon" aria-hidden="true">&#127873;</span>
-             <span>Compl\u00e9tez votre look</span>
+             <span>Complétez votre look</span>
              <span class="bonus-tip">Parfaits accords</span>
           </div>
           <div class="bonus-scroll">
@@ -159,7 +159,7 @@
           </svg>
         </button>
         <input type="text"
-               placeholder="D\u00e9crivez votre style id\u00e9al..."
+               placeholder="Décrivez votre style idéal..."
                [(ngModel)]="userInput"
                maxlength="300"
                (keypress)="onKeyPress($event)"
@@ -172,7 +172,7 @@
           </svg>
         </button>
       </div>
-      <p class="input-hint">Essayez : "robe pour soir\u00e9e" ou "tenue casual chic"</p>
+      <p class="input-hint">Essayez : "robe pour soirée" ou "tenue casual chic"</p>
     </div>
 
   </div>

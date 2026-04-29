@@ -147,6 +147,7 @@ export class AuthService {
       return this.http.get<User>(`${this.apiUrl}/api/auth/me`, {
         headers: this.getHeaders()
       }).pipe(
+        map(user => this.normalizeUser(user)),
         tap(user => {
           this.currentUserSubject.next(user);
           localStorage.setItem('user', JSON.stringify(user));
@@ -185,6 +186,7 @@ export class AuthService {
       return this.http.put<User>(`${this.apiUrl}/api/auth/profile`, userData, {
         headers: this.getHeaders()
       }).pipe(
+        map(user => this.normalizeUser(user)),
         tap(user => {
           this.currentUserSubject.next(user);
           localStorage.setItem('user', JSON.stringify(user));
@@ -290,14 +292,17 @@ export class AuthService {
       }
     }
     if (response.user) {
-      localStorage.setItem('user', JSON.stringify(response.user));
-      this.currentUserSubject.next(response.user);
+      const normalizedUser = this.normalizeUser(response.user);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      this.currentUserSubject.next(normalizedUser);
     }
   }
 
   private handleAuthError(error: any): Observable<never> {
     let message = 'Une erreur est survenue';
-    if (error.status === 401) {
+    if (error.status === 0) {
+      message = 'Impossible de joindre le serveur d\'authentification';
+    } else if (error.status === 401) {
       message = 'Email ou mot de passe incorrect';
     } else if (error.status === 400) {
       message = error.error?.detail || 'Données invalides';
@@ -309,7 +314,7 @@ export class AuthService {
 
   private transformStrapiResponse(response: any): AuthResponse {
     return {
-      user: this.transformStrapiUser(response.user || response),
+      user: this.normalizeUser(response.user || response),
       tokens: {
         access_token: response.jwt || response.token,
         refresh_token: '',
@@ -319,7 +324,7 @@ export class AuthService {
     };
   }
 
-  private transformStrapiUser(user: any): User {
+  private normalizeUser(user: any): User {
     return {
       id: user.id,
       email: user.email,
@@ -329,8 +334,12 @@ export class AuthService {
       role: user.role?.name || user.role || 'customer',
       gender: user.gender,
       birthday: user.birthday,
-      isActive: user.isActive !== false,
-      isVerified: user.isVerified || user.confirmed
+      isActive: user.isActive ?? user.is_active ?? true,
+      isVerified: user.isVerified ?? user.is_verified ?? user.confirmed
     };
+  }
+
+  private transformStrapiUser(user: any): User {
+    return this.normalizeUser(user);
   }
 }

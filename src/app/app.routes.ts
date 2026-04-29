@@ -7,7 +7,6 @@ import { SharedWishlistComponent } from './components/pages/shared-wishlist/shar
 import { ProductComparisonComponent } from './components/commun/product-comparison/product-comparison.component';
 import { StoreLocatorComponent } from './components/pages/store-locator/store-locator.component';
 import { FlashSaleDetailComponent } from './components/pages/flash-sale-detail/flash-sale-detail.component';
-import { StudioLookComponent } from './components/pages/studio-look/studio-look.component';
 import { StylistPageComponent } from './components/pages/stylist-page/stylist-page.component';
 import { B2bPortalComponent } from './components/pages/b2b-portal/b2b-portal.component';
 import { CmsPageComponent } from './components/pages/cms-page/cms-page.component';
@@ -16,7 +15,11 @@ import { SellerPortalComponent } from './components/pages/seller-portal/seller-p
 
 export const routes: Routes = [
   // Studio Look — Mannequin composer (Wave 3)
-  { path: 'studio-look', component: StudioLookComponent },
+  {
+    path: 'studio-look',
+    loadComponent: () =>
+      import('./components/pages/studio-look/studio-look.component').then((m) => m.StudioLookComponent)
+  },
 
   // Expansion roadmap — customer-facing standalone pages
   { path: 'stylist', component: StylistPageComponent },

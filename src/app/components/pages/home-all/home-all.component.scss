@@ -661,7 +661,34 @@
   overflow: hidden;
   cursor: pointer;
   background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+  background-size: cover;
+  background-position: center;
   min-height: 200px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  &.women-card {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.18)),
+      url('/assets/images/hero-banner.jpg');
+  }
+
+  &.men-card {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+      url('/assets/images/hero-banner-mobile.jpg');
+  }
+
+  &.accessories-card {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+      url('/assets/images/placeholder.jpg');
+  }
 
   &.large {
     grid-row: span 2;
@@ -680,6 +707,7 @@
   .editorial-content {
     position: absolute;
     inset: 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;

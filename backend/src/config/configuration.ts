@@ -5,8 +5,9 @@ export default () => ({
 
   database: {
     type: process.env.DB_TYPE || 'mssql',
-    host: process.env.DB_HOST || 'DESKTOP-KOR5QAB',
+    host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT, 10) || 1433,
+    instanceName: process.env.DB_INSTANCE_NAME ?? 'SQLEXPRESS',
     username: process.env.DB_USERNAME || 'admin',
     password: process.env.DB_PASSWORD || 'admin123',
     name: process.env.DB_NAME || 'barsha',

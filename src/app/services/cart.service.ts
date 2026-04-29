@@ -22,6 +22,7 @@ export class CartService {
   private cartItemsSource = new BehaviorSubject<CartItem[]>([]);
   cartItems$ = this.cartItemsSource.asObservable();
   private currentUserId: string | null = null;
+  private readonly debugLogging = false;
 
   constructor(private http: HttpClient, private productService: ProductService, private analyticsService: AnalyticsService, private funnel: FunnelService) {
     // Écouter les changements de stockage pour la synchronisation entre les onglets
@@ -38,17 +39,23 @@ export class CartService {
     this.loadCurrentUserCart();
   }
 
+  private log(...args: unknown[]) {
+    if (this.debugLogging) {
+      console.log(...args);
+    }
+  }
+
   private handleAuthenticationChange() {
-    console.log('Changement d\'authentification détecté');
+    this.log('Changement d\'authentification détecté');
     const token = localStorage.getItem('jwt');
     
     if (token) {
       // L'utilisateur vient de se connecter
-      console.log('Connexion détectée - début de la synchronisation');
+      this.log('Connexion détectée - début de la synchronisation');
       this.syncGuestCart(token);
     } else {
       // L'utilisateur vient de se déconnecter
-      console.log('Déconnexion détectée - réinitialisation du panier');
+      this.log('Déconnexion détectée - réinitialisation du panier');
       this.currentUserId = null;
       this.loadCurrentUserCart();
     }
@@ -87,18 +94,18 @@ export class CartService {
     const newUserId = this.getUserIdFromToken();
     const oldUserId = this.currentUserId;
     
-    console.log('Chargement du panier utilisateur...');
-    console.log('Ancien ID utilisateur:', oldUserId);
-    console.log('Nouvel ID utilisateur:', newUserId);
+    this.log('Chargement du panier utilisateur...');
+    this.log('Ancien ID utilisateur:', oldUserId);
+    this.log('Nouvel ID utilisateur:', newUserId);
     
     // Si l'utilisateur a changé, on met à jour l'ID et on gère la synchronisation
     if (newUserId !== oldUserId) {
-      console.log('Changement d\'utilisateur détecté');
+      this.log('Changement d\'utilisateur détecté');
       this.currentUserId = newUserId;
 
       // Si c'est une connexion (passage de null à un ID)
       if (newUserId && !oldUserId) {
-        console.log('Connexion détectée - tentative de synchronisation du panier invité');
+        this.log('Connexion détectée - tentative de synchronisation du panier invité');
         // On garde une copie du panier invité avant de changer la clé
         const guestItems = localStorage.getItem('cartItems_guest');
         
@@ -106,14 +113,14 @@ export class CartService {
           try {
             const parsedGuestItems = JSON.parse(guestItems);
             if (Array.isArray(parsedGuestItems) && parsedGuestItems.length > 0) {
-              console.log('Panier invité trouvé:', parsedGuestItems);
+              this.log('Panier invité trouvé:', parsedGuestItems);
               // On sauvegarde directement le panier invité dans le panier utilisateur
               localStorage.setItem(`cartItems_${newUserId}`, guestItems);
               // On supprime le panier invité
               localStorage.removeItem('cartItems_guest');
               // On met à jour le BehaviorSubject
               this.cartItemsSource.next(parsedGuestItems);
-              console.log('Synchronisation directe du panier invité effectuée');
+              this.log('Synchronisation directe du panier invité effectuée');
               return;
             }
           } catch (e) {
@@ -124,19 +131,19 @@ export class CartService {
       
       // Si on passe d'utilisateur connecté à invité
       if (!newUserId && oldUserId) {
-        console.log('Passage en mode invité - création d\'un nouveau panier');
+        this.log('Passage en mode invité - création d\'un nouveau panier');
         this.updateCart([]);
         return;
       }
     }
 
     const currentKey = this.getStorageKey();
-    console.log('Clé de stockage actuelle:', currentKey);
+    this.log('Clé de stockage actuelle:', currentKey);
     const storedItems = localStorage.getItem(currentKey);
     
     try {
       const parsedItems = storedItems ? JSON.parse(storedItems) : [];
-      console.log('Articles chargés:', parsedItems);
+      this.log('Articles chargés:', parsedItems);
       
       // Vérifier que les données parsées sont bien un tableau
       if (!Array.isArray(parsedItems)) {
@@ -144,12 +151,21 @@ export class CartService {
         this.cartItemsSource.next([]);
       } else {
         this.cartItemsSource.next(parsedItems);
-        console.log('Panier mis à jour avec succès');
+        this.log('Panier mis à jour avec succès');
       }
     } catch (e) {
       console.error('Erreur lors du chargement du panier:', e);
       this.cartItemsSource.next([]);
     }
+  }
+
+  private normalizeStockCheckResponse(response: any): { inStock: boolean; availableStock: number; ean13: string } {
+    const payload = response?.data ?? response ?? {};
+    return {
+      inStock: Boolean(payload?.inStock),
+      availableStock: Number(payload?.availableStock ?? 0),
+      ean13: payload?.ean13 ?? '',
+    };
   }
 
   addToCart(item: CartItem): Observable<{success: boolean, message?: string}> {
@@ -180,9 +196,17 @@ export class CartService {
           const newQuantity = Math.min(10, currentItems[existingItemIndex].quantity + item.quantity);
 
           // Vérification du stock avec la nouvelle quantité
-          this.productService.checkStock(item.ean13, newQuantity).subscribe({
+          this.productService.checkStock(item.ean13, newQuantity, {
+            productId: item.product?.id,
+            color: item.selectedColor,
+            size: item.selectedSize,
+          }).subscribe({
             next: (response: any) => {
-              if (response.data.inStock) {
+              const stock = this.normalizeStockCheckResponse(response);
+              if (stock.inStock) {
+                if (!currentItems[existingItemIndex].ean13 && stock.ean13) {
+                  currentItems[existingItemIndex].ean13 = stock.ean13;
+                }
                 currentItems[existingItemIndex].quantity = newQuantity;
                 this.updateCart(currentItems);
                 // Ajout événement GA4
@@ -214,10 +238,15 @@ export class CartService {
           });
         } else {
           // Si l'item n'existe pas, vérifier le stock pour la quantité demandée
-          this.productService.checkStock(item.ean13, item.quantity).subscribe({
+          this.productService.checkStock(item.ean13, item.quantity, {
+            productId: item.product?.id,
+            color: item.selectedColor,
+            size: item.selectedSize,
+          }).subscribe({
             next: (response: any) => {
-              if (response.data.inStock) {
-                currentItems.push({...item});
+              const stock = this.normalizeStockCheckResponse(response);
+              if (stock.inStock) {
+                currentItems.push({...item, ean13: stock.ean13 || item.ean13});
                 this.updateCart(currentItems);
                 // Ajout événement GA4
                 this.analyticsService.trackEvent('add_to_cart', {
@@ -381,10 +410,10 @@ export class CartService {
     const guestKey = 'cartItems_guest';
     const userKey = `cartItems_${userId}`;
     
-    console.log('Début de la synchronisation du panier...');
-    console.log('Guest key:', guestKey);
-    console.log('User key:', userKey);
-    console.log('User ID:', userId);
+    this.log('Début de la synchronisation du panier...');
+    this.log('Guest key:', guestKey);
+    this.log('User key:', userKey);
+    this.log('User ID:', userId);
     
     const guestCart = localStorage.getItem(guestKey);
     const userCart = localStorage.getItem(userKey);
@@ -392,13 +421,13 @@ export class CartService {
     if (guestCart) {
       try {
         const guestItems: CartItem[] = JSON.parse(guestCart);
-        console.log('Articles du panier invité:', guestItems);
+        this.log('Articles du panier invité:', guestItems);
         
         let finalCart: CartItem[] = [];
 
         if (userCart) {
           const userItems: CartItem[] = JSON.parse(userCart);
-          console.log('Articles du panier utilisateur existant:', userItems);
+          this.log('Articles du panier utilisateur existant:', userItems);
           finalCart = [...userItems];
 
           // Fusion intelligente des items (sans vérification de stock pour la synchronisation)
@@ -420,11 +449,11 @@ export class CartService {
             }
           });
         } else {
-          console.log('Aucun panier utilisateur existant, utilisation du panier invité');
+          this.log('Aucun panier utilisateur existant, utilisation du panier invité');
           finalCart = guestItems;
         }
 
-        console.log('Panier final après fusion:', finalCart);
+        this.log('Panier final après fusion:', finalCart);
 
         // Mise à jour du panier utilisateur
         localStorage.setItem(userKey, JSON.stringify(finalCart));
@@ -432,12 +461,12 @@ export class CartService {
         
         // Suppression du panier invité
         localStorage.removeItem(guestKey);
-        console.log('Synchronisation du panier terminée avec succès');
+        this.log('Synchronisation du panier terminée avec succès');
       } catch (e) {
         console.error('Erreur lors de la synchronisation du panier:', e);
       }
     } else {
-      console.log('Aucun panier invité trouvé, aucune synchronisation nécessaire');
+      this.log('Aucun panier invité trouvé, aucune synchronisation nécessaire');
     }
     
     // Force le rechargement du panier après la synchronisation

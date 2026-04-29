@@ -146,22 +146,27 @@ export class ExpressCheckoutService {
       headers: this.getHeaders()
     }).pipe(
       map(response => {
-        if (response && response.data) {
-          return response.data.map((addr: any) => ({
-            id: addr.id,
-            label: addr.label || 'Adresse',
-            firstName: addr.firstName || '',
-            lastName: addr.lastName || '',
-            phone: addr.phone || '',
-            address: addr.address || '',
-            city: addr.city || '',
-            state: addr.state || '',
-            postalCode: addr.postalCode || '',
-            country: addr.country || 'Tunisie',
-            isDefault: addr.defaultAddress === true
-          }));
-        }
-        return [];
+        const rawAddresses = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : Array.isArray(response?.items)
+              ? response.items
+              : [];
+
+        return rawAddresses.map((addr: any) => ({
+          id: Number(addr.id ?? 0),
+          label: addr.label || 'Adresse',
+          firstName: addr.firstName || addr.first_name || '',
+          lastName: addr.lastName || addr.last_name || '',
+          phone: addr.phone || '',
+          address: addr.address || addr.street || addr.line1 || '',
+          city: addr.city || '',
+          state: addr.state || '',
+          postalCode: addr.postalCode || addr.postal_code || addr.codepost || '',
+          country: addr.country || 'Tunisie',
+          isDefault: Boolean(addr.isDefault ?? addr.defaultAddress ?? addr.is_default)
+        }));
       }),
       catchError(() => of([]))
     );
@@ -250,9 +255,12 @@ export class ExpressCheckoutService {
             paymentMethod: 2, // Card payment (CBE)
             shippingCost: parseFloat(shippingCost.toFixed(3)),
             total: parseFloat(total.toFixed(3)),
-            shippingAddress: info.defaultAddress!.id
+            shippingAddress: info.defaultAddress
           },
           products: cartItems.map(item => ({
+            sku: item.product?.sku,
+            title: item.product?.title,
+            image: item.image,
             ean13: item.ean13,
             quantity: item.quantity,
             unitPrice: parseFloat(item.product.currentPrice.toFixed(3)),

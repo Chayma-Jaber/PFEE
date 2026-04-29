@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
-import { ProfileService } from '../../../sign/profile';
+import { Component, AfterViewChecked, OnInit } from '@angular/core';
 import { GiftCardService } from '../../../gift-card/gift-card.service';
 import JsBarcode from 'jsbarcode';
 
@@ -29,11 +28,12 @@ interface CouponsByCategory {
 
 @Component({
   selector: 'app-coupons',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './coupons.component.html',
-  styleUrl: './coupons.component.scss'
+  styleUrls: ['./coupons.component.scss']
 })
-export class CouponsComponent implements AfterViewChecked {
+export class CouponsComponent implements OnInit, AfterViewChecked {
   coupons: Coupon[] = [];
   couponsAll: CouponsByCategory = {
     fidTransCoupons: [],

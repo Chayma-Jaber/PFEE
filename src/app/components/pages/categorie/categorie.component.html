@@ -15,7 +15,7 @@
 
   <!-- Header avec logo -->
   <!-- Section Nouveauté -->
-  <section class="top-images-container" *ngIf="!isLoading">
+  <section class="top-images-container" *ngIf="!isLoading && selectedPage?.heroSections?.[0]">
     <div class="image-item center-image">
       <div class="image-aspect-ratio-container">
         <img [routerLink]="['/tn', selectedPage?.heroSections[0]?.linkTo]"
@@ -52,13 +52,13 @@
   </section>
 
   <!-- Section Denim -->
-  <section class="denim-text" *ngIf="selectedPage">
+  <section class="denim-text" *ngIf="selectedPage?.collections?.[0]">
 
     <h2 class="font">
       {{ selectedPage?.collections[0]?.title }}
     </h2>
   </section>
-  <div class="ratio ratio-custom">
+  <div class="ratio ratio-custom" *ngIf="selectedPage?.collections?.[0]?.items?.[0]">
     <img class="img-fluid" appLazyLoadImage [src]="selectedPage?.collections[0]?.items[0]?.media?.url"
       [alt]="selectedPage?.collections[0]?.items[0]?.title"
       [routerLink]="['/tn', selectedPage?.collections[0]?.items[0]?.linkTo]"
@@ -70,13 +70,13 @@
     <h2 class="font">Barsha LOOKs</h2>
   </section> -->
   <!-- Section Barsha Looks -->
-  <section class="barsha-looks-title" *ngIf="selectedPage">
+  <section class="barsha-looks-title" *ngIf="selectedPage?.collections?.[1]">
     <h2 class="font">
       {{ selectedPage?.collections[1]?.title }}
     </h2>
   </section>
 
-  <section class="barsha-looks" *ngIf="selectedPage">
+  <section class="barsha-looks" *ngIf="selectedPage?.collections?.[1]?.items?.length">
     <ng-container *ngFor="let item of selectedPage?.collections[1]?.items">
       <div class="look-item">
         <div class="look-image-container">

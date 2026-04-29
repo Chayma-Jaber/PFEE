@@ -7,90 +7,59 @@
     <h1 class="font">Mon Compte</h1>
     <div class="line"></div>
 
-    <div class="button-container">
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'pourvous'"
-            (click)="selectTab('pourvous')"
-        >Pour vous ✨</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'monstyle'"
-            (click)="selectTab('monstyle')"
-        >Mon Style</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'achat'"
-            (click)="selectTab('achat')"
-        >Achat</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'favoris'"
-            (click)="selectTab('favoris')"
-        >Favoris</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'profil'"
-            (click)="selectTab('profil')"
-        >Profil</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'coupon'"
-            (click)="selectTab('coupon')"
-        >Coupons</button>
-        <button
-        class="nav-button"
-        [class.active]="selectedTab === 'retour'"
-        (click)="selectTab('retour')"
-    >Demande de retour</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'alertes'"
-            (click)="selectTab('alertes')"
-        ><i class="fa fa-bell me-1"></i>Mes alertes</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'stock-alertes'"
-            (click)="selectTab('stock-alertes')"
-        ><i class="fa fa-box me-1"></i>Alertes stock</button>
-        <!-- <button
-            class="nav-button"
-            [class.active]="selectedTab === 'notifications'"
-            (click)="selectTab('notifications')"
-        >Notifications</button> -->
-        <!-- <button
-            class="nav-button"
-            [class.active]="selectedTab === 'parametres'"
-            (click)="selectTab('parametres')"
-        >Parametres</button> -->
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'points'"
-            (click)="selectTab('points')"
-        ><i class="fa fa-star me-1"></i>Fidélité</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'giftcards'"
-            (click)="selectTab('giftcards')"
-        ><i class="fa fa-gift me-1"></i>Cartes Cadeaux</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'referrals'"
-            (click)="selectTab('referrals')"
-        ><i class="fa fa-users me-1"></i>Parrainage</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'adresses'"
-            (click)="selectTab('adresses')"
-        ><i class="fa fa-map-marker-alt me-1"></i>Mes adresses</button>
-        <button
-            class="nav-button"
-            [class.active]="selectedTab === 'paiements'"
-            (click)="selectTab('paiements')"
-        ><i class="fa fa-credit-card me-1"></i>Mes paiements</button>
-    </div>
+    <div class="account-layout">
+      <aside class="account-sidebar">
+        <section class="account-nav-shell">
+          <div class="user-summary">
+            <div class="avatar-shell">
+              <div class="avatar-initials">{{ userProfile.firstName[0] }}{{ userProfile.lastName[0] }}</div>
+              <div class="avatar-ring"></div>
+            </div>
+            <div class="user-info">
+              <h3>{{ userProfile.firstName }} {{ userProfile.lastName }}</h3>
+              <p>{{ userProfile.email }}</p>
+            </div>
+          </div>
 
-    <div class="content">
+          <div class="account-nav-intro">
+            <span class="eyebrow">Espace personnel</span>
+            <h2>Mon espace client</h2>
+          </div>
+
+          <div class="account-nav-sections">
+            <section class="account-nav-group" *ngFor="let section of accountNavSections">
+              <div class="account-nav-group-header" (click)="toggleNavSection(section.id)">
+                <span class="account-nav-group-label">{{ section.label }}</span>
+                <i class="fas fa-chevron-down toggle-icon" [class.rotated]="isNavSectionExpanded(section.id)"></i>
+              </div>
+
+              <div class="account-nav-grid" [class.expanded]="isNavSectionExpanded(section.id)">
+                <button
+                  *ngFor="let item of section.items"
+                  type="button"
+                  class="nav-tile"
+                  [class.active]="selectedTab === item.key"
+                  [attr.data-accent]="item.accent"
+                  (click)="selectTab(item.key)"
+                >
+                  <span class="nav-tile-icon">
+                    <i class="fa" [ngClass]="item.icon"></i>
+                  </span>
+
+                  <span class="nav-tile-copy">
+                    <span class="nav-tile-title">{{ item.title }}</span>
+                    <span class="nav-tile-subtitle">{{ item.subtitle }}</span>
+                  </span>
+                  
+                  <span class="active-indicator" *ngIf="selectedTab === item.key"></span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </section>
+      </aside>
+
+      <div class="content">
         <!-- Personalized Recommendations Tab -->
         <div *ngIf="selectedTab === 'pourvous'" class="recommendations-section">
           <app-account-recommendations></app-account-recommendations>
@@ -394,12 +363,12 @@
             </div> -->
         </div>
 
-        <div class="profile-actions">
-            <a  class="action-link" (click)="logout()">se deconnecter</a>
-            <a  class="action-link delete-link" (click)="deleteAccount()">supprimer le compte</a>
-        </div>
-    </div>
-    <div *ngIf="selectedTab === 'notifications'" class="notifications-section">
+	        <div class="profile-actions">
+	            <a  class="action-link" (click)="logout()">se deconnecter</a>
+	            <a  class="action-link delete-link" (click)="deleteAccount()">supprimer le compte</a>
+	        </div>
+	      </div>
+	      <div *ngIf="selectedTab === 'notifications'" class="notifications-section">
 
         <div class="notification-list">
             <div class="notification-item" *ngFor="let notification of notif">
@@ -450,7 +419,7 @@
                 </div>
             </div>
         </div>
-        <div *ngIf="selectedTab === 'coupon'" class="profile-section">
+        <div *ngIf="selectedTab === 'coupon'" class="account-feature-section">
 
             <app-coupons></app-coupons>
 
@@ -468,26 +437,26 @@
             <app-loyalty-dashboard></app-loyalty-dashboard>
         </div>
 
-        <div *ngIf="selectedTab === 'giftcards'" class="profile-section">
+        <div *ngIf="selectedTab === 'giftcards'" class="account-feature-section">
             <app-gift-cards></app-gift-cards>
         </div>
 
-        <div *ngIf="selectedTab === 'referrals'" class="profile-section">
+        <div *ngIf="selectedTab === 'referrals'" class="account-feature-section">
             <app-referral-dashboard></app-referral-dashboard>
         </div>
 
         <!-- Saved Addresses Tab -->
-        <div *ngIf="selectedTab === 'adresses'" class="profile-section">
+        <div *ngIf="selectedTab === 'adresses'" class="account-feature-section">
             <app-saved-addresses></app-saved-addresses>
         </div>
 
         <!-- Saved Payment Methods Tab -->
-        <div *ngIf="selectedTab === 'paiements'" class="profile-section">
+        <div *ngIf="selectedTab === 'paiements'" class="account-feature-section">
             <app-saved-payments></app-saved-payments>
         </div>
 
         <!-- Alerts Tab -->
-        <div *ngIf="selectedTab === 'alertes'" class="alerts-section">
+        <div *ngIf="selectedTab === 'alertes'" class="account-feature-section alerts-section">
             <div class="alerts-header">
                 <h2 class="alerts-title">Mes Alertes</h2>
                 <p class="alerts-subtitle">Recevez des notifications pour les baisses de prix et les retours en stock</p>
@@ -548,7 +517,7 @@
             <div *ngIf="!isLoadingAlerts && !alertsError && alerts.length > 0" class="alerts-list">
                 <div *ngFor="let alert of alerts" class="alert-card">
                     <div class="alert-product-image" (click)="navigateToProduct(alert.product_id)">
-                        <img [src]="alert.product_image || 'assets/images/placeholder-product.jpg'"
+                        <img [src]="alert.product_image || 'assets/images/placeholder.jpg'"
                              [alt]="alert.product_name"
                              [title]="alert.product_name">
                     </div>
@@ -590,11 +559,13 @@
         </div>
 
         <!-- Stock Alerts Tab -->
-        <div *ngIf="selectedTab === 'stock-alertes'" class="stock-alerts-section">
+        <div *ngIf="selectedTab === 'stock-alertes'" class="account-feature-section stock-alerts-section">
             <app-stock-alerts-list
                 (alertDeleted)="onStockAlertDeleted($event)">
             </app-stock-alerts-list>
         </div>
+      </div>
+    </div>
     </div>
 
     <!-- Example Modal -->

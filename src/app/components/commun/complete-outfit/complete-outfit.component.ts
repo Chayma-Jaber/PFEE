@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../environements/environementDev';
+import { ProductService } from '../../../services/product.service';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 interface OutfitData {
   base: { id: number; title: string; firstImageUrl: string; currentPrice: number };
@@ -107,10 +110,19 @@ export class CompleteOutfitComponent implements OnChanges {
   @Input() productId?: number;
   data: OutfitData | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private productService: ProductService
+  ) {}
 
   ngOnChanges(ch: SimpleChanges): void {
     if (!this.productId) { this.data = null; return; }
+
+    if ((environementDev as any).useLocalAuth) {
+      this.loadLocalFallback();
+      return;
+    }
+
     const token = localStorage.getItem('jwt');
     const headers: any = token ? { Authorization: `Bearer ${token}` } : {};
     this.http.get<OutfitData>(
@@ -118,7 +130,54 @@ export class CompleteOutfitComponent implements OnChanges {
       { headers }
     ).subscribe({
       next: (r) => { this.data = r; },
-      error: () => { this.data = null; }
+      error: () => { this.loadLocalFallback(); }
+    });
+  }
+
+  private loadLocalFallback(): void {
+    if (!this.productId) {
+      this.data = null;
+      return;
+    }
+
+    this.productService.getProductById(this.productId).pipe(
+      catchError(() => of(null))
+    ).subscribe((product: any) => {
+      if (!product?.id || !product?.title || !product?.Famille || !product?.Persona) {
+        this.data = null;
+        return;
+      }
+
+      this.productService.getSimilarProducts(
+        product.title,
+        product.Famille,
+        product.Persona
+      ).pipe(
+        catchError(() => of({ hits: [] }))
+      ).subscribe((response) => {
+        const outfit = (response?.hits || [])
+          .filter((item: any) => item?.id && item.id !== product.id)
+          .slice(0, 4)
+          .map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            slug: item.slug,
+            firstImageUrl: item.firstImg?.url || item.firstImageUrl || 'assets/images/placeholder.png',
+            currentPrice: Number(item.currentPrice ?? item.price ?? 0),
+          }));
+
+        this.data = outfit.length > 0 ? {
+          base: {
+            id: product.id,
+            title: product.title,
+            firstImageUrl: product.firstImg?.url || 'assets/images/placeholder.png',
+            currentPrice: Number(product.currentPrice ?? product.price ?? 0),
+          },
+          bundles: [],
+          outfit,
+          reason: 'Suggestions similaires disponibles en mode local'
+        } : null;
+      });
     });
   }
 }

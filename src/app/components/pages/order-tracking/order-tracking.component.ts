@@ -843,7 +843,7 @@ export class OrderTrackingComponent implements OnInit {
       items: (order.products || order.orderItems || []).map((item: any) => ({
         id: item.id || item.productId,
         title: item.title || item.product?.title || 'Produit',
-        image: item.image || item.product?.image || 'assets/images/placeholder-product.jpg',
+        image: item.image || item.product?.image || 'assets/images/placeholder.jpg',
         quantity: item.quantity || 1,
         unitPrice: item.unitPrice || item.price || 0,
         color: item.color,
@@ -937,7 +937,7 @@ export class OrderTrackingComponent implements OnInit {
       case 'tunisia post':
         return 'https://upload.wikimedia.org/wikipedia/fr/thumb/7/78/Logo_de_La_Poste_Tunisienne.svg/200px-Logo_de_La_Poste_Tunisienne.svg.png';
       default:
-        return 'assets/images/carrier-default.png';
+        return 'assets/images/placeholder.png';
     }
   }
 

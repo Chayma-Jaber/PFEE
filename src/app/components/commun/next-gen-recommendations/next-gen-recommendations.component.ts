@@ -1064,6 +1064,7 @@ export class NextGenRecommendationsComponent implements OnInit, OnChanges, OnDes
 
   private destroy$ = new Subject<void>();
   private impressionObserver?: IntersectionObserver;
+  private lastRequestKey: string | null = null;
 
   constructor(
     private recommendationsService: NextGenRecommendationsService,
@@ -1106,6 +1107,12 @@ export class NextGenRecommendationsComponent implements OnInit, OnChanges, OnDes
   // ========================================================================
 
   private loadRecommendations(): void {
+    const requestKey = this.buildRequestKey();
+    if (requestKey === this.lastRequestKey) {
+      return;
+    }
+
+    this.lastRequestKey = requestKey;
     this.isLoading = true;
     this.cdr.markForCheck();
 
@@ -1137,6 +1144,20 @@ export class NextGenRecommendationsComponent implements OnInit, OnChanges, OnDes
         this.error.emit(err);
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  private buildRequestKey(): string {
+    return JSON.stringify({
+      strategy: this.strategy,
+      productId: this.productId ?? null,
+      limit: this.limit,
+      family: this.family ?? null,
+      style: this.style ?? null,
+      userId: this.userContext?.userId ?? null,
+      sessionId: this.userContext?.sessionId ?? null,
+      viewedProductIds: this.viewedProductIds || this.userContext?.viewedProductIds || [],
+      cartProductIds: this.cartProductIds || this.userContext?.cartProductIds || []
     });
   }
 

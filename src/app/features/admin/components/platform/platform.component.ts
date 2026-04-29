@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environementDev } from '../../../../../environements/environementDev';
+import { AdminModuleContextComponent } from '../_shared/admin-module-context.component';
 import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.styles';
 
 // Combined dashboard for the platform plumbing — events bus + observability snapshot.
 @Component({
   selector: 'app-admin-platform',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminModuleContextComponent],
   template: `
     <div class="admin-page">
       <div class="page-header">
@@ -18,6 +19,8 @@ import { ADMIN_PAGE_STYLES, adminAuthHeaders } from '../_shared/admin-page.style
           <p>Bus d'événements de domaine + métriques HTTP + erreurs récentes. Auto-refresh toutes les 30s.</p>
         </div>
       </div>
+
+      <app-admin-module-context moduleKey="platform" />
 
       <div class="stats-grid" *ngIf="snap">
         <div class="stat-card"><div class="stat-icon indigo"><i class="fas fa-stopwatch"></i></div><div><span class="stat-value">{{ snap.uptimeSec }}s</span><span class="stat-label">Uptime</span></div></div>

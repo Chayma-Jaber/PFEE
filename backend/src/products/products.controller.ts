@@ -34,9 +34,29 @@ export class ProductsController {
   @Post('checkStock')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Check stock availability for an EAN13 barcode' })
-  async checkStock(@Body() body: { ean13: string; quantity: number }) {
-    const result = await this.productsService.checkStock(body.ean13, body.quantity);
-    return { inStock: result.inStock, availableStock: result.availableStock };
+  async checkStock(
+    @Body()
+    body: {
+      ean13?: string;
+      quantity: number;
+      productId?: number;
+      color?: string;
+      size?: string;
+    },
+  ) {
+    const result = await this.productsService.checkStock(body.ean13 || '', body.quantity, {
+      productId: body.productId,
+      color: body.color,
+      size: body.size,
+    });
+    return {
+      inStock: result.inStock,
+      availableStock: result.availableStock,
+      ean13: result.ean13,
+      productId: result.productId,
+      color: result.color,
+      size: result.size,
+    };
   }
 
   @Post('checkCartProducts')
