@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AdminOrder } from '../../services/admin.service';
@@ -71,8 +70,8 @@ import { environementDev } from '../../../../../environements/environementDev';
                   <span class="phone">{{ order.shippingAddress?.phone }}</span>
                 </div>
               </td>
-              <td>{{ order.items.length }} articles</td>
-              <td class="price">{{ (order.totalAmount || 0).toFixed(3) }} TND</td>
+              <td>{{ order.items.length || 0 }} articles</td>
+              <td class="price">{{ order.totalAmount.toFixed(3) }} TND</td>
               <td>
                 <span class="payment-badge" [class]="getPaymentClass(order.paymentStatus)">
                   {{ getPaymentLabel(order.paymentStatus) }}
@@ -118,8 +117,6 @@ import { environementDev } from '../../../../../environements/environementDev';
   styleUrl: './orders.component.scss'
 })
 export class AdminOrdersComponent implements OnInit {
-  private readonly apiUrl = environementDev.api;
-  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
   orders: AdminOrder[] = [];
   isLoading = true;
   searchQuery = '';
@@ -131,7 +128,6 @@ export class AdminOrdersComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -152,13 +148,8 @@ export class AdminOrdersComponent implements OnInit {
       status: this.statusFilter || undefined,
       payment_status: this.paymentFilter || undefined
     }).subscribe(response => {
-      this.orders = (response.items || []).map((order: any) => ({
-        ...order,
-        shippingAddress: order.shippingAddress || {},
-        items: Array.isArray(order.items) ? order.items : [],
-        totalAmount: Number(order.totalAmount || order.total || 0),
-      }));
-      this.totalPages = response.pages || 1;
+      this.orders = response.items;
+      this.totalPages = response.pages;
       this.isLoading = false;
     });
   }
@@ -175,63 +166,7 @@ export class AdminOrdersComponent implements OnInit {
   }
 
   exportOrders(): void {
-    if (this.useLocalMode) {
-      this.downloadOrdersAsCsv();
-      return;
-    }
-
-    const token = localStorage.getItem('admin_jwt') || localStorage.getItem('jwt');
-    this.http.get(`${this.apiUrl}/api/admin/orders/export/csv`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      responseType: 'blob'
-    }).subscribe({
-      next: (blob) => {
-        const objectUrl = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = objectUrl;
-        anchor.download = 'orders.csv';
-        anchor.click();
-        window.URL.revokeObjectURL(objectUrl);
-      },
-      error: () => {
-        this.downloadOrdersAsCsv();
-      }
-    });
-  }
-
-  private downloadOrdersAsCsv(): void {
-    const rows = this.orders.map(order => ({
-      reference: order.reference || '',
-      client: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim(),
-      phone: order.shippingAddress?.phone || '',
-      items: order.items?.length || 0,
-      total_tnd: (Number(order.totalAmount) || 0).toFixed(3),
-      payment_status: order.paymentStatus || '',
-      status: order.status || '',
-      date: order.createdAt || ''
-    }));
-
-    const header = ['reference', 'client', 'phone', 'items', 'total_tnd', 'payment_status', 'status', 'date'];
-    const csv = [
-      header.join(','),
-      ...rows.map(row => header.map(key => this.escapeCsvValue((row as any)[key])).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const objectUrl = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = 'orders.csv';
-    anchor.click();
-    window.URL.revokeObjectURL(objectUrl);
-  }
-
-  private escapeCsvValue(value: unknown): string {
-    const stringValue = String(value ?? '');
-    const escaped = stringValue.replace(/"/g, '""');
-    return `"${escaped}"`;
+    window.open(`${environementDev.api}/api/admin/orders/export/csv`, '_blank');
   }
 
   getStatusClass(status: string): string {

@@ -484,9 +484,10 @@ export class FlashSalesSectionComponent implements OnInit, OnDestroy {
   }
 
   onAddToCart(product: FlashSaleProduct): void {
-    // Emit event or call cart service
-    console.log('Add to cart:', product);
-    // TODO: Integrate with cart service
+    // Flash-sale products need a size/colour pick before they can be added.
+    // Send the user to the PDP — the existing add-to-cart logic on the
+    // product detail page handles variant selection + stock check.
+    this.navigateToProduct(product);
   }
 
   onBannerClosed(): void {

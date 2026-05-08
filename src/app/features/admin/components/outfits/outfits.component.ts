@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule, HttpHeaders, HttpParams } from '@angular/common/http';
-import { catchError, of, debounceTime, Subject, map } from 'rxjs';
+import { catchError, of, debounceTime, Subject } from 'rxjs';
 import { environementDev } from '../../../../../environements/environementDev';
 
 export interface Outfit {
@@ -492,7 +492,6 @@ interface OutfitForm {
 })
 export class AdminOutfitsComponent implements OnInit {
   private apiUrl = `${environementDev.api}/api`;
-  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
 
   outfits: Outfit[] = [];
   isLoading = false;
@@ -578,75 +577,19 @@ export class AdminOutfitsComponent implements OnInit {
     if (this.featuredFilter === 'featured') params = params.set('is_featured', 'true');
     if (this.featuredFilter === 'not-featured') params = params.set('is_featured', 'false');
 
-    if (this.useLocalMode) {
-      this.loadPublicOutfitsFallback().subscribe(response => {
-        this.outfits = (response.items || []).map((outfit: any) => this.normalizeOutfit(outfit));
-        this.totalPages = response.pages || 1;
-        this.isLoading = false;
-      });
-      return;
-    }
-
     this.http.get<{ items: Outfit[]; total: number; pages: number }>(
       `${this.apiUrl}/admin/outfits`,
       { headers: this.getHeaders(), params }
     ).pipe(
       catchError(err => {
-        if (![401, 404].includes(err?.status)) {
-          console.error('Error loading outfits:', err);
-        }
-        return this.loadPublicOutfitsFallback();
+        console.error('Error loading outfits:', err);
+        return of({ items: [], total: 0, pages: 0 });
       })
     ).subscribe(response => {
-      this.outfits = (response.items || []).map((outfit: any) => this.normalizeOutfit(outfit));
-      this.totalPages = response.pages || 1;
+      this.outfits = response.items;
+      this.totalPages = response.pages;
       this.isLoading = false;
     });
-  }
-
-  private loadPublicOutfitsFallback() {
-    return this.http.get<any>(`${this.apiUrl}/outfits`, { headers: this.getHeaders() }).pipe(
-      catchError(() => of({ outfits: [] })),
-      map((response: any) => ({
-        items: Array.isArray(response?.outfits) ? response.outfits : [],
-        total: Array.isArray(response?.outfits) ? response.outfits.length : 0,
-        pages: 1
-      }))
-    );
-  }
-
-  private normalizeOutfit(outfit: any): Outfit {
-    return {
-      id: Number(outfit.id || 0),
-      title: outfit.title || outfit.name || 'Tenue',
-      description: outfit.description || '',
-      occasion: outfit.occasion || '',
-      season: outfit.season || '',
-      family: outfit.family || 'UNISEX',
-      coverImageUrl: outfit.coverImageUrl || outfit.coverImage || outfit.image_url || '',
-      styleTags: Array.isArray(outfit.styleTags) ? outfit.styleTags : Array.isArray(outfit.style_tags) ? outfit.style_tags : [],
-      products: Array.isArray(outfit.products)
-        ? outfit.products.map((product: any, index: number) =>
-            typeof product === 'number'
-              ? { id: index, productId: product, sku: '', title: `Produit #${product}`, price: 0, imageUrl: '', position: index }
-              : {
-                  id: Number(product.id || index),
-                  productId: Number(product.productId || product.product_id || product.id || 0),
-                  sku: product.sku || '',
-                  title: product.title || product.name || '',
-                  price: Number(product.price || product.currentPrice || 0),
-                  imageUrl: product.imageUrl || product.image || '',
-                  position: Number(product.position || index)
-                }
-          )
-        : [],
-      totalPrice: Number(outfit.totalPrice || outfit.total_price || 0),
-      views: Number(outfit.views || outfit.view_count || 0),
-      isFeatured: outfit.isFeatured ?? outfit.is_featured ?? false,
-      isActive: outfit.isActive ?? outfit.isActive ?? outfit.is_published ?? true,
-      createdAt: outfit.createdAt || outfit.created_at || '',
-      updatedAt: outfit.updatedAt || outfit.updated_at || ''
-    };
   }
 
   onProductSearch(query: string): void {

@@ -49,10 +49,11 @@ export interface LikeThisResponse {
 @Injectable({ providedIn: 'root' })
 export class ChatService {
 
-  private readonly API_AI_URL = environementDev.apiChatbot;
-  private readonly AI_BASE_URL = environementDev.apiChatbot.replace('/api/chat', '');
+  private readonly API_AI_URL = `${environementDev.api}/api/chat`;
+  // Use the same env-driven hosts as the rest of the app so dev mode hits
+  // localhost and prod mode hits the real public hosts.
   private readonly MAIN_API_URL = `${environementDev.api}/api`;
-  private readonly MEILI_SEARCH_URL = 'https://cache-data.barsha.com.tn/indexes';
+  private readonly MEILI_SEARCH_URL = `${environementDev.apiSearchDev}/indexes`;
 
   // ─── ÉVÉNEMENTS UI ───
   private chatOpenSubject = new BehaviorSubject<boolean>(false);
@@ -85,7 +86,7 @@ export class ChatService {
   // ─── APIs BARSHA ───
 
   getUserProfile(): Observable<any> {
-    return this.http.get(`${this.MAIN_API_URL}/auth/me`, { headers: this.getAuthHeaders() });
+    return this.http.get(`${this.MAIN_API_URL}/users/me`, { headers: this.getAuthHeaders() });
   }
 
   getOrders(): Observable<any> {
@@ -140,14 +141,9 @@ export class ChatService {
 
       const text = response?.choices?.[0]?.message?.content || 'Désolé, je n\'ai pas pu répondre.';
 
-      const normalizedText = response?.text || text;
-      const normalizedProducts = Array.isArray(response?.products) && response.products.length > 0
-        ? response.products
-        : this.extractProducts(normalizedText, response.catalog_hits || []);
-
       return {
-        text: normalizedText,
-        products: normalizedProducts
+        text,
+        products: this.extractProducts(text, response.catalog_hits || [])
       };
 
     } catch (error: any) {
@@ -170,10 +166,10 @@ export class ChatService {
     while ((match = simpleIdRegex.exec(text)) !== null) {
       const pid = match[1];
       if (seen.has(pid)) continue;
+      seen.add(pid);
 
       const hit = catalogMap.get(pid);
       if (hit) {
-        seen.add(pid);
         products.push({
           reference: hit.reference || `ID:${pid}`,
           nom: hit.nom || 'Produit',
@@ -181,7 +177,30 @@ export class ChatService {
           url: hit.url || `https://barsha.com.tn/fr/produit/${pid}`,
           image: hit.image || 'assets/logo.jpg'
         });
+        continue;
       }
+
+      // Si pas dans catalogHits, fallback basique via texte
+      const contextBefore = text.substring(Math.max(0, match.index - 50), match.index);
+      const nameMatch = contextBefore.match(/(?:la|le|un|une)\s+([a-zA-Z\s]+)$|^([a-zA-Z\s]+)$|(\w+)\s*$/i);
+      const nom = (nameMatch?.[1] || nameMatch?.[2] || nameMatch?.[3] || 'Produit').trim();
+
+      const contextAfter = text.substring(match.index, Math.min(text.length, match.index + 50));
+      const priceMatch = contextAfter.match(/(\d+(?:[.,]\d+)?\s*(?:TND|DT))/i);
+      const prix = priceMatch?.[0] || '';
+
+      const lineEnd = text.indexOf('\n', match.index);
+      const lineStr = text.substring(match.index, lineEnd !== -1 ? lineEnd : text.length);
+      const imgMatch = lineStr.match(/ImgPrincipale:\s*([^|\n]*)\|?\s*(https?:\/\/[^\s\n]+)/i);
+      const fallbackImg = imgMatch && imgMatch[1].trim() ? imgMatch[1].trim() : 'assets/logo.jpg';
+
+      products.push({
+        reference: `ID:${pid}`,
+        nom: nom,
+        prix: prix,
+        url: `https://barsha.com.tn/fr/produit/${pid}`,
+        image: fallbackImg
+      });
     }
 
     // Fallback markdown links
@@ -197,11 +216,10 @@ export class ChatService {
   // ─── LIKE THIS — Recherche Visuelle ───
 
   async analyzeImage(imageBase64: string): Promise<LikeThisResponse> {
-    const normalizedImage = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
-    const body = { image: normalizedImage, limit: 8 };
+    const body = { image_base64: imageBase64 };
     try {
       const raw = await firstValueFrom(
-        this.http.post<any>(`${this.AI_BASE_URL}/api/like-this`, body)
+        this.http.post<any>(`${environementDev.api}/api/like-this`, body)
       );
       return {
         detected: raw.detected,

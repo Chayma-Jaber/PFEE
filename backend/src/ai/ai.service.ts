@@ -340,7 +340,7 @@ export class AiService {
   // ─── Visual search ────────────────────────────────────────────────
   async visualSearch(
     imageBase64: string,
-  ): Promise<{ results: Array<{ product_id: number; similarity: number }>; query_description?: string }> {
+  ): Promise<{ results: Array<{ product_id: number; similarity: number; nom?: string; prix?: number; image?: string; famille?: string; category?: string }>; query_description?: string; method?: string; confidence?: number }> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.ollamaTimeout);
 
@@ -362,10 +362,20 @@ export class AiService {
 
       const data = await response.json();
 
+      // The Python ai-service returns { method, results: [{id, nom, prix, currentPrice,
+      // image, famille, category, score}], count, confidence }. Preserve the rich
+      // fields so the frontend can render product cards directly.
       return {
+        method: data.method,
+        confidence: data.confidence,
         results: (data.results || []).map((r: any) => ({
-          product_id: r.product_id,
-          similarity: r.similarity || r.score || 0,
+          product_id: r.id ?? r.product_id,
+          similarity: r.score ?? r.similarity ?? 0,
+          nom: r.nom,
+          prix: r.currentPrice ?? r.prix,
+          image: r.image,
+          famille: r.famille,
+          category: r.category,
         })),
         query_description: data.query_description || data.description,
       };

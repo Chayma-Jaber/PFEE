@@ -79,6 +79,8 @@ export interface AdminCustomer {
   providedIn: 'root'
 })
 export class AdminService {
+  // Backend admin API - connects to unified_api.py on port 8000
+  // Run: cd backend-ai && python unified_api.py
   private apiUrl = `${environementDev.api}/api`;
 
   // Demo mode flag - when backend is unavailable, show mock data
@@ -788,8 +790,6 @@ export class AdminService {
       `${this.apiUrl}/admin/returns/${id}/status`,
       { status, notes },
       { headers: this.getHeaders() }
-    ).pipe(
-      catchError(() => of({ id, status, notes, localFallback: true }))
     );
   }
 

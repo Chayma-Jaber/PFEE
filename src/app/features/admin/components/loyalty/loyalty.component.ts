@@ -640,7 +640,6 @@ interface LoyaltyStats {
 })
 export class AdminLoyaltyComponent implements OnInit {
   private apiUrl = `${environementDev.api}/api`;
-  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
 
   // Data
   accounts: LoyaltyAccount[] = [];
@@ -694,11 +693,6 @@ export class AdminLoyaltyComponent implements OnInit {
   }
 
   loadStats(): void {
-    if (this.useLocalMode) {
-      this.stats = this.getMockStats();
-      return;
-    }
-
     this.http.get<LoyaltyStats>(
       `${this.apiUrl}/admin/loyalty/stats`,
       { headers: this.getHeaders() }
@@ -711,13 +705,6 @@ export class AdminLoyaltyComponent implements OnInit {
 
   loadAccounts(): void {
     this.isLoading = true;
-
-    if (this.useLocalMode) {
-      this.accounts = this.getMockAccounts();
-      this.totalPages = 1;
-      this.isLoading = false;
-      return;
-    }
 
     let params = new HttpParams()
       .set('page', this.currentPage.toString())
@@ -745,12 +732,6 @@ export class AdminLoyaltyComponent implements OnInit {
 
   loadTransactions(accountId: number): void {
     this.isLoadingTransactions = true;
-
-    if (this.useLocalMode) {
-      this.transactions = this.getMockTransactions();
-      this.isLoadingTransactions = false;
-      return;
-    }
 
     this.http.get<LoyaltyTransaction[]>(
       `${this.apiUrl}/admin/loyalty/accounts/${accountId}/transactions`,
@@ -805,14 +786,6 @@ export class AdminLoyaltyComponent implements OnInit {
       ? this.adjustmentForm.points
       : -this.adjustmentForm.points;
 
-    if (this.useLocalMode) {
-      this.selectedAccount.availablePoints = this.getNewBalance();
-      this.showToast('Points ajustes avec succes', 'success');
-      this.isSubmitting = false;
-      this.closeModals();
-      return;
-    }
-
     this.http.post(
       `${this.apiUrl}/admin/loyalty/accounts/${this.selectedAccount.id}/adjust`,
       {
@@ -842,64 +815,7 @@ export class AdminLoyaltyComponent implements OnInit {
   }
 
   exportLoyaltyData(): void {
-    if (this.useLocalMode) {
-      this.downloadLoyaltyAsCsv();
-      return;
-    }
-
-    const token = localStorage.getItem('admin_jwt') || localStorage.getItem('jwt');
-    this.http.get(`${this.apiUrl}/admin/loyalty/export/csv`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      responseType: 'blob'
-    }).subscribe({
-      next: (blob) => {
-        const objectUrl = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = objectUrl;
-        anchor.download = 'loyalty.csv';
-        anchor.click();
-        window.URL.revokeObjectURL(objectUrl);
-      },
-      error: () => {
-        this.downloadLoyaltyAsCsv();
-      }
-    });
-  }
-
-  private downloadLoyaltyAsCsv(): void {
-    const rows = this.accounts.map(account => ({
-      user_name: account.userName || '',
-      user_email: account.userEmail || '',
-      tier: account.tier || '',
-      available_points: Number(account.availablePoints || 0),
-      total_earned: Number(account.totalEarned || 0),
-      total_redeemed: Number(account.totalRedeemed || 0),
-      member_since: account.memberSince || '',
-      last_activity: account.lastActivity || '',
-      status: account.isActive ? 'active' : 'inactive'
-    }));
-
-    const header = ['user_name', 'user_email', 'tier', 'available_points', 'total_earned', 'total_redeemed', 'member_since', 'last_activity', 'status'];
-    const csv = [
-      header.join(','),
-      ...rows.map(row => header.map(key => this.escapeCsvValue((row as any)[key])).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const objectUrl = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = 'loyalty.csv';
-    anchor.click();
-    window.URL.revokeObjectURL(objectUrl);
-  }
-
-  private escapeCsvValue(value: unknown): string {
-    const stringValue = String(value ?? '');
-    const escaped = stringValue.replace(/"/g, '""');
-    return `"${escaped}"`;
+    window.open(`${this.apiUrl}/admin/loyalty/export/csv`, '_blank');
   }
 
   showToast(message: string, type: 'success' | 'error'): void {

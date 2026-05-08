@@ -107,12 +107,22 @@ export class FlashSalesService {
   }
 
   /**
-   * Get a specific flash sale with its products
+   * Get a specific flash sale with its embedded products. The backend wraps
+   * the entity in `{ success, flashSale | flash_sale }` — unwrap here so
+   * the rest of the app keeps a flat FlashSale object.
    */
   getFlashSale(id: number): Observable<FlashSale | null> {
-    return this.http.get<FlashSale>(
+    return this.http.get<any>(
       `${this.apiUrl}/api/promotions/flash-sales/${id}`
     ).pipe(
+      map((response) => {
+        if (!response) return null;
+        // Tolerate both wrapped and unwrapped shapes.
+        const sale: FlashSale = response.flashSale || response.flash_sale || response;
+        if (!sale || !sale.id) return null;
+        if (!sale.products) sale.products = [];
+        return sale;
+      }),
       catchError(error => {
         console.error('Error fetching flash sale:', error);
         return of(null);

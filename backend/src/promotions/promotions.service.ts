@@ -8,6 +8,7 @@ import { Repository, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import { Promotion, PromotionType } from './entities/promotion.entity';
 import { Coupon, CouponDiscountType } from './entities/coupon.entity';
 import { CouponUsage } from './entities/coupon-usage.entity';
+import { Product } from '../products/entities/product.entity';
 
 @Injectable()
 export class PromotionsService {
@@ -18,6 +19,8 @@ export class PromotionsService {
     private readonly couponRepo: Repository<Coupon>,
     @InjectRepository(CouponUsage)
     private readonly couponUsageRepo: Repository<CouponUsage>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
   ) {}
 
   // ── Flash Sales ──────────────────────────────────────────────
@@ -73,16 +76,53 @@ export class PromotionsService {
     id: number,
     page: number = 1,
     limit: number = 20,
-  ): Promise<{ promotion: Promotion; product_ids: number[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    promotion: Promotion;
+    products: Product[];
+    product_ids: number[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const promo = await this.getFlashSaleById(id);
-    const allIds = promo.product_ids || [];
+    let allIds = (promo.product_ids || []).map((n) => Number(n)).filter((n) => !isNaN(n));
+
+    // Fallback when the flash sale wasn't explicitly populated: pick the most
+    // attractive subset of the live catalogue (active products, sorted by
+    // existing discount then bestseller). Stock is enforced at order time
+    // via the warehouse module, not on this discovery page.
+    if (allIds.length === 0) {
+      const fallback = await this.productRepo
+        .createQueryBuilder('p')
+        .where('p.is_active = :a', { a: true })
+        .orderBy('p.discount', 'DESC')
+        .addOrderBy('p.is_bestseller', 'DESC')
+        .addOrderBy('p.is_featured', 'DESC')
+        .addOrderBy('p.id', 'ASC')
+        .take(48)
+        .getMany();
+      allIds = fallback.map((p) => p.id);
+    }
+
     const total = allIds.length;
     const offset = (page - 1) * limit;
-    const product_ids = allIds.slice(offset, offset + limit);
+    const pageIds = allIds.slice(offset, offset + limit);
+
+    let products: Product[] = [];
+    if (pageIds.length > 0) {
+      // Preserve the order of pageIds by sorting after the fetch.
+      const fetched = await this.productRepo.find({
+        where: { id: In(pageIds), isActive: true },
+        relations: ['images', 'variants'],
+      });
+      const map = new Map(fetched.map((p) => [p.id, p]));
+      products = pageIds.map((pid) => map.get(pid)).filter((p): p is Product => !!p);
+    }
 
     return {
       promotion: promo,
-      product_ids,
+      products,
+      product_ids: pageIds,
       total,
       page,
       limit,

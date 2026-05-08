@@ -50,26 +50,22 @@ from engines import (
     NextGenRecommendationEngine,
 )
 
-# â”€â”€â”€ Environment â”€â”€â”€
+# ─── Environment ───
 load_dotenv(override=True)
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# â”€â”€â”€ Helper: clean env vars (strip stray quotes/spaces) â”€â”€â”€
+# ─── Helper: clean env vars (strip stray quotes/spaces) ───
 def get_clean_env(key: str) -> str | None:
     val = os.getenv(key)
     return val.strip("'\" ") if val else None
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
@@ -92,15 +88,13 @@ VECTOR_MODEL_NAME = "openai/clip-vit-base-patch32"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 VECTORS_PATH = os.path.join(DATA_DIR, "product_vectors.pt")
-LEGACY_VECTORS_PATH = os.path.join(BASE_DIR, "..", "backend-ai", "product_vectors.pt")
-LEGACY_DATA_VECTORS_PATH = os.path.join(BASE_DIR, "..", "backend-ai", "data", "product_vectors.pt")
 CATALOG_PATH = os.path.join(DATA_DIR, "barsha_products.json")
 STORES_PATH = os.path.join(DATA_DIR, "barsha_stores.json")
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # GLOBAL STATE
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 CLIP_MODEL = None
 CLIP_PROCESSOR = None
@@ -115,9 +109,9 @@ PREMIUM_ENGINE: PremiumRecommendationEngine | None = None
 NEXTGEN_ENGINE: NextGenRecommendationEngine | None = None
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # SEMANTIC GROUPS (for CLIP coherence filtering)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 GROUPS = {
     "BAGS": ["SAC", "SACOCHE", "POCHETTE", "CABAS", "BANDOULIERE", "VALISE", "SAC-A-MAIN", "SAC-A-DOS"],
@@ -141,9 +135,9 @@ def get_group(product_name: str) -> str:
     return first_word
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # CHAT HELPERS: GENDER / COLOR / BUDGET DETECTION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 GENDER_MALE_PATTERNS = r'\b(homme|hommes|masculin|masculins|mec|gars|gar\u00e7on|gar\u00e7ons|boy|boys|man|men|cale\u00e7on|boxer|slip)\b'
 GENDER_FEMALE_PATTERNS = r'\b(femme|femmes|f\u00e9minin|f\u00e9minins|fille|filles|dame|dames|woman|women|girl|girls|robe|jupe|balerine|talon|talons|escarpin|chemisier|sac \u00e0 main)\b'
@@ -244,9 +238,9 @@ def clean_search_query(query: str) -> str:
     return final_query
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # MEILISEARCH INTEGRATION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 GENRE_TO_FAMILLE = {
     'homme': ['MEN', 'TEEN MEN', 'BOYS', 'TEEN BOYS'],
@@ -366,30 +360,6 @@ def ensure_abs_url(url_val):
     return f"https://barsha.com.tn/{url.lstrip('/')}"
 
 
-def product_matches_requested_color(product: dict, requested_color: str | None) -> bool:
-    if not requested_color:
-        return True
-
-    requested = requested_color.upper().strip()
-    if not requested:
-        return True
-
-    declinaisons = product.get("declinaisons") or []
-    decl_colors = [
-        str(d.get("couleur") or "").upper().strip()
-        for d in declinaisons
-        if d.get("couleur")
-    ]
-    if decl_colors:
-        return any(requested in color for color in decl_colors)
-
-    text_fields = " ".join(
-        str(product.get(key) or "")
-        for key in ("nom", "title", "name", "category", "categorie", "genre", "Famille")
-    ).upper()
-    return requested in text_fields
-
-
 def format_product_line(p: dict, pid, requested_color: str | None, stock_map: dict, local_images: dict) -> tuple[str | None, dict | None]:
     """
     Format a single product hit into the strict text line for the LLM system prompt
@@ -422,9 +392,11 @@ def format_product_line(p: dict, pid, requested_color: str | None, stock_map: di
         if requested_color and libellet == requested_color:
             highlighted_img = p.get("image")
 
-    # Skip products that don't explicitly match the requested colour.
-    if not product_matches_requested_color(p, requested_color):
-        return None, None
+    # Skip products that don't have the requested colour
+    if requested_color and variants_parts:
+        has_color = any(requested_color in str(v).upper() for v in declinaisons if "couleur" in v)
+        if not has_color:
+            return None, None
 
     img_val = local_images.get(str(pid)) or p.get("image") or p.get("firstImg") or ""
     main_img = ensure_abs_url(img_val)
@@ -454,9 +426,9 @@ def format_product_line(p: dict, pid, requested_color: str | None, stock_map: di
     return line, clean_hit
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # CATALOG SEARCH (grounding for the chatbot)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class ChatMessage(BaseModel):
     role: str
@@ -649,9 +621,9 @@ def scrub_history(messages: List[ChatMessage]) -> List[dict]:
     return clean
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # LLM CALL HELPERS
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 async def call_ollama_chat(messages: list) -> dict | None:
     """Call local Ollama (Qwen). Returns OpenRouter-compatible dict or None."""
@@ -772,9 +744,9 @@ async def call_openrouter_chat(messages: list, model_override: str | None = None
     return None
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # FASTAPI APPLICATION
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 app = FastAPI(
     title="Barsha AI Service",
@@ -791,7 +763,7 @@ app.add_middleware(
 )
 
 
-# â”€â”€â”€ Startup â”€â”€â”€
+# ─── Startup ───
 
 @app.on_event("startup")
 async def startup_event():
@@ -805,7 +777,7 @@ async def startup_event():
     logger.info(f"Gemini Key  : {'SET' if GEMINI_API_KEY else 'NOT SET'}")
     logger.info(f"OpenRouter  : {'SET' if OPENROUTER_API_KEY else 'NOT SET'}")
 
-    # â”€â”€ Load product catalog â”€â”€
+    # ── Load product catalog ──
     if os.path.exists(CATALOG_PATH):
         try:
             with open(CATALOG_PATH, "r", encoding="utf-8") as f:
@@ -821,28 +793,15 @@ async def startup_event():
     else:
         logger.warning(f"Catalog not found at {CATALOG_PATH}")
 
-    # â”€â”€ Load CLIP model + vectors â”€â”€
-    vectors_source = (
-        VECTORS_PATH if os.path.exists(VECTORS_PATH)
-        else LEGACY_VECTORS_PATH if os.path.exists(LEGACY_VECTORS_PATH)
-        else LEGACY_DATA_VECTORS_PATH if os.path.exists(LEGACY_DATA_VECTORS_PATH)
-        else None
-    )
-    if vectors_source:
+    # ── Load CLIP model + vectors ──
+    if os.path.exists(VECTORS_PATH):
         try:
             logger.info(f"Loading CLIP model ({VECTOR_MODEL_NAME})...")
-            CLIP_MODEL = CLIPModel.from_pretrained(
-                VECTOR_MODEL_NAME,
-                local_files_only=True,
-            ).to("cpu")
-            CLIP_PROCESSOR = CLIPProcessor.from_pretrained(
-                VECTOR_MODEL_NAME,
-                local_files_only=True,
-            )
+            CLIP_MODEL = CLIPModel.from_pretrained(VECTOR_MODEL_NAME).to("cpu")
+            CLIP_PROCESSOR = CLIPProcessor.from_pretrained(VECTOR_MODEL_NAME)
             CLIP_MODEL.eval()
 
-            logger.info(f"Using vectors file: {vectors_source}")
-            data = torch.load(vectors_source, weights_only=False, map_location="cpu")
+            data = torch.load(VECTORS_PATH, weights_only=False, map_location="cpu")
             PRODUCT_IDS = data["ids"]
 
             embeddings_raw = data["embeddings"]
@@ -858,11 +817,9 @@ async def startup_event():
             CLIP_MODEL = None
             PRODUCT_VECS = None
     else:
-        logger.warning(
-            f"Vectors file not found at {VECTORS_PATH} or {LEGACY_VECTORS_PATH} or {LEGACY_DATA_VECTORS_PATH}"
-        )
+        logger.warning(f"Vectors file not found at {VECTORS_PATH}")
 
-    # â”€â”€ Initialise recommendation engines â”€â”€
+    # ── Initialise recommendation engines ──
     try:
         REC_ENGINE = get_recommendation_engine()
         logger.info(f"RecommendationEngine ready: {len(REC_ENGINE.catalog)} products")
@@ -881,7 +838,7 @@ async def startup_event():
     except Exception as e:
         logger.error(f"NextGenRecommendationEngine init error: {e}")
 
-    # â”€â”€ Check Ollama availability â”€â”€
+    # ── Check Ollama availability ──
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get("http://localhost:11434/api/tags", timeout=5.0)
@@ -896,9 +853,9 @@ async def startup_event():
     logger.info("=== BARSHA AI SERVICE: READY ===")
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINT: Health Check
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/health")
 async def health_check():
@@ -929,9 +886,9 @@ async def health_check():
     }
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINT: POST /api/chat
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
@@ -982,7 +939,7 @@ async def chat_endpoint(request: ChatRequest):
         motifs = _ensure_list(ctx.get("motifs", []))
         wishlist = _ensure_list(ctx.get("wishlist", []))
 
-        # â”€â”€ Format wishlist â”€â”€
+        # ── Format wishlist ──
         wishlist_formatted = []
         for w in wishlist:
             w_prod = w.get("product") or w.get("produit") or w
@@ -1011,11 +968,16 @@ async def chat_endpoint(request: ChatRequest):
             if not img:
                 img = "https://barsha.com.tn/assets/images/logo.png"
 
-        wishlist_formatted.append(
-            f"- [ID:{pid}] [{ref}] {nom} | {prix} | Famille:FAVORI | "
-            f"Couleurs+Images: N/A | ImgPrincipale: {img} | "
-            f"https://barsha.com.tn/fr/produit/{pid}"
-        )
+            wishlist_formatted.append(
+                f"- [ID:{pid}] [{ref}] {nom} | {prix} | Famille:FAVORI | "
+                f"Couleurs+Images: N/A | ImgPrincipale: {img} | "
+                f"https://barsha.com.tn/fr/produit/{pid}"
+            )
+            raw_hits.append({
+                "id": pid, "reference": ref, "nom": nom,
+                "prix": prix, "image": img,
+                "url": f"https://barsha.com.tn/fr/produit/{pid}",
+            })
 
         wishlist_catalog = (
             f"VOICI LA LISTE D\u00c9TAILL\u00c9E DE SES FAVORIS :\n" + "\n".join(wishlist_formatted)
@@ -1023,7 +985,7 @@ async def chat_endpoint(request: ChatRequest):
             else "Aucun favori enregistr\u00e9."
         )
 
-        # â”€â”€ Format orders â”€â”€
+        # ── Format orders ──
         STATUS_MAP = {
             "pending": "En attente de confirmation",
             "confirmed": "Confirm\u00e9e \u2705",
@@ -1194,7 +1156,7 @@ Cette chemise se marierait tr\u00e8s bien avec un pantalon chino pour un look sm
 
         final_messages = [system_prompt] + api_messages
 
-        # â”€â”€ Step A: OLLAMA (LOCAL, PRIMARY) â”€â”€
+        # ── Step A: OLLAMA (LOCAL, PRIMARY) ──
         if not request.model or request.model == "openrouter/auto":
             logger.info("CHAT: trying Ollama (local)...")
             ollama_resp = await call_ollama_chat(final_messages)
@@ -1202,7 +1164,7 @@ Cette chemise se marierait tr\u00e8s bien avec un pantalon chino pour un look sm
                 ollama_resp["catalog_hits"] = raw_hits
                 return ollama_resp
 
-        # â”€â”€ Step B: GEMINI (CLOUD FALLBACK #1) â”€â”€
+        # ── Step B: GEMINI (CLOUD FALLBACK #1) ──
         if GEMINI_API_KEY:
             logger.info("CHAT: trying Gemini (cloud fallback #1)...")
             try:
@@ -1213,35 +1175,118 @@ Cette chemise se marierait tr\u00e8s bien avec un pantalon chino pour un look sm
             except Exception as e:
                 logger.warning(f"CHAT: Gemini failed: {e}")
 
-        # â”€â”€ Step C: OPENROUTER (CLOUD FALLBACK #2) â”€â”€
-        logger.info("CHAT: trying OpenRouter (cloud fallback #2)...")
-        if not OPENROUTER_API_KEY and not GEMINI_API_KEY:
-            raise Exception("No API keys configured (Ollama unavailable, no Gemini or OpenRouter key).")
+        # ── Step C: OPENROUTER (CLOUD FALLBACK #2) ──
+        if OPENROUTER_API_KEY:
+            logger.info("CHAT: trying OpenRouter (cloud fallback #2)...")
+            or_resp = await call_openrouter_chat(final_messages, model_override=request.model)
+            if or_resp:
+                or_resp["catalog_hits"] = raw_hits
+                return or_resp
 
-        or_resp = await call_openrouter_chat(final_messages, model_override=request.model)
-        if or_resp:
-            or_resp["catalog_hits"] = raw_hits
-            return or_resp
-
-        raise Exception("No AI model responded.")
+        # ── Step D: LOCAL DETERMINISTIC FALLBACK ──
+        # All LLM providers are unavailable. Return a useful templated answer
+        # so the chatbot UI never shows a raw error to the end user.
+        logger.warning("CHAT: no LLM available, returning deterministic fallback")
+        fallback_text = build_local_chat_answer(user_query, raw_hits)
+        return {
+            "choices": [{"message": {"role": "assistant", "content": fallback_text}}],
+            "catalog_hits": raw_hits,
+            "model": "local_fallback",
+        }
 
     except Exception as err:
         tb = traceback.format_exc()
-        logger.error(f"CHAT ERROR:\n{tb}")
+        logger.error(f"CHAT ERROR: {tb}")
+        try:
+            user_q = request.messages[-1].content if request.messages else ""
+            fallback_text = build_local_chat_answer(user_q, [])
+        except Exception:
+            fallback_text = (
+                "Bonjour ! Je suis l'assistant Barsha. "
+                "Que puis-je faire pour vous ?"
+            )
         return {
-            "choices": [{
-                "message": {
-                    "role": "assistant",
-                    "content": f"D\u00e9sol\u00e9, j'ai rencontr\u00e9 un probl\u00e8me technique.\n\nErreur : {str(err)}",
-                }
-            }],
-            "debug": tb,
+            "choices": [{"message": {"role": "assistant", "content": fallback_text}}],
+            "catalog_hits": [],
+            "model": "local_fallback_error",
+            "debug": tb[:500],
         }
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+def build_local_chat_answer(user_query: str, hits: list) -> str:
+    """Compose a useful French reply without any LLM (templated answers)."""
+    q = (user_query or "").lower().strip()
+
+    greetings = {"bonjour", "hello", "hi", "salut", "hey", "coucou", "bonsoir", "yo"}
+    if not q or (any(g in q for g in greetings) and len(q) <= 30):
+        return (
+            "Bonjour ! Je suis l'assistant Barsha.\n\n"
+            "Je peux vous aider à :\n"
+            "• Trouver une tenue (robe, chemise, pantalon, chaussures...)\n"
+            "• Composer un look pour une occasion (mariage, soirée, bureau, plage...)\n"
+            "• Suivre une commande ou initier un retour\n\n"
+            "Que recherchez-vous aujourd'hui ?"
+        )
+
+    if any(k in q for k in ["livraison", "expedition", "expedit", "delai", "delais"]):
+        return (
+            "Livraison Barsha :\n\n"
+            "Nous livrons partout en Tunisie en 2 à 5 jours ouvrables. "
+            "La livraison est gratuite à partir de 200 TND. Vous pouvez "
+            "également récupérer votre commande dans nos points relais."
+        )
+    if any(k in q for k in ["retour", "echange", "rembourser", "remboursement"]):
+        return (
+            "Retours et échanges :\n\n"
+            "Vous disposez de 14 jours après réception pour retourner ou "
+            "échanger un article. Connectez-vous puis allez dans Mon compte > "
+            "Mes commandes pour initier la demande en quelques clics."
+        )
+    if any(k in q for k in ["paiement", "carte", "click to pay", "ctp"]):
+        return (
+            "Modes de paiement :\n\n"
+            "Nous acceptons la carte bancaire (Click-to-Pay) et le paiement à "
+            "la livraison (COD). Le paiement carte est 100% sécurisé."
+        )
+    if any(k in q for k in ["taille", "guide"]):
+        return (
+            "Guide des tailles :\n\n"
+            "Chaque fiche produit affiche le guide des tailles correspondant. "
+            "Si vous hésitez, prenez la taille au-dessus pour les coupes ajustées."
+        )
+    if any(k in q for k in ["soldes", "promo", "promotion", "reduction"]):
+        return (
+            "Promotions en cours :\n\n"
+            "Retrouvez nos offres flash sur la page d'accueil. Le code WELCOME10 "
+            "vous offre 10% sur votre première commande."
+        )
+
+    if hits:
+        top = hits[: min(5, len(hits))]
+        lines = ["Voici quelques pièces qui correspondent à votre recherche :\n"]
+        for p in top:
+            name = p.get("nom") or p.get("title") or "Article"
+            price = p.get("currentPrice") or p.get("prix") or p.get("price") or 0
+            pid = p.get("id") or "?"
+            try:
+                price = float(price)
+                lines.append(f"• [ID:{pid}] {name} — {price:.2f} TND")
+            except (TypeError, ValueError):
+                lines.append(f"• [ID:{pid}] {name}")
+        lines.append("\nSouhaitez-vous voir d'autres options ou affiner par couleur / taille ?")
+        return "\n".join(lines)
+
+    return (
+        "Je suis là pour vous aider à trouver la tenue parfaite. "
+        "Pouvez-vous préciser ce que vous recherchez ?\n\n"
+        "Par exemple : une robe pour mariage, chemise homme blanche, "
+        "chaussures de sport, ou demandez conseil pour une occasion."
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINT: POST /api/visual-search (CLIP)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class VisualSearchRequest(BaseModel):
     image: str
@@ -1374,9 +1419,9 @@ async def visual_search(request: VisualSearchRequest):
         raise HTTPException(status_code=500, detail=f"Visual search processing error: {str(e)}")
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINT: POST /api/like-this (legacy CLIP format)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/like-this")
 async def like_this_compat(request: VisualSearchRequest):
@@ -1436,9 +1481,9 @@ async def like_this_compat(request: VisualSearchRequest):
         }
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # ENDPOINT: GET /api/recommendations/:strategy
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def _rec_result_to_dict(rec) -> dict:
     """Convert a RecommendationResult/RecommendationItem to a JSON-safe dict."""
@@ -1603,9 +1648,9 @@ async def get_recommendations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # ROOT
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/")
 async def root():
@@ -1622,20 +1667,13 @@ async def root():
     }
 
 
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("AI_SERVICE_PORT", "8001"))
     logger.info(f"Starting Barsha AI Service on port {port}")
-    try:
-        uvicorn.run(app, host="0.0.0.0", port=port)
-    except OSError as exc:
-        if getattr(exc, "winerror", None) == 10048:
-            logger.error(
-                f"Port {port} is already in use. Change AI_SERVICE_PORT in ai-service/.env or stop the existing process."
-            )
-        raise
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -458,7 +458,6 @@ import { environementDev } from '../../../../../environements/environementDev';
   `]
 })
 export class AdminLoginComponent implements OnInit {
-  private readonly apiUrl = environementDev.api;
   email = '';
   password = '';
   loading = false;
@@ -484,7 +483,7 @@ export class AdminLoginComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.http.post<any>(`${this.apiUrl}/api/auth/admin/login`, {
+    this.http.post<any>(`${environementDev.api}/api/auth/admin/login`, {
       email: this.email,
       password: this.password
     }).subscribe({

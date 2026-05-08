@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AdminCustomer } from '../../services/admin.service';
 import { environementDev } from '../../../../../environements/environementDev';
@@ -50,7 +49,7 @@ import { environementDev } from '../../../../../environements/environementDev';
                 </div>
               </td>
               <td>{{ customer.orderCount }} commandes</td>
-              <td class="price">{{ (customer.totalSpent || 0).toFixed(3) }} TND</td>
+              <td class="price">{{ customer.totalSpent.toFixed(3) }} TND</td>
               <td>
                 <span class="status-badge" [class.active]="customer.isActive" [class.inactive]="!customer.isActive">
                   {{ customer.isActive ? 'Actif' : 'Inactif' }}
@@ -94,16 +93,11 @@ import { environementDev } from '../../../../../environements/environementDev';
   `]
 })
 export class AdminCustomersComponent implements OnInit {
-  private readonly apiUrl = environementDev.api;
-  private readonly useLocalMode = !!(environementDev as any).useLocalAuth;
   customers: AdminCustomer[] = [];
   isLoading = false;
   searchQuery = '';
 
-  constructor(
-    private adminService: AdminService,
-    private http: HttpClient
-  ) {}
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadCustomers();
@@ -112,76 +106,13 @@ export class AdminCustomersComponent implements OnInit {
   loadCustomers(): void {
     this.isLoading = true;
     this.adminService.getCustomers({ search: this.searchQuery || undefined }).subscribe(response => {
-      this.customers = (response.items || []).map((customer: any) => ({
-        ...customer,
-        totalSpent: Number(customer.totalSpent || customer.total_spent || 0),
-        orderCount: Number(customer.orderCount || customer.order_count || 0),
-        firstName: customer.firstName || customer.first_name || '',
-        lastName: customer.lastName || customer.last_name || '',
-        isActive: customer.isActive ?? customer.is_active ?? true,
-      }));
+      this.customers = response.items;
       this.isLoading = false;
     });
   }
 
   exportCustomers(): void {
-    if (this.useLocalMode) {
-      this.downloadCustomersAsCsv();
-      return;
-    }
-
-    const token = localStorage.getItem('admin_jwt') || localStorage.getItem('jwt');
-    this.http.get(`${this.apiUrl}/api/admin/customers/export/csv`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      responseType: 'blob'
-    }).subscribe({
-      next: (blob) => {
-        const objectUrl = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = objectUrl;
-        anchor.download = 'customers.csv';
-        anchor.click();
-        window.URL.revokeObjectURL(objectUrl);
-      },
-      error: () => {
-        this.downloadCustomersAsCsv();
-      }
-    });
-  }
-
-  private downloadCustomersAsCsv(): void {
-    const rows = this.customers.map(customer => ({
-      first_name: customer.firstName || '',
-      last_name: customer.lastName || '',
-      email: customer.email || '',
-      phone: customer.phone || '',
-      order_count: Number(customer.orderCount || 0),
-      total_spent_tnd: (Number(customer.totalSpent) || 0).toFixed(3),
-      status: customer.isActive ? 'active' : 'inactive',
-      created_at: customer.createdAt || ''
-    }));
-
-    const header = ['first_name', 'last_name', 'email', 'phone', 'order_count', 'total_spent_tnd', 'status', 'created_at'];
-    const csv = [
-      header.join(','),
-      ...rows.map(row => header.map(key => this.escapeCsvValue((row as any)[key])).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const objectUrl = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = 'customers.csv';
-    anchor.click();
-    window.URL.revokeObjectURL(objectUrl);
-  }
-
-  private escapeCsvValue(value: unknown): string {
-    const stringValue = String(value ?? '');
-    const escaped = stringValue.replace(/"/g, '""');
-    return `"${escaped}"`;
+    window.open(`${environementDev.api}/api/admin/customers/export/csv`, '_blank');
   }
 
   formatDate(dateStr: string): string {

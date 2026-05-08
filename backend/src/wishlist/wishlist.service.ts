@@ -47,10 +47,19 @@ export class WishlistService {
     });
   }
 
-  async removeItem(userId: number, id: number): Promise<void> {
-    const item = await this.itemRepo.findOne({
-      where: { id, user_id: userId },
+  async removeItem(userId: number, productOrItemId: number): Promise<void> {
+    // The legacy frontend passes the *product* id in the URL (DELETE
+    // /api/removeWishListItem/:productId). For convenience we also tolerate
+    // being given the wishlist row id directly. Look up by product_id first
+    // (the common case) then fall back to row id.
+    let item = await this.itemRepo.findOne({
+      where: { product_id: productOrItemId, user_id: userId },
     });
+    if (!item) {
+      item = await this.itemRepo.findOne({
+        where: { id: productOrItemId, user_id: userId },
+      });
+    }
     if (!item) {
       throw new NotFoundException('Wishlist item not found');
     }
